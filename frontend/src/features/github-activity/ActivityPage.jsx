@@ -14,6 +14,7 @@ export function ActivityPage() {
   const { user } = useAuth();
   const [state, setState] = useState({ loading: true, error: null, items: [] });
   const [filter, setFilter] = useState("ALL");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -21,10 +22,10 @@ export function ActivityPage() {
       .then((r) => live && setState({ loading: false, error: null, items: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, items: [] }));
     return () => { live = false; };
-  }, [user.studentId]);
+  }, [user.studentId, attempt]);
 
   if (state.loading) return <LoadingState label="Loading GitHub activity…" lines={4} />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [] }); setAttempt((a) => a + 1); }} />;
 
   const items = state.items.filter((s) => filter === "ALL" || s.outcome === filter);
 

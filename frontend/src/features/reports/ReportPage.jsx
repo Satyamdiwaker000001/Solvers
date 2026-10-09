@@ -11,6 +11,7 @@ import { BookOpenCheck, GitCommitHorizontal, ScanSearch, ShieldCheck } from "luc
 export function ReportPage() {
   const { user } = useAuth();
   const [state, setState] = useState({ loading: true, error: null, overview: null, items: [] });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -18,10 +19,10 @@ export function ReportPage() {
       .then(([o, s]) => live && setState({ loading: false, error: null, overview: o.data, items: s.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, overview: null, items: [] }));
     return () => { live = false; };
-  }, [user.studentId]);
+  }, [user.studentId, attempt]);
 
   if (state.loading) return <LoadingState label="Compiling your progress report…" lines={5} />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, overview: null, items: [] }); setAttempt((a) => a + 1); }} />;
 
   const groups = ["VERIFIED", "NEEDS_REVIEW", "INCOMPLETE", "CHECK_FAILED", "INGESTION_PENDING"]
     .map((o) => ({ outcome: o, items: state.items.filter((s) => s.outcome === o) }))

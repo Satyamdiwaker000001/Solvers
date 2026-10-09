@@ -88,7 +88,7 @@ export function AdminLoginPage() {
 }
 
 export function AccessStatusPage() {
-  const { user, signInAs } = useAuth();
+  const { user, signInAs, expireDemoLock } = useAuth();
   const toast = useToast();
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -100,6 +100,12 @@ export function AccessStatusPage() {
   const request = async () => {
     setBusy(true); setError(null);
     try {
+      // Demo-only simulation of the backend REAPPLICATION_LOCKED response
+      // (real enforcement is server-side per FR-AUTH-06; see services/api.js).
+      if (user.reapplyAfter && new Date(user.reapplyAfter) > new Date()) {
+        setError(`You can reapply in ${timeUntil(user.reapplyAfter)} (demo lock). The real 24-hour rule is enforced by server time, not this screen.`);
+        return;
+      }
       await submitAccessRequest(user.githubLogin);
       toast.push({ title: "Access request submitted", body: "Professors have been notified. Check back for approval." });
       signInAs("pending");
@@ -129,7 +135,10 @@ export function AccessStatusPage() {
               <p>Eligible to reapply: <strong className="tnum">in {timeUntil(user.reapplyAfter)}</strong></p>
             </div>
             {error && <p role="alert" className="mt-2 text-sm font-medium text-danger">{error}</p>}
-            <Button className="mt-3" loading={busy} onClick={request}>Submit a new access request</Button>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button loading={busy} onClick={request}>Submit a new access request</Button>
+              <Button tone="secondary" onClick={expireDemoLock}>Demo: simulate lock expiry</Button>
+            </div>
           </>
         )}
         {state === "APPROVED" && (

@@ -8,16 +8,17 @@ import { formatDateTime } from "../../lib/format.js";
 
 export function IntegrationPage() {
   const [state, setState] = useState({ loading: true, error: null, data: null });
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     getIntegrationStatus()
       .then((r) => live && setState({ loading: false, error: null, data: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, data: null }));
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
 
   if (state.loading) return <LoadingState label="Checking integration health…" lines={3} />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, data: null }); setAttempt((a) => a + 1); }} />;
 
   const d = state.data;
   return (
@@ -53,16 +54,17 @@ export function IntegrationPage() {
 
 export function AuditPage() {
   const [state, setState] = useState({ loading: true, error: null, items: [] });
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     getAuditLog()
       .then((r) => live && setState({ loading: false, error: null, items: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, items: [] }));
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
 
   if (state.loading) return <LoadingState label="Loading audit log…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [] }); setAttempt((a) => a + 1); }} />;
 
   return (
     <div className="grid gap-4">

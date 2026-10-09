@@ -13,6 +13,7 @@ import { formatDate } from "../../lib/format.js";
 export function StudentDashboard() {
   const { user } = useAuth();
   const [state, setState] = useState({ loading: true, error: null, overview: null, assignments: [], rank: null });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -27,10 +28,20 @@ export function StudentDashboard() {
       } catch (e) { if (live) setState((s) => ({ ...s, loading: false, error: e.message })); }
     })();
     return () => { live = false; };
-  }, [user.studentId]);
+  }, [user.studentId, attempt]);
 
   if (state.loading) return (<div className="grid gap-4"><LoadingState label="Loading your dashboard…" lines={4} /></div>);
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) {
+    return (
+      <ErrorState
+        body={state.error}
+        onRetry={() => {
+          setState({ loading: true, error: null, overview: null, assignments: [], rank: null });
+          setAttempt((a) => a + 1);
+        }}
+      />
+    );
+  }
 
   const { overview, assignments } = state;
   const todo = assignments.filter((a) => a.status !== "VERIFIED").slice(0, 4);

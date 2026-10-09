@@ -20,6 +20,7 @@ function RankBadge({ rank }) {
 /** Shared by student + admin; admin passes highlightId to spotlight a student. */
 export function Leaderboard({ highlightId, title = "Activity leaderboard", description = "Ranking reflects verified activity and consistency — never raw commit count (FR-LB-02). Values are reproducible from stored qualifying events." }) {
   const [state, setState] = useState({ loading: true, error: null, data: null });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -27,10 +28,10 @@ export function Leaderboard({ highlightId, title = "Activity leaderboard", descr
       .then((r) => live && setState({ loading: false, error: null, data: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, data: null }));
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
 
   if (state.loading) return <LoadingState label="Loading leaderboard…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, data: null }); setAttempt((a) => a + 1); }} />;
 
   const { entries, formula, window } = state.data;
   if (entries.length === 0) return <EmptyState title="No rankings yet" body="The leaderboard appears once qualifying evidence has been verified." />;

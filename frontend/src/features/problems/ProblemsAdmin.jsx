@@ -19,16 +19,18 @@ export function ProblemsAdminPage() {
   const [assignOpen, setAssignOpen] = useState(null);
   const toast = useToast();
 
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
     let live = true;
     getProblems()
       .then((r) => live && setState({ loading: false, error: null, items: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, items: [] }));
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
 
   if (state.loading) return <LoadingState label="Loading problem catalog…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [] }); setAttempt((a) => a + 1); }} />;
 
   return (
     <div className="grid gap-4">
