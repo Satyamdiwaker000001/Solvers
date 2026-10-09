@@ -164,14 +164,26 @@ const auditLogSchema = new Schema(
 auditLogSchema.index({ createdAt: -1 });
 export const AuditLog = mongoose.model("AuditLog", auditLogSchema);
 
-/** WEBHOOK_EVENT — intake ledger; analysis workers are deferred (see docs). */
+/** WEBHOOK_EVENT — intake ledger + evidence-worker processing states. */
 const webhookEventSchema = new Schema(
   {
     deliveryId: { type: String, required: true, unique: true },
     event: { type: String, default: "" },
     repo: { type: String, default: "" },
-    status: { type: String, enum: ["PENDING", "SEEN"], default: "PENDING", required: true },
+    status: {
+      type: String,
+      enum: ["PENDING", "SEEN", "PROCESSING", "PROCESSED", "FAILED"],
+      default: "PENDING",
+      required: true,
+      index: true,
+    },
     receivedAt: { type: Date, default: Date.now, required: true },
+    // Worker bookkeeping (populated by services/evidence.js; never secrets).
+    processedAt: { type: Date, default: null },
+    commitSha: { type: String, default: "" },
+    branch: { type: String, default: "" },
+    retryable: { type: Boolean, default: false },
+    error: { type: String, default: "", maxlength: 2000 },
   },
   { timestamps: false },
 );

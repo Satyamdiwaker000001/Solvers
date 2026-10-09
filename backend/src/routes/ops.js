@@ -119,6 +119,8 @@ export function adminOpsRoutes() {
   router.get("/github/integration-status", asyncHandler(async (req, res) => {
     const cfg = req.app.get("config");
     const pending = await WebhookEvent.countDocuments({ status: "PENDING" });
+    const processed = await WebhookEvent.countDocuments({ status: "PROCESSED" });
+    const failed = await WebhookEvent.countDocuments({ status: "FAILED" });
     const last = await WebhookEvent.findOne({}).sort({ receivedAt: -1 }).lean();
     const configured = Boolean(cfg.repo.fullName && cfg.webhookSecret);
     res.json({
@@ -126,10 +128,13 @@ export function adminOpsRoutes() {
         repo: { fullName: cfg.repo.fullName, branch: cfg.repo.branch, folderRoot: cfg.repo.folderRoot },
         status: !configured ? "NOT_CONFIGURED" : pending > 20 ? "DEGRADED" : "HEALTHY",
         pendingEvents: pending,
+        processedEvents: processed,
+        failedEvents: failed,
         lastReceivedAt: last ? last.receivedAt : null,
-        // Analysis workers are deferred (see docs/limitations): PENDING means
-        // "received, not yet analyzed" — never reported as verified.
-        note: "Webhook intake only; verification workers are not yet implemented.",
+        // Intake + worker: PENDING means "received, not yet analyzed" — never
+        // reported as verified. Evidence states are observable via the
+        // review queue; failures carry retryable + error (no secrets).
+        note: "Webhook intake with idempotent evidence worker (services/evidence.js); PENDING is analysis-pending, never verified.",
       },
     });
   }));
