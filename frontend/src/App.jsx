@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { StudentLayout, AdminLayout, ProtectedRoute } from "./layouts/AppLayouts.jsx";
-import { SignInPage, AdminLoginPage, AccessStatusPage } from "./features/auth/AuthPages.jsx";
+import { SignInPage, AdminLoginPage, AccessStatusPage, AuthFinishPage } from "./features/auth/AuthPages.jsx";
 import { StudentDashboard } from "./features/dashboard/StudentDashboard.jsx";
 import { AdminDashboard } from "./features/dashboard/AdminDashboard.jsx";
 import { ProblemsPage, ProblemDetailPage } from "./features/problems/ProblemsPages.jsx";
@@ -20,6 +20,7 @@ export default function App() {
       <Route path="/" element={<Navigate to="/sign-in" replace />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/admin-login" element={<AdminLoginPage />} />
+      <Route path="/auth/finish" element={<AuthFinishPage />} />
       <Route path="/access-status" element={<AccessStatusPage />} />
       <Route path="/forbidden" element={<ForbiddenPage />} />
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Info, Medal } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth.js";
 import { getLeaderboard } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
@@ -18,9 +19,11 @@ function RankBadge({ rank }) {
 }
 
 /** Shared by student + admin; admin passes highlightId to spotlight a student. */
-export function Leaderboard({ highlightId, title = "Activity leaderboard", description = "Ranking reflects verified activity and consistency — never raw commit count (FR-LB-02). Values are reproducible from stored qualifying events." }) {
+export function Leaderboard({ highlightId, useSelfHighlight = false, title = "Activity leaderboard", description = "Ranking reflects verified activity and consistency — never raw commit count (FR-LB-02). Values are reproducible from stored qualifying events." }) {
   const [state, setState] = useState({ loading: true, error: null, data: null });
   const [attempt, setAttempt] = useState(0);
+  const { user } = useAuth();
+  const effectiveHighlight = highlightId ?? (useSelfHighlight ? user?.studentId : undefined);
 
   useEffect(() => {
     let live = true;
@@ -51,12 +54,13 @@ export function Leaderboard({ highlightId, title = "Activity leaderboard", descr
       <ol className="grid gap-2 lg:hidden">
         {entries.map((e) => {
           const s = studentById(e.studentId);
-          const hot = e.studentId === highlightId;
+          const name = e.displayName || s?.displayName || e.studentId;
+          const hot = e.studentId === effectiveHighlight;
           return (
             <li key={e.studentId} className={`flex items-center gap-3 rounded-2xl border p-3 ${hot ? "border-primary bg-primary-subtle/50" : "border-border bg-surface"}`}>
               <RankBadge rank={e.rank} />
               <div className="min-w-0 flex-1 leading-tight">
-                <p className="truncate text-sm font-bold">{s.displayName} {hot && <span className="text-xs font-semibold text-primary">(you)</span>}</p>
+                <p className="truncate text-sm font-bold">{name} {hot && <span className="text-xs font-semibold text-primary">(you)</span>}</p>
                 <p className="tnum truncate text-xs text-muted">{e.verifiedProblems} verified · {e.activeDays} active days</p>
               </div>
               <p className="tnum text-base font-extrabold">{e.score}<span className="text-xs font-medium text-muted"> pts</span></p>
@@ -77,11 +81,13 @@ export function Leaderboard({ highlightId, title = "Activity leaderboard", descr
             <tbody>
               {entries.map((e) => {
                 const s = studentById(e.studentId);
-                const hot = e.studentId === highlightId;
+                const name = e.displayName || s?.displayName || e.studentId;
+                const login = e.githubLogin || s?.githubLogin || "";
+                const hot = e.studentId === effectiveHighlight;
                 return (
                   <tr key={e.studentId} className={`border-b border-border/60 last:border-0 ${hot ? "bg-primary-subtle/50" : "hover:bg-canvas/60"}`}>
                     <td className="px-4 py-3"><span className="flex items-center gap-2"><RankBadge rank={e.rank} /><span className="tnum text-xs text-muted">{e.trend}</span></span></td>
-                    <td className="px-4 py-3"><p className="font-semibold">{s.displayName} {hot && <span className="text-xs text-primary">(you)</span>}</p><p className="mono text-xs text-muted">@{s.githubLogin} · {s.id}</p></td>
+                    <td className="px-4 py-3"><p className="font-semibold">{name} {hot && <span className="text-xs text-primary">(you)</span>}</p><p className="mono text-xs text-muted">@{login} · {e.studentId}</p></td>
                     <td className="tnum px-4 py-3 text-right font-bold">{e.verifiedProblems}</td>
                     <td className="tnum px-4 py-3 text-right">{e.activeDays}</td>
                     <td className="tnum px-4 py-3 text-right font-extrabold">{e.score}</td>
@@ -97,5 +103,5 @@ export function Leaderboard({ highlightId, title = "Activity leaderboard", descr
 }
 
 export function StudentLeaderboardPage() {
-  return <Leaderboard highlightId="STU001" />;
+  return <Leaderboard highlightId={undefined} useSelfHighlight />;
 }

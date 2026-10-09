@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Pencil } from "lucide-react";
-import { getProblems, saveProblem } from "../../services/api.js";
-import { assignments } from "../../mocks/data.js";
+import { getProblems, saveProblem, getAdminAssignments, createAssignment, getStudents, isLiveMode } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { Badge } from "../../components/ui/Badge.jsx";
 import { Button } from "../../components/ui/Button.jsx";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
 import { Field, TextInput, TextArea, Select } from "../../components/ui/Field.jsx";
 import { Dialog } from "../../components/ui/Dialog.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
+import { useToast } from "../../hooks/useToast.js";
 import { formatDate } from "../../lib/format.js";
 
 const TOPICS = ["Arrays", "Binary Search", "Stacks", "Sliding Window", "Linked List", "Graphs", "Dynamic Programming", "Trees"];
 
 export function ProblemsAdminPage() {
-  const [state, setState] = useState({ loading: true, error: null, items: [] });
+  const [state, setState] = useState({ loading: true, error: null, items: [], linked: [] });
   const [assignOpen, setAssignOpen] = useState(null);
   const toast = useToast();
 
@@ -23,14 +22,19 @@ export function ProblemsAdminPage() {
 
   useEffect(() => {
     let live = true;
-    getProblems()
-      .then((r) => live && setState({ loading: false, error: null, items: r.data }))
-      .catch((e) => live && setState({ loading: false, error: e.message, items: [] }));
+    Promise.all([getProblems(), getAdminAssignments()])
+      .then(([p, a]) => live && setState({ loading: false, error: null, items: p.data, linked: a.data }))
+      .catch((e) => live && setState({ loading: false, error: e.message, items: [], linked: [] }));
     return () => { live = false; };
   }, [attempt]);
 
+  const reload = () => {
+    setState({ loading: true, error: null, items: [], linked: [] });
+    setAttempt((a) => a + 1);
+  };
+
   if (state.loading) return <LoadingState label="Loading problem catalog…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [] }); setAttempt((a) => a + 1); }} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={reload} />;
 
   return (
     <div className="grid gap-4">
@@ -45,7 +49,7 @@ export function ProblemsAdminPage() {
       ) : (
         <ul className="grid gap-3">
           {state.items.map((p) => {
-            const linked = assignments.filter((a) => a.problemId === p.id);
+            const linked = state.linked.filter((a) => a.problemId === p.id);
             return (
               <li key={p.id}>
                 <Card>
@@ -72,7 +76,7 @@ export function ProblemsAdminPage() {
       )}
       {assignOpen && (
         <AssignDialog problem={assignOpen} onClose={() => setAssignOpen(null)}
-          onDone={(msg) => { setAssignOpen(null); toast.push({ title: "Assignment recorded (demo)", body: msg }); }} />
+          onDone={(msg) => { setAssignOpen(null); toast.push({ title: "Assignment recorded", body: msg }); reload(); }} />
       )}
     </div>
   );
@@ -80,8 +84,68 @@ export function ProblemsAdminPage() {
 
 function AssignDialog({ problem, onClose, onDone }) {
   const [scope, setScope] = useState("COMMON");
-  const [due, setDue] = useState("2026-10-20");
+  const [due, setDue] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [selected, setSelected] = useState([]);
+  const [students, setStudents] = useState({ loading: true, error: null, items: [] });
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(null);
+  const live = isLiveMode();
+
+  useEffect(() => {
+    let cancelled = false;
+    getStudents()
+      .then((r) => {
+        if (!cancelled) setStudents({ loading: false, error: null, items: r.data });
+      })
+      .catch((e) => {
+        if (!cancelled) setStudents({ loading: false, error: e.message, items: [] });
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggle = (dbId) => {
+    setSelected((s) => (s.includes(dbId) ? s.filter((x) => x !== dbId) : [...s, dbId]));
+  };
+
+  const confirm = async () => {
+    if (scope === "INDIVIDUAL" && selected.length === 0) {
+      setFailed("Select at least one approved student for an individual assignment.");
+      return;
+    }
+    if (instructions.length > 5000) {
+      setFailed("Instructions are too long (max 5000 characters).");
+      return;
+    }
+    let dueAt = null;
+    if (due) {
+      const parsed = new Date(`${due}T23:59:00Z`);
+      if (Number.isNaN(parsed.getTime())) {
+        setFailed("The due date is not a valid calendar date.");
+        return;
+      }
+      dueAt = parsed.toISOString();
+    }
+    setBusy(true);
+    setFailed(null);
+    try {
+      const created = await createAssignment({
+        problemId: problem.id,
+        type: scope,
+        title: "",
+        dueAt,
+        instructions,
+        studentIds: scope === "INDIVIDUAL" ? selected : [],
+      });
+      const count = created.data?.targetCount ?? selected.length;
+      onDone(`${problem.title} → ${scope} (${count} student${count === 1 ? "" : "s"})${dueAt ? `, due ${formatDate(dueAt)}` : ""}`);
+    } catch (err) {
+      setFailed(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Dialog title={`Assign “${problem.title}”`} description="Common reaches every approved student. Individual targets one or more selected students." onClose={onClose}>
       <div className="grid gap-3">
@@ -91,11 +155,57 @@ function AssignDialog({ problem, onClose, onDone }) {
             <option value="INDIVIDUAL">Individual — selected students</option>
           </Select>
         </Field>
-        <Field label="Due date" htmlFor="due"><TextInput id="due" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
-        <p className="rounded-xl bg-canvas p-3 text-[13px] text-muted">Demo only: assignment is acknowledged in a toast and audit-logged locally. Real targeting rules (FR-PS-05) will be enforced by the backend.</p>
+        {scope === "COMMON" && (
+          <p className="rounded-xl bg-canvas p-3 text-[13px] text-muted" role="status">
+            {students.loading
+              ? "Counting approved students…"
+              : `Will reach all ${students.items.length} approved student${students.items.length === 1 ? "" : "s"}.`}
+          </p>
+        )}
+        {scope === "INDIVIDUAL" && (
+          <Field label="Students" htmlFor="student-pick-0" required hint="Only approved students can be assigned work.">
+            {students.loading ? (
+              <LoadingState label="Loading students…" lines={2} />
+            ) : students.items.length === 0 ? (
+              <EmptyState title="No approved students" body={students.error || "Approve students before creating individual assignments."} />
+            ) : (
+              <ul className="grid max-h-56 gap-1 overflow-y-auto rounded-xl border border-border p-2">
+                {students.items.map((s, i) => {
+                  const dbId = s.dbId || s.id;
+                  const checked = selected.includes(dbId);
+                  return (
+                    <li key={dbId}>
+                      <label htmlFor={`student-pick-${i}`} className="flex cursor-pointer items-center gap-2.5 rounded-lg p-2 hover:bg-canvas">
+                        <input
+                          id={`student-pick-${i}`}
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggle(dbId)}
+                          className="size-4 accent-primary"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold">{s.displayName}</span>
+                          <span className="mono block truncate text-xs text-muted">@{s.githubLogin} · {s.studentId || s.id}</span>
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Field>
+        )}
+        <Field label="Due date (optional)" htmlFor="due"><TextInput id="due" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
+        <Field label="Instructions (optional)" htmlFor="instr" hint="Shown to the assigned students alongside the problem.">
+          <TextArea id="instr" rows={3} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="e.g. Push your solution under arrays/ in your folder." />
+        </Field>
+        {!live && (
+          <p className="rounded-xl bg-canvas p-3 text-[13px] text-muted">Demo only: assignments are acknowledged locally. Connect the backend to persist them.</p>
+        )}
+        {failed && <p role="alert" className="rounded-xl bg-danger-bg/60 p-3 text-sm font-medium text-danger">{failed}</p>}
         <div className="flex flex-wrap justify-end gap-2">
           <Button tone="secondary" onClick={onClose} disabled={busy}>Cancel</Button>
-          <Button loading={busy} onClick={() => { setBusy(true); setTimeout(() => onDone(`${problem.id} → ${scope}, due ${due}`), 500); }}>Confirm assignment</Button>
+          <Button loading={busy} onClick={confirm}>Confirm assignment</Button>
         </div>
       </div>
     </Dialog>
@@ -117,11 +227,14 @@ export function ProblemFormPage() {
 
   useEffect(() => {
     if (isNew) return;
+    let cancelled = false;
     getProblems().then((r) => {
+      if (cancelled) return;
       const p = r.data.find((x) => x.id === id);
       if (p) setForm({ ...emptyForm, ...p, examples: (p.examples ?? []).join("\n"), constraints: (p.constraints ?? []).join("\n") });
       setLoaded(true);
     });
+    return () => { cancelled = true; };
   }, [id, isNew]);
 
   if (!loaded) return <LoadingState label="Loading problem…" lines={2} />;
@@ -140,7 +253,7 @@ export function ProblemFormPage() {
     try {
       const payload = { ...form, examples: form.examples.split("\n").map((s) => s.trim()).filter(Boolean), constraints: form.constraints.split("\n").map((s) => s.trim()).filter(Boolean) };
       const saved = await saveProblem(payload, isNew ? undefined : id);
-      toast.push({ title: isNew ? "Problem created (demo)" : "Problem updated (demo)", body: `${saved.data.id} saved locally for this session.` });
+      toast.push({ title: isNew ? "Problem created" : "Problem updated", body: `${saved.data.title} is saved${isLiveMode() ? " on the server" : " locally for this session"}.` });
       nav("/admin/problems");
     } catch (err) {
       setFailed(err.message);

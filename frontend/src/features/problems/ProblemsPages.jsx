@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, ExternalLink, FolderGit2 } from "lucide-react";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
 import { getStudentAssignments, getProblems } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { Badge, VerificationBadge } from "../../components/ui/Badge.jsx";
@@ -34,9 +34,9 @@ export function ProblemsPage() {
   }, [user.studentId, attempt]);
 
   const items = useMemo(() => state.items.filter((a) => {
-    const p = problemById(a.problemId);
+    const p = a.problem ?? problemById(a.problemId);
     const q = query.trim().toLowerCase();
-    const matchQ = !q || p.title.toLowerCase().includes(q) || p.topic.toLowerCase().includes(q);
+    const matchQ = !q || (p?.title || "").toLowerCase().includes(q) || (p?.topic || "").toLowerCase().includes(q);
     const matchF = filter === "ALL" || (filter === "TODO" ? a.status !== "VERIFIED" : filter === "DONE" ? a.status === "VERIFIED" : a.type === filter);
     return matchQ && matchF;
   }), [state.items, query, filter]);
@@ -70,7 +70,7 @@ export function ProblemsPage() {
           {/* Cards on narrow, table on wide */}
           <ul className="grid gap-3 lg:hidden">
             {items.map((a) => {
-              const p = problemById(a.problemId);
+              const p = a.problem ?? problemById(a.problemId);
               return (
                 <li key={a.id}>
                   <Link to={`/app/problems/${a.problemId}`} className="block rounded-2xl border border-border bg-surface p-4">
@@ -78,8 +78,8 @@ export function ProblemsPage() {
                       <Badge tone={a.type === "COMMON" ? "info" : "neutral"}>{a.type === "COMMON" ? "Common" : "Individual"}</Badge>
                       {statusBadge(a.status)}
                     </div>
-                    <p className="mt-1.5 font-bold">{p.title}</p>
-                    <p className="text-[13px] text-muted">{p.topic} · {p.difficulty} · due {formatDate(a.dueAt)}</p>
+                    <p className="mt-1.5 font-bold">{p?.title ?? "Problem"}</p>
+                    <p className="text-[13px] text-muted">{p?.topic} · {p?.difficulty} · due {formatDate(a.dueAt)}</p>
                   </Link>
                 </li>
               );
@@ -95,12 +95,12 @@ export function ProblemsPage() {
                 </thead>
                 <tbody>
                   {items.map((a) => {
-                    const p = problemById(a.problemId);
+                    const p = a.problem ?? problemById(a.problemId);
                     return (
                       <tr key={a.id} className="border-b border-border/60 last:border-0 hover:bg-canvas/60">
                         <td className="px-4 py-3">
-                          <Link to={`/app/problems/${a.problemId}`} className="font-semibold text-primary hover:underline">{p.title}</Link>
-                          <p className="text-[13px] text-muted">{p.topic} · {p.difficulty}</p>
+                          <Link to={`/app/problems/${a.problemId}`} className="font-semibold text-primary hover:underline">{p?.title ?? "Problem"}</Link>
+                          <p className="text-[13px] text-muted">{p?.topic} · {p?.difficulty}</p>
                         </td>
                         <td className="px-4 py-3"><Badge tone={a.type === "COMMON" ? "info" : "neutral"}>{a.type}</Badge></td>
                         <td className="px-4 py-3">{statusBadge(a.status)}</td>
@@ -165,7 +165,7 @@ export function ProblemDetailPage() {
           <Card>
             <h2 className="section-title">How to submit</h2>
             <ol className="mt-2 grid gap-2 text-sm text-muted">
-              <li className="flex gap-2"><FolderGit2 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" /><span>Push to <span className="mono">{CENTRAL_REPO.fullName}/{user.studentId === "STU001" ? "students/STU001" : "students/…"}</span> on branch <span className="mono">{CENTRAL_REPO.branch}</span>.</span></li>
+              <li className="flex gap-2"><FolderGit2 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" /><span>Push to <span className="mono">{CENTRAL_REPO.fullName}/{user.folder || (user.studentId ? `students/${user.studentId}` : "students/…")}</span> on branch <span className="mono">{CENTRAL_REPO.branch}</span>.</span></li>
               <li className="flex gap-2"><CalendarDays aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" /><span>{assignment ? `Due ${formatDate(assignment.dueAt)} · ${assignment.title}` : "No active assignment for this problem."}</span></li>
             </ol>
             <p className="mt-2 text-[13px] text-muted">A commit is evidence of a change, not proof of a solved problem (BR-06). Verification runs asynchronously.</p>

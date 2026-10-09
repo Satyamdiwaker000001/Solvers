@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
 import { getStudentOverview, getStudentSubmissions } from "../../services/api.js";
 import { PageHeader, StatCard, Card } from "../../components/ui/Card.jsx";
 import { LoadingState, ErrorState } from "../../components/ui/States.jsx";
@@ -50,10 +50,12 @@ export function ReportPage() {
             {g.items.map((s) => {
               const a = assignmentById(s.assignmentId);
               const p = a ? problemById(a.problemId) : null;
+              const title = s.problemTitle || p?.title || s.assignmentTitle || a?.title || s.assignmentId;
+              const subtitle = s.assignmentTitle || a?.title || "";
               return (
                 <li key={s.id}>
                   <Card>
-                    <p className="font-bold">{p?.title ?? s.assignmentId} <span className="font-normal text-muted">· {a?.title}</span></p>
+                    <p className="font-bold">{title} <span className="font-normal text-muted">· {subtitle}</span></p>
                     <div className="mt-2"><EvidencePanel submission={s} /></div>
                   </Card>
                 </li>

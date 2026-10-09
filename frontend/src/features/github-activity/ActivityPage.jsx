@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
 import { getStudentSubmissions } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
 import { EvidencePanel } from "../../components/data-display/EvidencePanel.jsx";
 import { VerificationBadge } from "../../components/ui/Badge.jsx";
-import { CENTRAL_REPO, assignmentById, problemById } from "../../mocks/data.js";
+import { assignmentById, problemById } from "../../mocks/data.js";
 import { formatDateTime } from "../../lib/format.js";
 
 const OUTCOMES = ["ALL", "VERIFIED", "NEEDS_REVIEW", "INCOMPLETE", "CHECK_FAILED", "INGESTION_PENDING"];
@@ -33,7 +33,7 @@ export function ActivityPage() {
     <div className="grid gap-4">
       <PageHeader
         title="GitHub activity"
-        description={`Evidence observed in ${CENTRAL_REPO.fullName} for your folder. The repository is evidence, not infallible proof — verification maps each change to a known problem before it counts.`}
+        description="Evidence observed in your folder on the central class repository. The repository is evidence, not infallible proof — verification maps each change to a known problem before it counts."
       />
       <Card>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by verification outcome">
@@ -60,7 +60,7 @@ export function ActivityPage() {
                 <Card>
                   <div className="flex flex-wrap items-center gap-2">
                     <VerificationBadge outcome={s.outcome} />
-                    <p className="min-w-0 flex-1 truncate text-sm font-bold">{p?.title ?? s.assignmentId}</p>
+                    <p className="min-w-0 flex-1 truncate text-sm font-bold">{s.problemTitle || p?.title || s.assignmentTitle || s.assignmentId}</p>
                     <span className="tnum text-xs text-muted">{formatDateTime(s.observedAt)}</span>
                   </div>
                   <div className="mt-2"><EvidencePanel submission={s} /></div>

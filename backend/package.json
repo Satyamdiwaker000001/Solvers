@@ -1,0 +1,28 @@
+{
+  "name": "dsa-tracker-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "DSA Practice Tracker backend — Express + MongoDB API (Phase 2)",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test --test-force-exit --test-concurrency=1 tests/*.test.js",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "connect-mongo": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "mongoose": "^8.9.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.1.4",
+    "oxlint": "^1.81.0",
+    "supertest": "^7.0.0"
+  }
+}

@@ -42,8 +42,8 @@ export function IntegrationPage() {
           <h2 className="section-title">Worker queue</h2>
           <dl className="mt-2 grid gap-1.5 text-sm">
             <div className="flex justify-between gap-2"><dt className="text-muted">Depth</dt><dd className="tnum font-bold">{d.queue.depth} jobs</dd></div>
-            <div className="flex justify-between gap-2"><dt className="text-muted">Oldest job age</dt><dd className="tnum">{d.queue.oldestAgeSec}s</dd></div>
-            <div className="flex justify-between gap-2"><dt className="text-muted">Dead-letter</dt><dd className="tnum">{d.queue.deadLetter}</dd></div>
+            <div className="flex justify-between gap-2"><dt className="text-muted">Oldest job age</dt><dd className="tnum">{d.queue.oldestAgeSec != null ? `${d.queue.oldestAgeSec}s` : "—"}</dd></div>
+            <div className="flex justify-between gap-2"><dt className="text-muted">Dead-letter</dt><dd className="tnum">{d.queue.deadLetter ?? "—"}</dd></div>
           </dl>
           <p className="mt-2 text-[13px] text-muted">Pending evidence shows <Badge tone="info">Analysis pending</Badge> — never verified.</p>
         </Card>
