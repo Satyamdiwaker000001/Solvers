@@ -31,19 +31,19 @@ export function IntegrationPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <h2 className="section-title">Repository</h2>
-          <dl className="mt-2 grid gap-1.5 text-sm">
-            <div className="flex justify-between gap-2"><dt className="text-muted">Full name</dt><dd className="mono">{d.repo.fullName}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="text-muted">Branch</dt><dd className="mono">{d.repo.branch}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="text-muted">Folder root</dt><dd className="mono">{d.repo.folderRoot}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="text-muted">Last sync</dt><dd className="tnum">{formatDateTime(d.lastSync)}</dd></div>
+          <dl className="mt-2 grid gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2 min-w-0"><dt className="text-muted shrink-0">Full name</dt><dd className="mono break-all text-ink">{d.repo.fullName}</dd></div>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2 min-w-0"><dt className="text-muted shrink-0">Branch</dt><dd className="mono break-all text-ink">{d.repo.branch}</dd></div>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2 min-w-0"><dt className="text-muted shrink-0">Folder root</dt><dd className="mono break-all text-ink">{d.repo.folderRoot}</dd></div>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2 min-w-0"><dt className="text-muted shrink-0">Last sync</dt><dd className="tnum text-ink">{formatDateTime(d.lastSync)}</dd></div>
           </dl>
         </Card>
         <Card>
           <h2 className="section-title">Worker queue</h2>
           <dl className="mt-2 grid gap-1.5 text-sm">
-            <div className="flex justify-between gap-2"><dt className="text-muted">Depth</dt><dd className="tnum font-bold">{d.queue.depth} jobs</dd></div>
-            <div className="flex justify-between gap-2"><dt className="text-muted">Oldest job age</dt><dd className="tnum">{d.queue.oldestAgeSec != null ? `${d.queue.oldestAgeSec}s` : "—"}</dd></div>
-            <div className="flex justify-between gap-2"><dt className="text-muted">Dead-letter</dt><dd className="tnum">{d.queue.deadLetter ?? "—"}</dd></div>
+            <div className="flex justify-between gap-2 min-w-0"><dt className="text-muted">Depth</dt><dd className="tnum font-bold text-ink">{d.queue.depth} jobs</dd></div>
+            <div className="flex justify-between gap-2 min-w-0"><dt className="text-muted">Oldest job age</dt><dd className="tnum text-ink">{d.queue.oldestAgeSec != null ? `${d.queue.oldestAgeSec}s` : "—"}</dd></div>
+            <div className="flex justify-between gap-2 min-w-0"><dt className="text-muted">Dead-letter</dt><dd className="tnum text-ink">{d.queue.deadLetter ?? "—"}</dd></div>
           </dl>
           <p className="mt-2 text-[13px] text-muted">Pending evidence shows <Badge tone="info">Analysis pending</Badge> — never verified.</p>
         </Card>
@@ -68,7 +68,7 @@ export function AuditPage() {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title="Audit log" description="Approval, assignment, and review decisions with actor, action, target, and timestamp (FR-AUD-02). Students cannot modify these records." />
+      <PageHeader title="Audit log" description="Approval, assignment, and review decisions with actor, action, target, and timestamp." />
       {state.items.length === 0 ? (
         <EmptyState title="No audit records" body="Admin actions will be recorded here." icon={History} />
       ) : (

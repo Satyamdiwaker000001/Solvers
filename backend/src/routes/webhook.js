@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
 import { Router } from "express";
-import { WebhookEvent } from "../models.js";
+import { User, WebhookEvent } from "../models.js";
 import { AppError, asyncHandler, badRequest } from "../middleware/errors.js";
 import { concurrencyLimit, rateLimit, ipKey } from "../middleware/rateLimit.js";
+import { triggerWebhookWorker } from "../services/evidence.js";
 
 function signaturesMatch(secret, payload, header) {
   if (!header || !header.startsWith("sha256=")) return false;
@@ -13,9 +14,9 @@ function signaturesMatch(secret, payload, header) {
 }
 
 /**
- * GitHub webhook intake (Phase 2 scope: receive → validate → dedupe → store
- * as PENDING, 202). Verification workers are deferred; PENDING is surfaced
- * as "analysis pending", never as verified success.
+ * GitHub webhook intake: receive → validate → dedupe → store
+ * as PENDING with validated payload → trigger asynchronous worker.
+ * Returns 202 only after durable persistence. Never claims processed or verified here.
  */
 export function webhookRoutes() {
   const router = Router();
@@ -43,22 +44,35 @@ export function webhookRoutes() {
         return next(new AppError(401, "FORBIDDEN", "Invalid webhook signature"));
       }
       const deliveryId = req.get("x-github-delivery");
-      if (!deliveryId) return next(badRequest("Missing X-GitHub-Delivery header"));
+      if (!deliveryId || typeof deliveryId !== "string" || !deliveryId.trim()) {
+        return next(badRequest("Missing X-GitHub-Delivery header"));
+      }
+      const event = req.get("x-github-event");
+      if (!event || typeof event !== "string" || !event.trim()) {
+        return next(badRequest("Missing X-GitHub-Event header"));
+      }
       let payload;
       try {
         payload = JSON.parse(raw.toString("utf8"));
       } catch {
         return next(badRequest("Malformed JSON payload"));
       }
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        return next(badRequest("Malformed JSON payload"));
+      }
       const repo = payload?.repository?.full_name || "";
-      if (repo && repo !== cfg.repo.fullName) {
+      if (!repo || repo !== cfg.repo.fullName) {
         return next(badRequest("Event is not for the configured repository"));
       }
       try {
+        const githubUserId = String(payload?.pull_request?.user?.id || payload?.sender?.id || "");
+        const student = githubUserId ? await User.findOne({ githubUserId, role: "student" }).select("_id").lean() : null;
         await WebhookEvent.create({
-          deliveryId,
-          event: req.get("x-github-event") || "",
-          repo: repo || cfg.repo.fullName,
+          deliveryId: deliveryId.trim(),
+          event: event.trim(),
+          repo,
+          student: student?._id || null,
+          payload,
           status: "PENDING",
         });
       } catch (err) {
@@ -68,6 +82,9 @@ export function webhookRoutes() {
         }
         throw err;
       }
+      // Pulse worker asynchronously — does not block the webhook HTTP acknowledgement.
+      triggerWebhookWorker(req.app);
+
       return res.status(202).json({ data: { accepted: true, status: "PENDING" } });
     }),
   );

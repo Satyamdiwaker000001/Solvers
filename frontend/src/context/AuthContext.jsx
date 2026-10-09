@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "./contexts.js";
-import { getMe, isLiveMode, logout as apiLogout, startOAuth } from "../services/api.js";
+import { getMe, isLiveMode, logout as apiLogout, startOAuth, adminLogin } from "../services/api.js";
 
 /**
  * Session state.
@@ -17,7 +17,7 @@ import { getMe, isLiveMode, logout as apiLogout, startOAuth } from "../services/
 export const DEMO_LOCK_HOURS = 14;
 
 const PERSONAS = {
-  student: { role: "student", name: "Aarav Sharma", displayName: "Aarav Sharma", studentId: "STU001", githubLogin: "aarav-codes", accessState: "APPROVED" },
+  student: { role: "student", name: "Aarav Sharma", displayName: "Aarav Sharma", studentId: "STU001", githubLogin: "aarav-codes", avatarUrl: "https://avatars.githubusercontent.com/u/10240111?v=4", accessState: "APPROVED" },
   pending: { role: "student", name: "New Applicant", displayName: "New Applicant", studentId: null, githubLogin: "newbie-dev-99", accessState: "PENDING" },
   rejected: { role: "student", name: "Loop Learner", displayName: "Loop Learner", studentId: null, githubLogin: "loop-learner", accessState: "REJECTED" },
   admin: { role: "admin", name: "Prof. Rao", displayName: "Prof. Rao", studentId: null, githubLogin: "prof-rao", accessState: "APPROVED" },
@@ -92,6 +92,22 @@ export function AuthProvider({ children }) {
     setUser(persona);
   }, []);
 
+  const signInAdmin = useCallback(async (username, password) => {
+    if (!isLiveMode()) {
+      signInAs("admin");
+      return PERSONAS.admin;
+    }
+    setLoading(true);
+    try {
+      const r = await adminLogin(username, password);
+      setUser(r.data.user);
+      setError(null);
+      return r.data.user;
+    } finally {
+      setLoading(false);
+    }
+  }, [signInAs]);
+
   /** Demo-only: simulate the lock expiring so the reapply branch is testable. */
   const expireDemoLock = useCallback(() => {
     setUser((u) => (u ? { ...u, reapplyAfter: new Date(Date.now() - 1_000).toISOString() } : u));
@@ -99,9 +115,9 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(
     () => (live
-      ? { user, loading, error, isDemo: false, signIn, signOut, refresh }
-      : { user, loading: false, error: null, isDemo: true, signInAs, signOut, expireDemoLock, refresh: async () => user }),
-    [live, user, loading, error, signIn, signOut, refresh, signInAs, expireDemoLock],
+      ? { user, loading, error, isDemo: false, signIn, signInAdmin, signOut, refresh }
+      : { user, loading: false, error: null, isDemo: true, signInAs, signInAdmin, signOut, expireDemoLock, refresh: async () => user }),
+    [live, user, loading, error, signIn, signInAdmin, signOut, refresh, signInAs, expireDemoLock],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

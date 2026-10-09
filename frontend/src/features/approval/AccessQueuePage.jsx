@@ -60,14 +60,14 @@ export function AccessQueuePage() {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title="Access requests" description="Approve or reject student access. Rejection starts a 24-hour reapply lock from server-recorded time (FR-AUTH-06). Decisions are audit-logged." />
+      <PageHeader title="Access requests" description="Approve or reject student access requests. Rejections apply a 24-hour waiting period before reapplication." />
       {pending.length === 0 ? (
         <EmptyState title="Queue is clear" body="No pending access requests. New GitHub sign-ins that request access will appear here." />
       ) : (
         <ul className="grid gap-3">
           {pending.map((r) => (
             <li key={r.id}>
-              <Card>
+              <Card className="glass-panel border-white/10">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="mono text-sm font-bold">@{r.githubLogin}</p>
                   <Badge tone="warning">Pending</Badge>
@@ -109,8 +109,8 @@ export function AccessQueuePage() {
         <Dialog
           title={confirm.decision === "approve" ? "Approve access?" : "Reject access?"}
           description={confirm.decision === "approve"
-            ? `@${confirm.item.githubLogin} will join official tracking and the leaderboard.`
-            : "Rejection locks reapplication for 24 hours from now (server time). The applicant sees the retry time."}
+            ? `@${confirm.item.githubLogin} will be approved for official tracking and assignments.`
+            : "Rejection initiates a 24-hour waiting period before the applicant can reapply."}
           onClose={() => !busy && setConfirm(null)}
         >
           <div className="flex flex-wrap justify-end gap-2">

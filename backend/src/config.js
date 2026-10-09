@@ -20,6 +20,15 @@ function optionalInt(value, fallback, name, { min = 1 } = {}) {
   return n;
 }
 
+function requestLimit(value, fallback, name) {
+  const chosen = value === undefined || value === null || value === "" ? fallback : String(value).trim();
+  if (!/^\d+(kb|mb|b)$/i.test(chosen)) throw new Error(`Invalid ${name}: expected a size such as 256kb or 2mb`);
+  const match = chosen.match(/^(\d+)(kb|mb|b)$/i);
+  const bytes = Number(match[1]) * (match[2].toLowerCase() === "mb" ? 1_048_576 : match[2].toLowerCase() === "kb" ? 1_024 : 1);
+  if (bytes < 1_024 || bytes > 10 * 1_048_576) throw new Error(`Invalid ${name}: must be between 1kb and 10mb`);
+  return chosen;
+}
+
 function parseAdminIds(value) {
   const raw = requiredString(value, "ADMIN_GITHUB_IDS");
   const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
@@ -48,6 +57,7 @@ export function loadConfig(env = process.env) {
 
   const origins = (env.CLIENT_ORIGIN || "http://localhost:5173")
     .split(",").map((s) => s.trim()).filter(Boolean);
+  if (isProd && !env.CLIENT_ORIGIN) throw new Error("Missing required environment variable: CLIENT_ORIGIN");
 
   return {
     nodeEnv,
@@ -58,18 +68,18 @@ export function loadConfig(env = process.env) {
     sessionMaxAgeMs: optionalInt(env.SESSION_MAX_AGE_MS, 12 * 3_600_000, "SESSION_MAX_AGE_MS"),
     clientOrigins: origins,
     trustProxy: optionalInt(env.TRUST_PROXY, isProd ? 1 : 0, "TRUST_PROXY", { min: 0 }),
-    jsonLimit: env.JSON_LIMIT || "256kb",
+    jsonLimit: requestLimit(env.JSON_LIMIT, "256kb", "JSON_LIMIT"),
 
     github: {
       clientId: requiredString(env.GITHUB_CLIENT_ID, "GITHUB_CLIENT_ID"),
       clientSecret: requiredString(env.GITHUB_CLIENT_SECRET, "GITHUB_CLIENT_SECRET"),
       callbackUrl: requiredString(env.GITHUB_CALLBACK_URL, "GITHUB_CALLBACK_URL"),
       scope: env.GITHUB_SCOPE || "read:user",
+      repoToken: env.GITHUB_REPO_TOKEN || "",
       apiBase: (env.GITHUB_API_BASE || "https://api.github.com").replace(/\/$/, ""),
       oauthBase: (env.GITHUB_OAUTH_BASE || "https://github.com").replace(/\/$/, ""),
     },
     adminGithubIds: parseAdminIds(env.ADMIN_GITHUB_IDS),
-
     repo: {
       fullName: env.CENTRAL_REPO_FULL_NAME || "",
       branch: env.CENTRAL_REPO_BRANCH || "main",
@@ -78,10 +88,10 @@ export function loadConfig(env = process.env) {
     webhookSecret: env.GITHUB_WEBHOOK_SECRET || "",
 
     rateLimit: {
-      general: { windowMs: optionalInt(env.RL_GENERAL_WINDOW_MS, 60_000, "RL_GENERAL_WINDOW_MS"), max: optionalInt(env.RL_GENERAL_MAX, 600, "RL_GENERAL_MAX") },
-      auth: { windowMs: optionalInt(env.RL_AUTH_WINDOW_MS, 15 * 60_000, "RL_AUTH_WINDOW_MS"), max: optionalInt(env.RL_AUTH_MAX, 30, "RL_AUTH_MAX") },
-      accessRequest: { windowMs: optionalInt(env.RL_ACCESS_WINDOW_MS, 3_600_000, "RL_ACCESS_WINDOW_MS"), max: optionalInt(env.RL_ACCESS_MAX, 10, "RL_ACCESS_MAX") },
-      adminWrite: { windowMs: optionalInt(env.RL_ADMIN_WINDOW_MS, 60_000, "RL_ADMIN_WINDOW_MS"), max: optionalInt(env.RL_ADMIN_MAX, 120, "RL_ADMIN_MAX") },
+      general: { windowMs: optionalInt(env.RL_GENERAL_WINDOW_MS, 60_000, "RL_GENERAL_WINDOW_MS"), max: optionalInt(env.RL_GENERAL_MAX, 300, "RL_GENERAL_MAX") },
+      auth: { windowMs: optionalInt(env.RL_AUTH_WINDOW_MS, 15 * 60_000, "RL_AUTH_WINDOW_MS"), max: optionalInt(env.RL_AUTH_MAX, 10, "RL_AUTH_MAX") },
+      accessRequest: { windowMs: optionalInt(env.RL_ACCESS_WINDOW_MS, 3_600_000, "RL_ACCESS_WINDOW_MS"), max: optionalInt(env.RL_ACCESS_MAX, 5, "RL_ACCESS_MAX") },
+      adminWrite: { windowMs: optionalInt(env.RL_ADMIN_WINDOW_MS, 60_000, "RL_ADMIN_WINDOW_MS"), max: optionalInt(env.RL_ADMIN_MAX, 60, "RL_ADMIN_MAX") },
       webhook: { windowMs: optionalInt(env.RL_WEBHOOK_WINDOW_MS, 60_000, "RL_WEBHOOK_WINDOW_MS"), max: optionalInt(env.RL_WEBHOOK_MAX, 120, "RL_WEBHOOK_MAX") },
       // NOTE: numeric defaults are operational placeholders (docs defer exact
       // thresholds until load/hosting is known). All are env-configurable.

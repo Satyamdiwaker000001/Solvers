@@ -11,9 +11,9 @@
  * Guarantees:
  * - Idempotent: re-processing the same delivery never double-counts
  *   (deliveryId unique intake + student/assignment/commitSha unique evidence).
- * - Fail-closed: nothing is ever marked VERIFIED here. New evidence lands as
- *   INGESTION_PENDING / NEEDS_REVIEW for professor review; only the existing
- *   review endpoint (`accept`) can create qualifying ProgressEvents.
+ * - Safe automation: a meaningful commit from a verified student folder that
+ *   matches one active assignment is verified automatically. Unmapped,
+ *   ambiguous, superficial, or empty evidence remains NEEDS_REVIEW.
  * - Commit count is never treated as solved count: one commit yields at most
  *   one Submission per (student, assignment); leaderboard math is untouched.
  * - Similarity / superficial-change signals are review hints recorded in
@@ -21,10 +21,14 @@
  * - No secrets are read, logged, or stored by this module.
  */
 
-import { Assignment, Submission, User, WebhookEvent } from "../models.js";
+import { Assignment, ProgressEvent, Submission, User, WebhookEvent } from "../models.js";
 
-const SEGMENT_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const SEGMENT_RE = /^[A-Za-z0-9][A-Za-z0-9._ +-]*[A-Za-z0-9._+-]$|^[A-Za-z0-9]$/;
 const SHA_RE = /^[0-9a-f]{7,64}$/i;
+
+function escapeRegex(s) {
+  return String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 /**
  * Validate a changed path against the required student layout:
@@ -35,6 +39,7 @@ const SHA_RE = /^[0-9a-f]{7,64}$/i;
  */
 export function parseStudentPath(path, folderRoot = "students/") {
   if (typeof path !== "string" || path === "") return { error: "Empty path" };
+  if (Array.from(path).some((c) => c.charCodeAt(0) < 32)) return { error: "Malformed path contains control characters" };
   if (path.includes("\\") || path.startsWith("/") || path.includes("//")) {
     return { error: `Malformed path: ${path.slice(0, 120)}` };
   }
@@ -45,7 +50,7 @@ export function parseStudentPath(path, folderRoot = "students/") {
   if (segs.length < 3) {
     return { error: `Path must be <Student>/<Topic>/<Solution.ext>: ${path.slice(0, 120)}` };
   }
-  if (segs.some((s) => s === "" || s === "." || s === "..")) {
+  if (segs.some((s) => s === "" || s === "." || s === ".." || s.trim() !== s)) {
     return { error: `Path contains empty or traversal segments: ${path.slice(0, 120)}` };
   }
   const [studentFolder, topic, ...fileParts] = segs;
@@ -59,32 +64,156 @@ export function parseStudentPath(path, folderRoot = "students/") {
   return { studentFolder, topic, file };
 }
 
-/** Normalize "Satyam_Diwaker" <-> "Satyam Diwaker" for fallback matching. */
-function normalizeName(s) {
-  return String(s || "").replace(/_/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+/** Normalize topic names, problem titles, and filename slugs for comparison. */
+export function normalizeToken(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/^[0-9]+[._-]/, "") // strip leading digits like 01_
+    .replace(/\.[^/.]+$/, "") // strip extension if present
+    .replace(/[._-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
- * Map a student folder to an approved student using authoritative server
- * records. Primary: the server-minted `user.folder` prefix. Fallback: the
- * display-name-derived folder (central repo uses Full_Name folders while the
- * tracker mints STU folders) — flagged via `fallback: true` so callers route
- * the evidence to NEEDS_REVIEW instead of trusting it silently.
+ * Map a student folder to an approved student using authoritative server records.
+ * Deterministic mapping: matches strictly against the server-verified `user.folder`
+ * (case-insensitive exact match).
+ *
+ * Never uses display-name matching or commit-author guessing.
+ * Detects conflicts when multiple students claim the same folder.
+ * Returns { user, conflict, unapproved, reason }.
  */
 export async function mapFolderToStudent(studentFolder, folderRoot = "students/") {
   const root = folderRoot.endsWith("/") ? folderRoot : `${folderRoot}/`;
   const full = `${root}${studentFolder}`;
-  const byFolder = await User.findOne({ folder: full, role: "student" }).lean();
-  if (byFolder) return { user: byFolder, fallback: false };
-  const approved = await User.find({ role: "student", accountStatus: "approved" })
-    .select("displayName githubLogin folder")
+
+  const regex = new RegExp(`^${escapeRegex(full)}$`, "i");
+  const matching = await User.find({ folder: regex, role: "student" }).lean();
+
+  if (matching.length === 0) {
+    return { user: null, conflict: false, unapproved: false, reason: `Unmapped folder: ${studentFolder}` };
+  }
+  if (matching.length > 1) {
+    return {
+      user: null,
+      conflict: true,
+      unapproved: false,
+      reason: `Conflicting students registered for folder '${studentFolder}' (${matching.length} matches)`,
+    };
+  }
+
+  const user = matching[0];
+  if (user.accountStatus !== "approved") {
+    return {
+      user,
+      conflict: false,
+      unapproved: true,
+      reason: `Student account is ${user.accountStatus}`,
+    };
+  }
+
+  return { user, conflict: false, unapproved: false, reason: null };
+}
+
+/**
+ * Match submitted evidence to an active assignment targeting the student.
+ * Compares problem topic against submitted folder topic, and problem title against
+ * filename slug.
+ *
+ * Rules (Phase B):
+ * - Canonical problem matching: requires exact normalized slug match between
+ *   filename and problem title (no loose substring matching).
+ * - Topic compatibility: if problem defines a topic, submitted topic must match
+ *   or share canonical tokens (unrelated topics do not match).
+ * - Targeting: INDIVIDUAL assignments match only explicitly targeted students.
+ * - Specificity: INDIVIDUAL assignments take precedence over COMMON assignments.
+ * - Ambiguity: multiple active candidates with equal score remain unresolved.
+ * Returns { assignment, matchReason }.
+ */
+export async function matchAssignmentForEvidence({ user, sp }) {
+  const assignments = await Assignment.find({
+    status: "active",
+    $or: [{ type: "COMMON" }, { targets: { $elemMatch: { student: user._id } } }],
+  })
+    .populate("problem", "topic title")
     .lean();
-  const want = normalizeName(studentFolder);
-  const byName = approved.find(
-    (u) => normalizeName(u.displayName) === want || normalizeName(u.githubLogin) === want,
-  );
-  if (byName) return { user: byName, fallback: true };
-  return { user: null, fallback: false };
+
+  if (!assignments || assignments.length === 0) {
+    return { assignment: null, matchReason: "no_active_assignments" };
+  }
+
+  const normTopic = normalizeToken(sp.topic);
+  // Optional nested solution folders are allowed; assignment matching uses
+  // the actual filename, not the directory path before it.
+  const normFile = normalizeToken(String(sp.file).split("/").pop());
+
+  const matched = [];
+
+  for (const a of assignments) {
+    if (!a.problem || !a.problem.title) continue;
+
+    // Verify targeting strictly: INDIVIDUAL assignments cannot match untargeted students
+    const isTargeted =
+      a.type === "COMMON" ||
+      (Array.isArray(a.targets) && a.targets.some((t) => String(t.student) === String(user._id)));
+    if (!isTargeted) continue;
+
+    const probTopic = normalizeToken(a.problem.topic);
+    const probTitle = normalizeToken(a.problem.title);
+
+    // 1. Problem title match: exact normalized slug comparison (never loose substring)
+    const titleMatches = probTitle === normFile;
+    if (!titleMatches) continue;
+
+    // 2. Topic match: if problem has topic, submitted topic must be compatible
+    if (probTopic && normTopic) {
+      const topicTokensProb = probTopic.split(" ").filter(Boolean);
+      const topicTokensSub = normTopic.split(" ").filter(Boolean);
+      const topicMatches =
+        probTopic === normTopic ||
+        topicTokensSub.some((tok) => topicTokensProb.includes(tok)) ||
+        topicTokensProb.some((tok) => topicTokensSub.includes(tok));
+
+      if (!topicMatches) {
+        // Filename matches, but topic mismatches! Do not match.
+        continue;
+      }
+    }
+
+    // Specificity score: INDIVIDUAL (20) > COMMON (10)
+    let score = a.type === "INDIVIDUAL" ? 20 : 10;
+
+    // Schedule: active assignment within deadline scores higher than past dueAt
+    const now = Date.now();
+    if (a.dueAt) {
+      const dueTime = new Date(a.dueAt).getTime();
+      if (dueTime >= now) {
+        score += 5; // active within deadline
+      }
+    }
+
+    matched.push({ assignment: a, score });
+  }
+
+  if (matched.length === 0) {
+    return {
+      assignment: null,
+      matchReason: `topic_or_problem_mismatch (submitted topic '${sp.topic}', file '${sp.file}')`,
+    };
+  }
+
+  matched.sort((a, b) => b.score - a.score);
+
+  if (matched.length === 1 || matched[0].score > matched[1].score) {
+    return { assignment: matched[0].assignment, matchReason: "matched" };
+  }
+
+  // Ambiguous: multiple active assignments share the highest score
+  return {
+    assignment: null,
+    matchReason: `ambiguous_match (multiple active assignments match problem '${matched[0].assignment.problem?.title}')`,
+  };
 }
 
 /**
@@ -109,15 +238,16 @@ export function classifyChanges({ additions = 0, deletions = 0, files = [] } = {
  * removed}], head_commit }). `fetchCommit` is an injectable
  * `async (sha) => { additions, deletions, files }` (GitHub API in production,
  * stub in tests); when null, per-commit stats are skipped and evidence is
- * recorded from path data alone (still NEEDS_REVIEW, never verified).
+ * recorded from path data alone (still NEEDS_REVIEW because commit statistics
+ * are unavailable).
  *
- * Returns a summary { deliveryId, status, evidence, errors }.
+ * Returns a summary { deliveryId, status, evidence, errors, retryable }.
  */
 export async function processWebhookPayload({ cfg, deliveryId, payload, fetchCommit = null }) {
-  const summary = { deliveryId, status: "PROCESSED", evidence: 0, errors: [] };
+  const summary = { deliveryId, status: "PROCESSED", evidence: 0, errors: [], retryable: false };
   const repoFull = payload?.repository?.full_name || "";
   if (repoFull && repoFull !== cfg.repo.fullName) {
-    return { ...summary, status: "FAILED", errors: [`Unexpected repository: ${repoFull}`] };
+    return { ...summary, status: "FAILED", retryable: false, errors: [`Unexpected repository: ${repoFull}`] };
   }
   const expectedRef = `refs/heads/${cfg.repo.branch}`;
   if (payload?.ref && payload.ref !== expectedRef) {
@@ -155,10 +285,11 @@ export async function processWebhookPayload({ cfg, deliveryId, payload, fetchCom
       try {
         stats = await fetchCommit(sha);
       } catch (err) {
-        summary.errors.push(`Commit ${sha.slice(0, 12)}: evidence API failed (${err.message}); will retry`);
-        summary.status = "PROCESSED";
-        summary.retryable = true;
-        continue;
+        const isRetryable = err?.retryable !== undefined ? Boolean(err.retryable) : true;
+        summary.errors.push(`Commit ${sha.slice(0, 12)}: evidence API failed (${err.message})`);
+        summary.status = "FAILED";
+        summary.retryable = isRetryable;
+        return summary;
       }
     }
     const classification = classifyChanges({
@@ -168,60 +299,144 @@ export async function processWebhookPayload({ cfg, deliveryId, payload, fetchCom
     });
 
     for (const sp of studentPaths) {
-      const { user, fallback } = await mapFolderToStudent(sp.studentFolder, cfg.repo.folderRoot);
-      if (!user) {
-        summary.errors.push(`No approved student for folder ${sp.studentFolder}; path ignored`);
+      const mapping = await mapFolderToStudent(sp.studentFolder, cfg.repo.folderRoot);
+      const { user, conflict, unapproved, reason } = mapping;
+
+      // If unresolved identity (no mapped student, conflicting claim, or unapproved student):
+      // Safely quarantine the evidence with student: null and outcome: NEEDS_REVIEW.
+      // Never guess, never silently attribute to an unapproved or wrong student.
+      if (!user || conflict || unapproved) {
+        const quarantineReason = !user
+          ? (conflict ? `identity_conflict: ${reason}` : `unmapped_folder: ${reason}`)
+          : `unapproved_student: student ${user._id} (${user.githubLogin}) is ${user.accountStatus}`;
+
+        summary.errors.push(`Quarantined evidence for ${sp.studentFolder}: ${quarantineReason}`);
+
+        try {
+          await Submission.updateOne(
+            { student: null, commitSha: sha.slice(0, 40), path: `${cfg.repo.folderRoot}${sp.studentFolder}/${sp.topic}/${sp.file}` },
+            {
+              $setOnInsert: {
+                student: null,
+                assignment: null,
+                repository: cfg.repo.fullName,
+                commitSha: sha.slice(0, 40),
+                path: `${cfg.repo.folderRoot}${sp.studentFolder}/${sp.topic}/${sp.file}`,
+                status: "observed",
+                outcome: "NEEDS_REVIEW",
+                eventType: "NEEDS_REVIEW",
+                additions: Number(stats?.additions ?? 0),
+                deletions: Number(stats?.deletions ?? 0),
+                note: [
+                  `topic=${sp.topic}`,
+                  `unresolved_identity=${quarantineReason}`,
+                  `change=${classification.signal}: ${classification.reason}`,
+                  "assignment=unassigned (unresolved student identity)",
+                ].join("; ").slice(0, 1000),
+                firstObservedAt: new Date(),
+              },
+            },
+            { upsert: true },
+          );
+          summary.evidence += 1;
+        } catch (err) {
+          if (err && err.code === 11000) continue; // idempotent duplicate
+          summary.errors.push(`Failed to persist quarantined submission: ${err.message}`);
+          summary.status = "FAILED";
+          summary.retryable = true;
+          return summary;
+        }
         continue;
       }
-      if (user.accountStatus !== "approved") {
-        summary.errors.push(`Student ${sp.studentFolder} is not approved; evidence held, not counted`);
-        continue;
-      }
-      // Assignment linkage is informational: prefer an active assignment whose
-      // problem topic matches, else record unassigned evidence without credit.
-      const assignment = await Assignment.findOne({
-        status: "active",
-        $or: [{ type: "COMMON" }, { targets: { $elemMatch: { student: user._id } } }],
-      })
-        .populate("problem", "topic title")
-        .sort({ createdAt: -1 })
-        .lean();
-      const needsReview =
-        fallback || classification.signal !== "MEANINGFUL" || !assignment;
+
+      // Match assignment with topic and problem constraints. Unmatched or ambiguous
+      // evidence is recorded with assignment: null (never user._id) for human review.
+      const { assignment, matchReason } = await matchAssignmentForEvidence({ user, sp });
+      const assignedId = assignment ? assignment._id : null;
+      const autoVerify = classification.signal === "MEANINGFUL" && Boolean(assignment);
+
+      const fullPath = `${cfg.repo.folderRoot}${sp.studentFolder}/${sp.topic}/${sp.file}`;
+      const subQuery = assignedId
+        ? { student: user._id, assignment: assignedId, commitSha: sha.slice(0, 40) }
+        : { student: user._id, assignment: null, commitSha: sha.slice(0, 40), path: fullPath };
+
       try {
-        await Submission.updateOne(
-          { student: user._id, assignment: assignment?._id || user._id, commitSha: sha.slice(0, 40) },
+        const submission = await Submission.findOneAndUpdate(
+          subQuery,
           {
             $setOnInsert: {
               student: user._id,
-              assignment: assignment?._id || user._id,
+              assignment: assignedId,
               repository: cfg.repo.fullName,
               commitSha: sha.slice(0, 40),
-              path: `${cfg.repo.folderRoot}${sp.studentFolder}/${sp.topic}/${sp.file}`,
+              path: fullPath,
               status: "observed",
-              outcome: needsReview ? "NEEDS_REVIEW" : "INGESTION_PENDING",
-              eventType: "NEEDS_REVIEW",
+              outcome: autoVerify ? "VERIFIED" : "NEEDS_REVIEW",
+              eventType: autoVerify ? "NEW_PROBLEM_VERIFIED" : "NEEDS_REVIEW",
               additions: Number(stats?.additions ?? 0),
               deletions: Number(stats?.deletions ?? 0),
               note: [
                 `topic=${sp.topic}`,
-                fallback ? "identity=fallback-name-match (review required)" : "identity=folder-match",
+                "identity=verified-folder-mapping",
                 `change=${classification.signal}: ${classification.reason}`,
-                assignment ? `assignment=${assignment._id}` : "assignment=unassigned (no credit until assigned)",
+                assignment ? `assignment=${assignment._id}` : `assignment=unassigned (${matchReason})`,
               ].join("; ").slice(0, 1000),
               firstObservedAt: new Date(),
             },
           },
-          { upsert: true },
-        );
+          { upsert: true, new: true },
+        ).lean();
         summary.evidence += 1;
+
+        // Existing submissions may have been ingested before the assignment
+        // matcher completed. Promote only unreviewed evidence; never override
+        // an explicit admin decision. The source key makes this idempotent.
+        if (autoVerify && submission && !submission.reviewedBy && submission.outcome !== "VERIFIED") {
+          await Submission.updateOne(
+            { _id: submission._id, reviewedBy: null },
+            { $set: { outcome: "VERIFIED", eventType: "NEW_PROBLEM_VERIFIED" } },
+          );
+        }
+
+        if (autoVerify && submission) {
+          await ProgressEvent.updateOne(
+            { sourceKey: `submission:${submission._id}` },
+            {
+              $setOnInsert: {
+                student: user._id,
+                eventType: "NEW_PROBLEM_VERIFIED",
+                occurredAt: submission.firstObservedAt || new Date(),
+                sourceKey: `submission:${submission._id}`,
+                meta: {
+                  assignmentId: String(assignment._id),
+                  commitSha: sha.slice(0, 40),
+                  path: fullPath,
+                  automated: true,
+                },
+              },
+            },
+            { upsert: true },
+          );
+        }
       } catch (err) {
         if (err && err.code === 11000) continue; // concurrent duplicate: no double count
-        throw err;
+        summary.errors.push(`Failed to persist submission: ${err.message}`);
+        summary.status = "FAILED";
+        summary.retryable = true;
+        return summary;
       }
-      if (assignment) {
+      if (assignment && autoVerify) {
         await Assignment.updateOne(
           { _id: assignment._id, "targets.student": user._id },
+          { $set: { "targets.$.completionStatus": "verified" } },
+        ).catch(() => {});
+      } else if (assignment) {
+        await Assignment.updateOne(
+          {
+            _id: assignment._id,
+            "targets.student": user._id,
+            "targets.completionStatus": { $in: ["not_started", "in_progress"] },
+          },
           { $set: { "targets.$.completionStatus": "needs_review" } },
         ).catch(() => {});
       }
@@ -231,41 +446,100 @@ export async function processWebhookPayload({ cfg, deliveryId, payload, fetchCom
 }
 
 /**
- * Claim and process all PENDING intake events (bounded batch). Atomically
- * moves PENDING → PROCESSING so parallel workers never double-process, then
- * marks PROCESSED / FAILED with `error` + `retryable` for observability.
- * `payloadByDelivery` maps deliveryId → parsed payload (production reads the
- * stored raw body or re-fetches; tests inject fixtures). Entries without a
- * payload are left PENDING with a recorded note instead of being lost.
+ * Claim and process all pending, lease-expired, or retryable intake events.
+ * Atomically transitions state to PROCESSING with a distributed lease so concurrent
+ * workers never claim the same event simultaneously. Crashed worker leases expire
+ * and are safely reclaimed on subsequent passes.
  */
-export async function processPendingWebhookEvents({ cfg, payloadByDelivery = {}, fetchCommit = null, limit = 20 } = {}) {
-  const claimed = [];
-  const pending = await WebhookEvent.find({ status: "PENDING" })
+export async function processPendingWebhookEvents({
+  cfg,
+  payloadByDelivery = {},
+  fetchCommit = null,
+  limit = 20,
+  leaseDurationMs = 30_000,
+  baseBackoffMs = 1_000,
+} = {}) {
+  const now = new Date();
+  const leaseExpiresAt = new Date(now.getTime() + leaseDurationMs);
+
+  const candidateQuery = {
+    $or: [
+      { status: "PENDING" },
+      { status: "PROCESSING", leaseExpiresAt: { $lte: now } },
+      {
+        status: "FAILED",
+        retryable: true,
+        $expr: { $lt: ["$attempts", "$maxAttempts"] },
+        $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }],
+      },
+    ],
+  };
+
+  const candidates = await WebhookEvent.find(candidateQuery)
     .sort({ receivedAt: 1 })
     .limit(limit)
+    .select("_id deliveryId status attempts maxAttempts payload")
     .lean();
-  for (const evt of pending) {
-    const res = await WebhookEvent.findOneAndUpdate(
-      { _id: evt._id, status: "PENDING" },
-      { $set: { status: "PROCESSING" } },
+
+  const claimed = [];
+  for (const c of candidates) {
+    const claimRes = await WebhookEvent.findOneAndUpdate(
+      {
+        _id: c._id,
+        $or: [
+          { status: "PENDING" },
+          { status: "PROCESSING", leaseExpiresAt: { $lte: now } },
+          {
+            status: "FAILED",
+            retryable: true,
+            $expr: { $lt: ["$attempts", "$maxAttempts"] },
+            $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }],
+          },
+        ],
+      },
+      {
+        $set: {
+          status: "PROCESSING",
+          claimedAt: now,
+          leaseExpiresAt,
+        },
+        $inc: { attempts: 1 },
+      },
       { new: true },
     ).lean();
-    if (res) claimed.push(res);
+    if (claimRes) claimed.push(claimRes);
   }
+
   const results = [];
   for (const evt of claimed) {
-    const payload = payloadByDelivery[evt.deliveryId];
+    const payload = payloadByDelivery[evt.deliveryId] || evt.payload;
     if (!payload) {
       await WebhookEvent.updateOne(
         { _id: evt._id },
-        { $set: { status: "PENDING", error: "No payload available for processing (awaiting redelivery or backfill)" } },
+        {
+          $set: {
+            status: "PENDING",
+            claimedAt: null,
+            leaseExpiresAt: null,
+            error: "No payload available for processing (awaiting redelivery or backfill)",
+          },
+        },
       );
       results.push({ deliveryId: evt.deliveryId, status: "PENDING", note: "awaiting payload" });
       continue;
     }
+
     try {
       const out = await processWebhookPayload({ cfg, deliveryId: evt.deliveryId, payload, fetchCommit });
       const failed = out.status === "FAILED";
+      const attemptsSoFar = evt.attempts || 1;
+      const maxAttempts = evt.maxAttempts || 3;
+      const isRetryable = Boolean(out.retryable) && attemptsSoFar < maxAttempts;
+
+      const nextRetryAt = isRetryable
+        ? new Date(Date.now() + Math.min(60_000, baseBackoffMs * Math.pow(2, attemptsSoFar - 1)))
+        : null;
+
       await WebhookEvent.updateOne(
         { _id: evt._id },
         {
@@ -274,19 +548,133 @@ export async function processPendingWebhookEvents({ cfg, payloadByDelivery = {},
             processedAt: new Date(),
             commitSha: String(payload?.head_commit?.id || payload?.commits?.[0]?.id || "").slice(0, 40),
             branch: String(payload?.ref || "").replace("refs/heads/", ""),
-            retryable: Boolean(out.retryable),
+            retryable: isRetryable,
+            nextRetryAt,
+            leaseExpiresAt: null,
             error: (out.errors || []).join(" | ").slice(0, 2000),
           },
         },
       );
-      results.push({ deliveryId: evt.deliveryId, ...out });
+      results.push({ deliveryId: evt.deliveryId, ...out, retryable: isRetryable, attempts: attemptsSoFar });
     } catch (err) {
+      const attemptsSoFar = evt.attempts || 1;
+      const maxAttempts = evt.maxAttempts || 3;
+      const isRetryable = attemptsSoFar < maxAttempts;
+      const nextRetryAt = isRetryable
+        ? new Date(Date.now() + Math.min(60_000, baseBackoffMs * Math.pow(2, attemptsSoFar - 1)))
+        : null;
+
       await WebhookEvent.updateOne(
         { _id: evt._id },
-        { $set: { status: "FAILED", processedAt: new Date(), retryable: true, error: String(err.message || err).slice(0, 2000) } },
+        {
+          $set: {
+            status: "FAILED",
+            processedAt: new Date(),
+            retryable: isRetryable,
+            nextRetryAt,
+            leaseExpiresAt: null,
+            error: String(err.message || err).slice(0, 2000),
+          },
+        },
       );
-      results.push({ deliveryId: evt.deliveryId, status: "FAILED", retryable: true, errors: [String(err.message || err)] });
+      results.push({
+        deliveryId: evt.deliveryId,
+        status: "FAILED",
+        retryable: isRetryable,
+        errors: [String(err.message || err)],
+        attempts: attemptsSoFar,
+      });
     }
   }
   return results;
 }
+
+let workerIntervalId = null;
+let isWorkerRunning = false;
+let isProcessingBatch = false;
+
+/**
+ * Start the in-process webhook evidence worker.
+ * Runs an unblocked polling interval for lease-recovery, retries, and backlog draining,
+ * while supporting event-driven immediate execution via triggerWebhookWorker.
+ */
+export function startWebhookWorker({
+  app,
+  cfg,
+  fetchCommit = null,
+  intervalMs = 5000,
+  limit = 20,
+  leaseDurationMs = 30_000,
+} = {}) {
+  if (workerIntervalId) return;
+  isWorkerRunning = true;
+
+  const runPass = async () => {
+    if (!isWorkerRunning || isProcessingBatch) return;
+    isProcessingBatch = true;
+    try {
+      const activeCfg = cfg || app?.get("config");
+      const github = app?.get("github");
+      const activeFetchCommit = fetchCommit || (github ? (sha) => github.fetchCommit({ repoFullName: activeCfg?.repo?.fullName, sha, token: activeCfg?.github?.repoToken }) : null);
+      if (activeCfg) {
+        await processPendingWebhookEvents({
+          cfg: activeCfg,
+          fetchCommit: activeFetchCommit,
+          limit,
+          leaseDurationMs,
+        });
+      }
+    } catch (err) {
+      console.error(`[webhook-worker] Error in periodic pass: ${err.message}`);
+    } finally {
+      isProcessingBatch = false;
+    }
+  };
+
+  workerIntervalId = setInterval(runPass, intervalMs);
+  if (workerIntervalId.unref) workerIntervalId.unref();
+
+  return {
+    runPass,
+    stop: stopWebhookWorker,
+  };
+}
+
+/**
+ * Stop the in-process webhook worker gracefully, waiting for any in-flight batch.
+ */
+export async function stopWebhookWorker() {
+  isWorkerRunning = false;
+  if (workerIntervalId) {
+    clearInterval(workerIntervalId);
+    workerIntervalId = null;
+  }
+  const start = Date.now();
+  while (isProcessingBatch && Date.now() - start < 3000) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+}
+
+/**
+ * Pulse the webhook worker asynchronously without blocking the intake HTTP response.
+ */
+export function triggerWebhookWorker(app) {
+  if (!isWorkerRunning) return;
+  setImmediate(async () => {
+    if (!isWorkerRunning || isProcessingBatch) return;
+    isProcessingBatch = true;
+    try {
+      const cfg = app?.get("config");
+      const github = app?.get("github");
+      const fetchCommit = github ? (sha) => github.fetchCommit({ repoFullName: cfg?.repo?.fullName, sha, token: cfg?.github?.repoToken }) : null;
+      if (cfg) {
+        await processPendingWebhookEvents({ cfg, fetchCommit });
+      }
+    } catch (err) {
+      console.error(`[webhook-worker] Error in triggered pass: ${err.message}`);
+    } finally {
+      isProcessingBatch = false;
+    }
+  });
+}
+

@@ -1,69 +1,32 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Inbox, ScanSearch, BookOpenCheck, Users, ArrowRight, TriangleAlert } from "lucide-react";
-import { getAdminOverview } from "../../services/api.js";
-import { PageHeader, StatCard, Card } from "../../components/ui/Card.jsx";
-import { Badge } from "../../components/ui/Badge.jsx";
+import { ArrowRight, BookOpenCheck, Inbox, ScanSearch, Server, Target, TriangleAlert, Users } from "lucide-react";
+import { getAdminOverview, getTrackingPolicy, updateTrackingPolicy } from "../../services/api.js";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
-const ActivityChart = lazy(() => import("../../components/data-display/ActivityChart.jsx").then((m) => ({ default: m.ActivityChart })));
 import { formatDateTime } from "../../lib/format.js";
+
+// Responsive metric grid: grid-cols-1 sm:grid-cols-2 xl:grid-cols-4.
+
+const ActivityChart = lazy(() => import("../../components/data-display/ActivityChart.jsx").then((module) => ({ default: module.ActivityChart })));
+
+function AdminMetric({ icon: Icon, value, label, detail, tone = "amber" }) {
+  return <div className={`admin-metric ${tone}`}><span><Icon aria-hidden="true" /></span><div><strong>{value}</strong><b>{label}</b><small>{detail}</small></div></div>;
+}
+
+function AdminPanel({ title, action, children, className = "" }) {
+  return <section className={`admin-panel ${className}`}><header><h2>{title}</h2>{action}</header>{children}</section>;
+}
 
 export function AdminDashboard() {
   const [state, setState] = useState({ loading: true, error: null, data: null });
   const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let live = true;
-    getAdminOverview()
-      .then((r) => live && setState({ loading: false, error: null, data: r.data }))
-      .catch((e) => live && setState({ loading: false, error: e.message, data: null }));
-    return () => { live = false; };
-  }, [attempt]);
-
-  if (state.loading) return <LoadingState label="Loading class overview…" lines={4} />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, data: null }); setAttempt((a) => a + 1); }} />;
-
-  const d = state.data;
-  return (
-    <div className="grid gap-5">
-      <PageHeader
-        title="Class overview"
-        description="Access queue, verification health, and class activity at a glance. Every admin action here is audit-logged (FR-AUD-01)."
-        actions={<Link to="/admin/requests" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-strong">Review requests <ArrowRight aria-hidden="true" className="size-4" /></Link>}
-      />
-      {d.integration.status !== "HEALTHY" && (
-        <Card className="flex gap-2.5 border-warning/30 bg-warning-bg/50 text-sm" role="status">
-          <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warning" />
-          <p><strong>GitHub integration degraded:</strong> {d.integration.message} <span className="tnum text-muted">Last sync {formatDateTime(d.integration.lastSync)}.</span></p>
-        </Card>
-      )}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard label="Pending requests" value={d.pendingRequests} sub="Need a decision" icon={Inbox} tone="text-warning" />
-        <StatCard label="Needs review" value={d.needsReview} sub="Flagged evidence" icon={ScanSearch} tone="text-warning" />
-        <StatCard label="Verified (all time)" value={d.verifiedWeek} sub="Qualifying events" icon={BookOpenCheck} tone="text-success" />
-        <StatCard label="Students · assignments" value={`${d.totalStudents} · ${d.activeAssignments}`} sub="Approved · active" icon={Users} />
-      </div>
-      <div className="grid gap-5 xl:grid-cols-5">
-        <Card className="xl:col-span-3">
-          <h2 className="section-title">Class activity</h2>
-          <p className="mb-3 text-[13px] text-muted">Qualifying evidence per day across all students.</p>
-          {d.activitySeries.length === 0 ? (
-            <EmptyState title="No trend data" body="Daily class activity is not reported by the server yet. Totals above are live." />
-          ) : (
-            <Suspense fallback={<LoadingState label="Loading chart…" lines={2} />}>
-              <ActivityChart data={d.activitySeries} />
-            </Suspense>
-          )}
-        </Card>
-        <Card className="xl:col-span-2">
-          <h2 className="section-title">Needs attention</h2>
-          <ul className="mt-2 grid gap-2 text-sm">
-            <li><Link to="/admin/requests" className="flex items-center justify-between gap-2 rounded-xl border border-border p-3 hover:bg-canvas/60"><span className="flex items-center gap-2 font-semibold"><Inbox aria-hidden="true" className="size-4 text-warning" /> Access queue</span><Badge tone="warning">{d.pendingRequests} pending</Badge></Link></li>
-            <li><Link to="/admin/review" className="flex items-center justify-between gap-2 rounded-xl border border-border p-3 hover:bg-canvas/60"><span className="flex items-center gap-2 font-semibold"><ScanSearch aria-hidden="true" className="size-4 text-warning" /> Review queue</span><Badge tone="warning">{d.needsReview} flagged</Badge></Link></li>
-            <li><Link to="/admin/integration" className="flex items-center justify-between gap-2 rounded-xl border border-border p-3 hover:bg-canvas/60"><span className="font-semibold">Integration health</span><Badge tone="warning">Degraded</Badge></Link></li>
-          </ul>
-        </Card>
-      </div>
-    </div>
-  );
+  const [policy, setPolicy] = useState({ dailyMinimum: 1, saving: false, message: "" });
+  useEffect(() => { let active = true; getAdminOverview().then((response) => active && setState({ loading: false, error: null, data: response.data })).catch((error) => active && setState({ loading: false, error: error.message, data: null })); return () => { active = false; }; }, [attempt]);
+  useEffect(() => { const timer = window.setInterval(() => setAttempt((value) => value + 1), 30000); return () => window.clearInterval(timer); }, []);
+  useEffect(() => { getTrackingPolicy().then((response) => setPolicy((current) => ({ ...current, dailyMinimum: response.data.dailyMinimum }))).catch(() => {}); }, []);
+  if (state.loading) return <div className="admin-loading"><LoadingState label="Loading class overview…" lines={3} /></div>;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, data: null }); setAttempt((value) => value + 1); }} />;
+  const data = state.data;
+  const healthy = data.integration.status === "HEALTHY";
+  return <div className="admin-dashboard"><div className="admin-heading"><div><p className="admin-eyebrow">ADMIN CONSOLE</p><h1>Class overview</h1><p>Monitor access, verification, and student progress from one focused workspace.</p></div><Link to="/admin/requests" className="admin-primary-action">Review requests <ArrowRight aria-hidden="true" /></Link></div>{!healthy && <div className="admin-alert" role="status"><TriangleAlert aria-hidden="true" /><p><b>GitHub integration needs attention.</b> {data.integration.message} <small>Last sync {formatDateTime(data.integration.lastSync)}.</small></p></div>}<div className="admin-metrics"><AdminMetric icon={Inbox} value={data.pendingRequests} label="Pending requests" detail="Need a decision" tone="peach" /><AdminMetric icon={ScanSearch} value={data.needsReview} label="Needs review" detail="Evidence flagged" tone="scarlet" /><AdminMetric icon={BookOpenCheck} value={data.verifiedWeek} label="Verified problems" detail="Qualifying events" tone="amber" /><AdminMetric icon={Users} value={data.totalStudents} label="Students" detail={`${data.activeAssignments} active assignments`} tone="blue" /></div>{data.overdueAssignments > 0 && <div className="admin-alert" role="status"><TriangleAlert aria-hidden="true" /><p><b>{data.overdueAssignments} student assignment{data.overdueAssignments === 1 ? " is" : "s are"} overdue.</b> The count is derived from due dates and unfinished targets.</p></div>}<div className="admin-grid"><AdminPanel title="Daily tracking target"><div className="admin-policy"><Target aria-hidden="true" /><div><b>Minimum verified problems per day</b><small>Used by every student’s rolling report.</small></div><input aria-label="Minimum verified problems per day" type="number" min="0" max="100" value={policy.dailyMinimum} onChange={(event) => setPolicy((current) => ({ ...current, dailyMinimum: Number(event.target.value) }))} /><button type="button" disabled={policy.saving} onClick={async () => { setPolicy((current) => ({ ...current, saving: true, message: "" })); try { await updateTrackingPolicy(policy.dailyMinimum); setPolicy((current) => ({ ...current, saving: false, message: "Saved" })); } catch (error) { setPolicy((current) => ({ ...current, saving: false, message: error.message })); } }}>Save</button>{policy.message && <em>{policy.message}</em>}</div></AdminPanel><AdminPanel title="Class activity" action={<span className="admin-panel-note">Verified evidence per day</span>}><div className="admin-chart">{data.activitySeries.length === 0 ? <EmptyState title="No activity yet" body="Daily class activity will appear here when qualifying evidence is recorded." /> : <Suspense fallback={<LoadingState label="Loading chart…" lines={2} />}><ActivityChart data={data.activitySeries} /></Suspense>}</div></AdminPanel><AdminPanel title="Needs attention"><div className="admin-queue"><Link to="/admin/requests"><span><Inbox aria-hidden="true" /><b>Access queue</b></span><strong>{data.pendingRequests}</strong><ArrowRight aria-hidden="true" /></Link><Link to="/admin/review"><span><ScanSearch aria-hidden="true" /><b>Review queue</b></span><strong>{data.needsReview}</strong><ArrowRight aria-hidden="true" /></Link><Link to="/admin/integration"><span><Server aria-hidden="true" /><b>Integration health</b></span><em className={healthy ? "healthy" : "degraded"}>{healthy ? "Healthy" : "Degraded"}</em><ArrowRight aria-hidden="true" /></Link></div></AdminPanel></div></div>;
 }

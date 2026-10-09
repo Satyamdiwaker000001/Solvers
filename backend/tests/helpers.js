@@ -33,6 +33,7 @@ export async function bootApp(envOverrides = {}, { mongod: shared = null } = {})
   const github = {
     exchangeCode: async () => { throw new Error("github.exchangeCode not stubbed for this test"); },
     fetchProfile: async () => { throw new Error("github.fetchProfile not stubbed for this test"); },
+    fetchCommit: async () => ({ additions: 1, deletions: 0, files: [] }),
   };
   if (mongoose.connection.readyState === 0) {
     await connectDb(cfg.mongoUri);

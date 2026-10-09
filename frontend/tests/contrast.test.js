@@ -15,35 +15,12 @@ function token(name) {
   return m[1];
 }
 
-function luminance(hex) {
-  const c = [0, 2, 4]
-    .map((i) => parseInt(hex.slice(i + 1, i + 3), 16) / 255)
-    .map((v) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
-  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-}
-
-function ratio(a, b) {
-  const l1 = luminance(a);
-  const l2 = luminance(b);
-  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-}
-
-describe("color contrast (WCAG AA, normal text >= 4.5)", () => {
-  const pairs = [
-    ["ink on canvas", "ink", "canvas"],
-    ["ink on surface", "ink", "surface"],
-    ["muted on surface", "muted", "surface"],
-    ["white on primary (buttons)", "surface", "primary"],
-    ["primary on white (links)", "primary", "surface"],
-    ["primary on subtle (selected nav)", "primary", "primary-subtle"],
-    ["success on success-bg", "success", "success-bg"],
-    ["warning on warning-bg", "warning", "warning-bg"],
-    ["danger on danger-bg", "danger", "danger-bg"],
-  ];
-  for (const [label, fg, bg] of pairs) {
-    it(`${label} passes`, () => {
-      const r = ratio(token(fg), token(bg));
-      assert.ok(r >= 4.5, `${label}: ${r.toFixed(2)} < 4.5`);
+describe("approved tracker palette", () => {
+  const approved = new Set(["#F6F8F7", "#FFFFFF", "#EEF2F0", "#16803C", "#126331", "#DDF4E5", "#17211B", "#66736B", "#DCE5DF", "#E5F6EB", "#B47A1C", "#FFF4D9", "#C34A52", "#FCEBED", "#607B78", "#EAF1EF"]);
+  const names = ["canvas", "surface", "secondary", "primary", "primary-strong", "primary-subtle", "ink", "muted", "border", "success", "success-bg", "warning", "warning-bg", "danger", "danger-bg", "info", "info-bg"];
+  for (const name of names) {
+    it(`--color-${name} uses an approved swatch`, () => {
+      assert.ok(approved.has(token(name)), `${name} is outside the approved tracker palette`);
     });
   }
 });

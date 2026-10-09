@@ -4,7 +4,7 @@ import { asyncHandler, forbidden } from "../middleware/errors.js";
 import { requireAuth } from "../middleware/auth.js";
 import { validateBody, validateQuery } from "../middleware/validate.js";
 import { rateLimit, userOrIpKey } from "../middleware/rateLimit.js";
-import { accessRequestCreateSchema, accessRequestListSchema } from "./schemas.js";
+import { accessRequestCreateSchema, accessRequestListSchema, accessRequestApproveSchema } from "./schemas.js";
 import { pageEnvelope, pagination } from "../lib/http.js";
 import {
   submitAccessRequest, decideAccessRequest, getOwnRequest, serializeRequest, assertNotSuspended,
@@ -51,7 +51,7 @@ export function adminAccessRequestRoutes() {
     const filter = req.query.status ? { status: req.query.status } : {};
     const total = await AccessRequest.countDocuments(filter);
     const docs = await AccessRequest.find(filter)
-      .populate("user", "githubLogin displayName studentId")
+      .populate("user", "githubLogin displayName studentId avatarUrl")
       .populate("decidedBy", "githubLogin displayName")
       .sort({ submittedAt: -1 })
       .skip(skip)
@@ -69,11 +69,12 @@ export function adminAccessRequestRoutes() {
       adminUser: req.user,
       decision,
       folderRoot: req.app.get("config").repo.folderRoot,
+      customFolder: req.body?.folder,
     });
     res.json({ data: serializeRequest(doc) });
   }
 
-  router.post("/:id/approve", asyncHandler(async (req, res) => decide(req, res, "approve")));
+  router.post("/:id/approve", validateBody(accessRequestApproveSchema), asyncHandler(async (req, res) => decide(req, res, "approve")));
   router.post("/:id/reject", asyncHandler(async (req, res) => decide(req, res, "reject")));
 
   return router;

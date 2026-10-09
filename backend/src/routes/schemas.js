@@ -30,12 +30,25 @@ export const assignmentCreateSchema = z.object({
   title: z.string().trim().max(200).optional().default(""),
   dueAt: z.string().datetime({ offset: true }).nullable().optional().default(null),
   instructions: z.string().max(5000).optional().default(""),
+  dailyMinimum: z.coerce.number().int().min(0).max(100).optional().default(0),
   studentIds: z.array(objectId).max(500).optional().default([]),
 }).strict();
 
 export const reviewSchema = z.object({
   decision: z.enum(["accept", "sendback"]),
   comment: z.string().trim().max(2000).optional().default(""),
+}).strict();
+
+export const accessRequestApproveSchema = z.object({
+  folder: z.string().trim().min(1).max(200).optional(),
+}).strict();
+
+export const studentFolderUpdateSchema = z.object({
+  folder: z.string().trim().min(1).max(200),
+}).strict();
+
+export const submissionAssignStudentSchema = z.object({
+  studentId: objectId,
 }).strict();
 
 export const accessRequestListSchema = paginationSchema.extend({
@@ -45,3 +58,27 @@ export const accessRequestListSchema = paginationSchema.extend({
 export const problemListSchema = paginationSchema.extend({
   status: z.enum(["draft", "published", "archived"]).optional(),
 });
+
+export const assignmentPatchSchema = z.object({
+  title: z.string().trim().max(200).optional(),
+  instructions: z.string().max(5000).optional(),
+  dueAt: z.string().datetime({ offset: true }).nullable().optional(),
+  status: z.enum(["active", "archived"]).optional(),
+  dailyMinimum: z.coerce.number().int().min(0).max(100).optional(),
+}).strict();
+
+export const adminLoginSchema = z.object({
+  username: z.string().trim().min(1).max(160),
+  password: z.string().min(1).max(256),
+}).strict();
+
+export const trackingPolicySchema = z.object({
+  dailyMinimum: z.coerce.number().int().min(0).max(100),
+}).strict();
+
+export const submissionAssignAssignmentSchema = z.object({
+  assignmentId: objectId,
+}).strict();
+
+
+

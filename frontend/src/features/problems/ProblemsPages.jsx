@@ -8,8 +8,10 @@ import { Badge, VerificationBadge } from "../../components/ui/Badge.jsx";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
 import { EvidencePanel } from "../../components/data-display/EvidencePanel.jsx";
 import { Field, Select, TextInput } from "../../components/ui/Field.jsx";
-import { problemById, CENTRAL_REPO } from "../../mocks/data.js";
 import { formatDate } from "../../lib/format.js";
+
+const DEFAULT_REPO_NAME = "Satyamdiwaker000001/DSA_Batch_2027";
+const DEFAULT_REPO_BRANCH = "main";
 
 function statusBadge(status) {
   if (status === "VERIFIED") return <VerificationBadge outcome="VERIFIED" />;
@@ -34,7 +36,7 @@ export function ProblemsPage() {
   }, [user.studentId, attempt]);
 
   const items = useMemo(() => state.items.filter((a) => {
-    const p = a.problem ?? problemById(a.problemId);
+    const p = a.problem || { title: a.title, topic: a.topic || "Practice" };
     const q = query.trim().toLowerCase();
     const matchQ = !q || (p?.title || "").toLowerCase().includes(q) || (p?.topic || "").toLowerCase().includes(q);
     const matchF = filter === "ALL" || (filter === "TODO" ? a.status !== "VERIFIED" : filter === "DONE" ? a.status === "VERIFIED" : a.type === filter);
@@ -46,7 +48,7 @@ export function ProblemsPage() {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title="Assigned problems" description="Common class work plus any individual assignments from your professors. Individual items are visible only to you and admins (BR-05)." />
+      <PageHeader title="Assigned problems" description="Class work and individual problem assignments." />
       <Card className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="min-w-0 flex-1">
           <Field label="Search" htmlFor="q"><TextInput id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search title or topic…" /></Field>
@@ -64,22 +66,22 @@ export function ProblemsPage() {
         </div>
       </Card>
       {items.length === 0 ? (
-        <EmptyState title="No problems match" body="Try clearing the search, or check back after professors publish the next assignment." />
+        <EmptyState title="No problems match" body="Try adjusting your search or filters." />
       ) : (
         <>
           {/* Cards on narrow, table on wide */}
           <ul className="grid gap-3 lg:hidden">
             {items.map((a) => {
-              const p = a.problem ?? problemById(a.problemId);
+              const p = a.problem || { title: a.title || "Problem", topic: "Practice", difficulty: "Standard" };
               return (
                 <li key={a.id}>
-                  <Link to={`/app/problems/${a.problemId}`} className="block rounded-2xl border border-border bg-surface p-4">
+                  <Link to={`/app/problems/${a.problemId || a.id}`} className="block rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-primary/50 min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge tone={a.type === "COMMON" ? "info" : "neutral"}>{a.type === "COMMON" ? "Common" : "Individual"}</Badge>
                       {statusBadge(a.status)}
                     </div>
-                    <p className="mt-1.5 font-bold">{p?.title ?? "Problem"}</p>
-                    <p className="text-[13px] text-muted">{p?.topic} · {p?.difficulty} · due {formatDate(a.dueAt)}</p>
+                    <p className="mt-1.5 font-bold truncate">{p?.title ?? "Problem"}</p>
+                    <p className="text-[13px] text-muted truncate">{p?.topic} · {p?.difficulty} · due {formatDate(a.dueAt)}</p>
                   </Link>
                 </li>
               );
@@ -95,11 +97,11 @@ export function ProblemsPage() {
                 </thead>
                 <tbody>
                   {items.map((a) => {
-                    const p = a.problem ?? problemById(a.problemId);
+                    const p = a.problem || { title: a.title || "Problem", topic: "Practice", difficulty: "Standard" };
                     return (
                       <tr key={a.id} className="border-b border-border/60 last:border-0 hover:bg-canvas/60">
                         <td className="px-4 py-3">
-                          <Link to={`/app/problems/${a.problemId}`} className="font-semibold text-primary hover:underline">{p?.title ?? "Problem"}</Link>
+                          <Link to={`/app/problems/${a.problemId || a.id}`} className="font-semibold text-primary hover:underline">{p?.title ?? "Problem"}</Link>
                           <p className="text-[13px] text-muted">{p?.topic} · {p?.difficulty}</p>
                         </td>
                         <td className="px-4 py-3"><Badge tone={a.type === "COMMON" ? "info" : "neutral"}>{a.type}</Badge></td>
@@ -135,45 +137,48 @@ export function ProblemDetailPage() {
   if (state.loading) return <LoadingState label="Loading problem…" />;
   if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [], catalog: [] }); setAttempt((a) => a + 1); }} />;
 
-  const problem = state.catalog.find((p) => p.id === id) ?? problemById(id);
-  if (!problem) return <EmptyState title="Problem not found" body="It may have been archived, or the link is wrong." />;
-  const assignment = state.items.find((a) => a.problemId === id);
+  const problem = state.catalog.find((p) => p.id === id)
+    ?? state.items.find((a) => a.problemId === id || a.id === id)?.problem
+    ?? null;
+
+  if (!problem) return <EmptyState title="Problem not found" body="The problem could not be found or has not been assigned." />;
+  const assignment = state.items.find((a) => a.problemId === id || a.id === id);
 
   return (
     <div className="grid gap-4">
       <Link to="/app/problems" className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-primary"><ArrowLeft aria-hidden="true" className="size-4" /> All problems</Link>
       <PageHeader
         title={problem.title}
-        description={`${problem.topic} · ${problem.difficulty} · ${problem.id}`}
+        description={`${problem.topic || "DSA"} · ${problem.difficulty || "Standard"} · ${problem.id || id}`}
         actions={assignment ? statusBadge(assignment.status) : <Badge tone="neutral">Not assigned</Badge>}
       />
       <div className="grid gap-4 xl:grid-cols-5">
         <Card className="xl:col-span-3">
           <h2 className="section-title">Statement</h2>
-          <p className="mt-1 text-[15px] leading-relaxed">{problem.statement}</p>
+          <p className="mt-1 text-[15px] leading-relaxed">{problem.statement || "No statement text provided."}</p>
           {problem.examples?.length > 0 && (
             <><h3 className="mt-4 text-sm font-bold">Examples</h3>
-            <ul className="mt-1 grid gap-1.5">{problem.examples.map((e, i) => <li key={i} className="mono rounded-lg bg-canvas p-2.5">{e}</li>)}</ul></>
+            <ul className="mt-1 grid gap-1.5">{problem.examples.map((e, i) => <li key={i} className="mono rounded-lg bg-canvas p-2.5 break-all">{e}</li>)}</ul></>
           )}
           {problem.constraints?.length > 0 && (
             <><h3 className="mt-4 text-sm font-bold">Constraints</h3>
             <ul className="mt-1 list-disc pl-5 text-sm text-muted">{problem.constraints.map((c, i) => <li key={i}>{c}</li>)}</ul></>
           )}
-          {problem.sourceUrl && <a href={problem.sourceUrl} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">Source <ExternalLink aria-hidden="true" className="size-3.5" /></a>}
+          {problem.sourceUrl && <a href={problem.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">Source reference <ExternalLink aria-hidden="true" className="size-3.5" /></a>}
         </Card>
         <div className="grid content-start gap-4 xl:col-span-2">
           <Card>
             <h2 className="section-title">How to submit</h2>
             <ol className="mt-2 grid gap-2 text-sm text-muted">
-              <li className="flex gap-2"><FolderGit2 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" /><span>Push to <span className="mono">{CENTRAL_REPO.fullName}/{user.folder || (user.studentId ? `students/${user.studentId}` : "students/…")}</span> on branch <span className="mono">{CENTRAL_REPO.branch}</span>.</span></li>
+              <li className="flex gap-2"><FolderGit2 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" /><span>Push to <span className="mono break-all">{DEFAULT_REPO_NAME}/{user.folder || (user.studentId ? `students/${user.studentId}` : "students/…")}</span> on branch <span className="mono">{DEFAULT_REPO_BRANCH}</span>.</span></li>
               <li className="flex gap-2"><CalendarDays aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" /><span>{assignment ? `Due ${formatDate(assignment.dueAt)} · ${assignment.title}` : "No active assignment for this problem."}</span></li>
             </ol>
-            <p className="mt-2 text-[13px] text-muted">A commit is evidence of a change, not proof of a solved problem (BR-06). Verification runs asynchronously.</p>
+            <p className="mt-2 text-[13px] text-muted">Verification runs automatically against automated test suites and validation rubrics.</p>
           </Card>
           <Card>
             <h2 className="section-title">Your evidence</h2>
             {!assignment || assignment.submissions.length === 0 ? (
-              <p className="mt-1 text-sm text-muted">No commits observed for this problem yet.</p>
+              <p className="mt-1 text-sm text-muted">No commits recorded for this problem yet.</p>
             ) : (
               <ul className="mt-2 grid gap-2">{assignment.submissions.map((s) => <li key={s.id}><EvidencePanel submission={s} /></li>)}</ul>
             )}

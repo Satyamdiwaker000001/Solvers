@@ -1,25 +1,54 @@
 import { useEffect, useState } from "react";
-import { Info, Medal } from "lucide-react";
+import { Crown, Flame, Info, Medal, TrendingUp, Trophy } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { getLeaderboard } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
-import { studentById } from "../../mocks/data.js";
+import { Avatar } from "../../components/ui/Avatar.jsx";
 
 function RankBadge({ rank }) {
-  const styles = ["bg-warning-bg text-warning", "bg-canvas text-muted", "bg-primary-subtle text-primary"];
+  const styles = [
+    "leader-rank-gold",
+    "leader-rank-silver",
+    "leader-rank-bronze",
+  ];
   if (rank <= 3) {
     return (
-      <span className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-extrabold ${styles[rank - 1]}`}>
-        <Medal aria-hidden="true" className="size-4" />
+      <span className={`leader-rank-badge ${styles[rank - 1]}`}>
+        {rank === 1 ? <Crown aria-hidden="true" /> : <Medal aria-hidden="true" />}
       </span>
     );
   }
-  return <span className="tnum grid size-8 shrink-0 place-items-center rounded-full bg-canvas text-sm font-bold text-muted">{rank}</span>;
+  return <span className="leader-rank-number">{rank}</span>;
+}
+
+function Podium({ entries, highlightId }) {
+  const top = [entries[1], entries[0], entries[2]].filter(Boolean);
+  return (
+    <div className="leader-podium" aria-label="Top three students">
+      {top.map((entry) => (
+        <div key={entry.studentId} className={`leader-podium-card rank-${entry.rank} ${entry.studentId === highlightId ? "is-current" : ""}`}>
+          <div className="flex items-center justify-between gap-2">
+            <RankBadge rank={entry.rank} />
+            <span className="leader-place">#{entry.rank}</span>
+          </div>
+          <Avatar src={entry.avatarUrl} name={entry.displayName || entry.name || entry.studentId} className="leader-avatar object-cover" />
+          <p className="leader-name">{entry.displayName || entry.name || entry.studentId}{entry.studentId === highlightId && <span className="leader-you">YOU</span>}</p>
+          <p className="leader-score">{entry.score}<small> points</small></p>
+          <p className="leader-subscore">{entry.verifiedProblems} verified · {entry.activeDays} active days</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /** Shared by student + admin; admin passes highlightId to spotlight a student. */
-export function Leaderboard({ highlightId, useSelfHighlight = false, title = "Activity leaderboard", description = "Ranking reflects verified activity and consistency — never raw commit count (FR-LB-02). Values are reproducible from stored qualifying events." }) {
+export function Leaderboard({
+  highlightId,
+  useSelfHighlight = false,
+  title = "Activity leaderboard",
+  description = "Ranking reflects verified problem completion and consistent activity across class assignments.",
+}) {
   const [state, setState] = useState({ loading: true, error: null, data: null });
   const [attempt, setAttempt] = useState(0);
   const { user } = useAuth();
@@ -42,6 +71,7 @@ export function Leaderboard({ highlightId, useSelfHighlight = false, title = "Ac
   return (
     <div className="grid gap-4">
       <PageHeader title={title} description={description} />
+      <div className="leaderboard-intro"><div className="leaderboard-intro-icon"><Trophy aria-hidden="true" /></div><div><p className="leaderboard-kicker">COMPETITION HUB</p><h2>Climb the ranks</h2><p>Earn points through consistent, verified problem solving.</p></div><div className="leaderboard-streak"><Flame aria-hidden="true" /><b>Keep your streak alive</b></div></div>
       <Card className="flex gap-2.5 border-info/25 bg-info-bg/50 text-sm">
         <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-info" />
         <div className="min-w-0">
@@ -50,20 +80,21 @@ export function Leaderboard({ highlightId, useSelfHighlight = false, title = "Ac
           <p className="tnum mt-0.5 text-xs text-muted">{window}</p>
         </div>
       </Card>
+      <Podium entries={entries} highlightId={effectiveHighlight} />
       {/* Compact list on narrow screens */}
       <ol className="grid gap-2 lg:hidden">
         {entries.map((e) => {
-          const s = studentById(e.studentId);
-          const name = e.displayName || s?.displayName || e.studentId;
+          const name = e.displayName || e.name || e.studentId;
           const hot = e.studentId === effectiveHighlight;
           return (
-            <li key={e.studentId} className={`flex items-center gap-3 rounded-2xl border p-3 ${hot ? "border-primary bg-primary-subtle/50" : "border-border bg-surface"}`}>
+            <li key={e.studentId} className={`leader-list-row ${hot ? "is-current" : ""}`}>
               <RankBadge rank={e.rank} />
+              <Avatar src={e.avatarUrl} name={name} className="size-8 shrink-0 rounded-full border border-border object-cover text-center text-xs font-bold leading-8 text-primary" />
               <div className="min-w-0 flex-1 leading-tight">
                 <p className="truncate text-sm font-bold">{name} {hot && <span className="text-xs font-semibold text-primary">(you)</span>}</p>
                 <p className="tnum truncate text-xs text-muted">{e.verifiedProblems} verified · {e.activeDays} active days</p>
               </div>
-              <p className="tnum text-base font-extrabold">{e.score}<span className="text-xs font-medium text-muted"> pts</span></p>
+              <p className="leader-list-score"><TrendingUp aria-hidden="true" />{e.score}<span>pts</span></p>
             </li>
           );
         })}
@@ -80,14 +111,13 @@ export function Leaderboard({ highlightId, useSelfHighlight = false, title = "Ac
             </thead>
             <tbody>
               {entries.map((e) => {
-                const s = studentById(e.studentId);
-                const name = e.displayName || s?.displayName || e.studentId;
-                const login = e.githubLogin || s?.githubLogin || "";
+                const name = e.displayName || e.name || e.studentId;
+                const login = e.githubLogin || "";
                 const hot = e.studentId === effectiveHighlight;
                 return (
                   <tr key={e.studentId} className={`border-b border-border/60 last:border-0 ${hot ? "bg-primary-subtle/50" : "hover:bg-canvas/60"}`}>
-                    <td className="px-4 py-3"><span className="flex items-center gap-2"><RankBadge rank={e.rank} /><span className="tnum text-xs text-muted">{e.trend}</span></span></td>
-                    <td className="px-4 py-3"><p className="font-semibold">{name} {hot && <span className="text-xs text-primary">(you)</span>}</p><p className="mono text-xs text-muted">@{login} · {e.studentId}</p></td>
+                    <td className="px-4 py-3"><RankBadge rank={e.rank} /></td>
+                    <td className="px-4 py-3"><p className="font-semibold">{name} {hot && <span className="text-xs text-primary">(you)</span>}</p>{login && <p className="mono text-xs text-muted">@{login} · {e.studentId}</p>}</td>
                     <td className="tnum px-4 py-3 text-right font-bold">{e.verifiedProblems}</td>
                     <td className="tnum px-4 py-3 text-right">{e.activeDays}</td>
                     <td className="tnum px-4 py-3 text-right font-extrabold">{e.score}</td>

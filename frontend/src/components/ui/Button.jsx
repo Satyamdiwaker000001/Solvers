@@ -1,8 +1,9 @@
 import { cn } from "./cn.js";
 
 const tones = {
-  primary: "bg-primary text-white hover:bg-primary-strong disabled:bg-primary/40",
-  secondary: "bg-white text-ink border border-border hover:bg-canvas disabled:text-muted",
+  primary: "bg-primary text-surface font-bold hover:bg-primary-strong disabled:bg-primary/40 shadow-xs",
+  secondary: "bg-surface text-ink border border-border hover:bg-canvas hover:border-primary/30 disabled:text-muted",
+  amber: "bg-primary text-surface font-bold hover:bg-primary-strong disabled:opacity-50 shadow-xs",
   destructive: "bg-danger text-white hover:brightness-110 disabled:opacity-50",
   ghost: "text-primary hover:bg-primary-subtle disabled:text-muted",
 };
