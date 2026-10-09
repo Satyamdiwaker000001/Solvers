@@ -1,0 +1,12 @@
+erDiagram
+  USER ||--o{ ACCESS_REQUEST : submits
+  USER ||--o| GITHUB_IDENTITY : links
+  PROBLEM ||--o{ ASSIGNMENT : referenced_by
+  ASSIGNMENT ||--o{ ASSIGNMENT_TARGET : targets
+  USER ||--o{ ASSIGNMENT_TARGET : receives
+  USER ||--o{ SUBMISSION : owns
+  ASSIGNMENT ||--o{ SUBMISSION : receives
+  SUBMISSION ||--o{ REPOSITORY_EVIDENCE : supported_by
+  SUBMISSION ||--o{ VERIFICATION_RESULT : evaluated_by
+  USER ||--o{ AUDIT_LOG : performs
+  USER ||--o{ PROGRESS_EVENT : earns

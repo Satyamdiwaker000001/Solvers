@@ -1,0 +1,28 @@
+flowchart TB
+  UI[React UI: Student + Admin]
+  API[Node.js + Express API / modular monolith]
+  IAM[Identity and Access]
+  PS[PS and Assignment Management]
+  GH[GitHub Integration]
+  VER[Verification Engine]
+  REP[Progress Reports and Leaderboard]
+  AUD[Admin Audit]
+  DB[(MongoDB)]
+  Q[(Background Queue)]
+  W[Background Worker]
+  SB[Isolated Test Sandbox - optional]
+  EXT[GitHub]
+  UI --> API
+  API --> IAM
+  API --> PS
+  API --> REP
+  API --> AUD
+  IAM <--> DB
+  PS <--> DB
+  AUD --> DB
+  EXT --> GH
+  GH --> Q --> W
+  W --> VER
+  VER <--> DB
+  VER --> SB
+  REP <--> DB

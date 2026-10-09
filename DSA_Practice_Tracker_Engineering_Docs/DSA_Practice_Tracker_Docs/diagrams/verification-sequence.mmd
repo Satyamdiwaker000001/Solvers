@@ -1,0 +1,15 @@
+sequenceDiagram
+  participant GH as GitHub
+  participant API as Webhook API
+  participant Q as Queue
+  participant W as Worker
+  participant DB as Database
+  GH->>API: Repository event
+  API->>API: Validate signature + deduplicate
+  API->>Q: Enqueue
+  API-->>GH: Acknowledge
+  Q->>W: Deliver event
+  W->>GH: Fetch allowed evidence
+  GH-->>W: Commit/diff/files
+  W->>DB: Store evidence and verification result
+  W->>DB: Update qualifying progress event

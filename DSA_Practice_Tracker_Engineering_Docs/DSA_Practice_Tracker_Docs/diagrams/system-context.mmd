@@ -1,0 +1,8 @@
+flowchart LR
+  S[Student] -->|GitHub login, access request| SYS((DSA Practice Tracker))
+  SYS -->|Access status, assigned PS, report, leaderboard| S
+  A[Professor Admin 1] -->|Manage PS, approve requests, review| SYS
+  B[Professor Admin 2] -->|Manage PS, approve requests, review| SYS
+  SYS -->|Class progress and review queue| A
+  SYS -->|Class progress and review queue| B
+  GH[GitHub OAuth and central repository] <-->|Identity and repository evidence| SYS
