@@ -83,11 +83,11 @@ export function DemoBadge() {
   );
 }
 
-export function Topbar({ title, onMenu, right }) {
+export function Topbar({ title, onMenu, menuExpanded, right }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
-        <button type="button" onClick={onMenu} aria-label="Open navigation menu" className="rounded-lg p-2 text-ink hover:bg-canvas lg:hidden">
+        <button type="button" onClick={onMenu} aria-label="Open navigation menu" aria-expanded={Boolean(menuExpanded)} aria-controls="mobile-nav" className="rounded-lg p-2 text-ink hover:bg-canvas lg:hidden">
           <Menu aria-hidden="true" className="size-5" />
         </button>
         <div className="min-w-0 flex-1 lg:hidden"><Brand /></div>

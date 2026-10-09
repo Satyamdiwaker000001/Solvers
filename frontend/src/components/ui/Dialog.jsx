@@ -1,18 +1,25 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { useContainedFocus } from "../../hooks/useContainedFocus.js";
 
-/** Accessible dialog: labelled, Escape to close, viewport-aware, internal scroll. */
+/**
+ * Accessible dialog (UI spec §6, §10): labelled, focus-trapped, Escape to
+ * close, focus restored to the trigger, viewport-aware, internal scroll.
+ */
 export function Dialog({ title, description, onClose, children, wide }) {
+  const panelRef = useRef(null);
+  useContainedFocus(panelRef, { onEscape: onClose });
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") onClose?.(); };
-    document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
-  }, [onClose]);
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 p-0 sm:items-center sm:p-6" role="presentation" onClick={onClose}>
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog" aria-modal="true" aria-label={title}
         onClick={(e) => e.stopPropagation()}
         className={`flex max-h-[92svh] w-full flex-col rounded-t-2xl bg-surface shadow-xl sm:rounded-2xl ${wide ? "sm:max-w-3xl" : "sm:max-w-lg"}`}

@@ -1,7 +1,9 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion.js";
 
 /** Responsive activity chart with labelled axes, legend, and text summary. */
 export function ActivityChart({ data }) {
+  const reducedMotion = usePrefersReducedMotion();
   const totals = (data ?? []).reduce((a, d) => ({ v: a.v + d.verified, p: a.p + d.progress, r: a.r + d.review }), { v: 0, p: 0, r: 0 });
   return (
     <figure className="min-w-0">
@@ -13,9 +15,9 @@ export function ActivityChart({ data }) {
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} label={{ value: "qualifying events", angle: -90, position: "insideLeft", fontSize: 11 }} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Area type="monotone" dataKey="verified" name="Verified problems" stroke="#247A52" fill="#247A52" fillOpacity={0.18} strokeWidth={2} />
-            <Area type="monotone" dataKey="progress" name="Meaningful progress" stroke="#2859A8" fill="#2859A8" fillOpacity={0.12} strokeWidth={2} />
-            <Area type="monotone" dataKey="review" name="Needs review" stroke="#946200" fill="#946200" fillOpacity={0.15} strokeWidth={2} />
+            <Area type="monotone" dataKey="verified" name="Verified problems" stroke="#247A52" fill="#247A52" fillOpacity={0.18} strokeWidth={2} isAnimationActive={!reducedMotion} />
+            <Area type="monotone" dataKey="progress" name="Meaningful progress" stroke="#2859A8" fill="#2859A8" fillOpacity={0.12} strokeWidth={2} isAnimationActive={!reducedMotion} />
+            <Area type="monotone" dataKey="review" name="Needs review" stroke="#946200" fill="#946200" fillOpacity={0.15} strokeWidth={2} isAnimationActive={!reducedMotion} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

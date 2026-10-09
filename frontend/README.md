@@ -1,16 +1,61 @@
-# React + Vite
+# DSA Practice Tracker — Frontend (Phase 1)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Responsive React + Vite + JavaScript + Tailwind CSS UI for the student and
+professor-admin workflows defined in the project SRS and UI/UX specification.
+**Demo only:** all data is mocked, nothing persists, there is no real
+authentication. See `IMPLEMENTATION_PLAN.md` for locked scope, open decisions,
+and the backend integration contract.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Requirements: Node.js 20+ and npm.
 
-## React Compiler
+```powershell
+npm install
+npm run dev      # start local dev server with HMR
+npm run preview  # serve the production build locally
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Commands
 
-## Expanding the Oxlint configuration
+| Command         | What it does                                              |
+|----------------|-----------------------------------------------------------|
+| `npm run dev`  | Local dev server                                          |
+| `npm test`     | Automated checks: `node --test tests/` (no extra deps)    |
+| `npm run lint` | `oxlint` static analysis (0 errors expected)              |
+| `npm run build`| Production build to `dist/` (must pass before handover)  |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Copy `.env.example` to `.env` when the backend exists and set
+`VITE_API_BASE_URL`. It is ignored until Phase 2.
+
+## Structure
+
+```
+src/
+  main.jsx, App.jsx, styles/globals.css   # entry, routes, Tailwind v4 tokens
+  config/ lib/                            # navigation, formatting helpers
+  mocks/data.js                           # ALL demo data (clearly labelled MOCK)
+  services/api.js                         # mock-backed service layer (stable signatures)
+  services/http.js                        # real fetch client stub (unused until backend)
+  context/                                # mock Auth personas + toasts
+  components/ hooks/                      # reusable UI, focus + reduced-motion hooks
+  layouts/                                # student/admin shells, route guards
+  features/                               # auth, dashboards, problems, activity,
+                                          # reports, leaderboard, approval,
+                                          # students, review, admin ops
+  pages/                                  # 403 / 404
+tests/                                    # node:test suites (logic, integrity, a11y)
+```
+
+## Demo limitations
+
+- Persona buttons on `/sign-in` replace GitHub OAuth; the rejected-persona
+  cooldown is computed at sign-in time and labelled demo-only.
+- Mutations (approve/reject, create problem, record review) update in-memory
+  mock data and reset on reload.
+- `ProtectedRoute` is client-side convenience; server-side authorization is
+  still required (NFR-SEC-01).
+- Manual browser verification (keyboard walkthrough, screen reader, device
+  matrix) has **not** been performed in this environment; automated static
+  checks cover tokens, focus management wiring, contrast ratios, and
+  responsive patterns. See test output for details.

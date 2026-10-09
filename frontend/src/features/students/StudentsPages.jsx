@@ -13,6 +13,7 @@ import { assignmentById, problemById } from "../../mocks/data.js";
 export function StudentsPage() {
   const [state, setState] = useState({ loading: true, error: null, items: [] });
   const [q, setQ] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -20,10 +21,10 @@ export function StudentsPage() {
       .then((r) => live && setState({ loading: false, error: null, items: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, items: [] }));
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
 
   if (state.loading) return <LoadingState label="Loading students…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [] }); setAttempt((a) => a + 1); }} />;
 
   const query = q.trim().toLowerCase();
   const items = state.items.filter((s) => !query || s.displayName.toLowerCase().includes(query) || s.githubLogin.toLowerCase().includes(query) || s.id.toLowerCase().includes(query));
@@ -77,6 +78,7 @@ export function StudentsPage() {
 export function StudentDetailPage() {
   const { id } = useParams();
   const [state, setState] = useState({ loading: true, error: null, data: null });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -84,10 +86,10 @@ export function StudentDetailPage() {
       .then((r) => live && setState({ loading: false, error: null, data: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, data: null }));
     return () => { live = false; };
-  }, [id]);
+  }, [id, attempt]);
 
   if (state.loading) return <LoadingState label="Loading student report…" lines={4} />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, data: null }); setAttempt((a) => a + 1); }} />;
   if (!state.data?.student) return <EmptyState title="Student not found" body="Check the ID — mapping uses the stable internal ID, not folder names." />;
 
   const { student, submissions } = state.data;

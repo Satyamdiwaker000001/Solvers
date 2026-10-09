@@ -10,6 +10,7 @@ import { formatDateTime } from "../../lib/format.js";
 
 export function AdminDashboard() {
   const [state, setState] = useState({ loading: true, error: null, data: null });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -17,10 +18,10 @@ export function AdminDashboard() {
       .then((r) => live && setState({ loading: false, error: null, data: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, data: null }));
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
 
   if (state.loading) return <LoadingState label="Loading class overview…" lines={4} />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, data: null }); setAttempt((a) => a + 1); }} />;
 
   const d = state.data;
   return (

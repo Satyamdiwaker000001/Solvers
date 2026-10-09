@@ -23,6 +23,7 @@ export function ProblemsPage() {
   const [state, setState] = useState({ loading: true, error: null, items: [] });
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("ALL");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -30,7 +31,7 @@ export function ProblemsPage() {
       .then((r) => live && setState({ loading: false, error: null, items: r.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, items: [] }));
     return () => { live = false; };
-  }, [user.studentId]);
+  }, [user.studentId, attempt]);
 
   const items = useMemo(() => state.items.filter((a) => {
     const p = problemById(a.problemId);
@@ -41,7 +42,7 @@ export function ProblemsPage() {
   }), [state.items, query, filter]);
 
   if (state.loading) return <LoadingState label="Loading assigned problems…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [] }); setAttempt((a) => a + 1); }} />;
 
   return (
     <div className="grid gap-4">
@@ -121,6 +122,7 @@ export function ProblemDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [state, setState] = useState({ loading: true, error: null, items: [], catalog: [] });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -128,10 +130,10 @@ export function ProblemDetailPage() {
       .then(([a, c]) => live && setState({ loading: false, error: null, items: a.data, catalog: c.data }))
       .catch((e) => live && setState({ loading: false, error: e.message, items: [], catalog: [] }));
     return () => { live = false; };
-  }, [user.studentId]);
+  }, [user.studentId, attempt]);
 
   if (state.loading) return <LoadingState label="Loading problem…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={() => window.location.reload()} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={() => { setState({ loading: true, error: null, items: [], catalog: [] }); setAttempt((a) => a + 1); }} />;
 
   const problem = state.catalog.find((p) => p.id === id) ?? problemById(id);
   if (!problem) return <EmptyState title="Problem not found" body="It may have been archived, or the link is wrong." />;
