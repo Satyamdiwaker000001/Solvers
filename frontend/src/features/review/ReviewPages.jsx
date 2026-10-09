@@ -8,7 +8,7 @@ import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States
 import { Field, TextArea, Select } from "../../components/ui/Field.jsx";
 import { EvidencePanel } from "../../components/data-display/EvidencePanel.jsx";
 import { VerificationBadge } from "../../components/ui/Badge.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
+import { useToast } from "../../hooks/useToast.js";
 import { studentById, assignmentById, problemById } from "../../mocks/data.js";
 
 export function ReviewQueuePage() {
@@ -36,12 +36,14 @@ export function ReviewQueuePage() {
             const st = studentById(s.studentId);
             const a = assignmentById(s.assignmentId);
             const p = a ? problemById(a.problemId) : null;
+            const who = s.studentName || st?.displayName || s.studentId;
+            const what = s.problemTitle || p?.title || s.assignmentTitle || s.assignmentId;
             return (
               <li key={s.id}>
                 <Card>
                   <div className="flex flex-wrap items-center gap-2">
                     <VerificationBadge outcome={s.outcome} />
-                    <p className="min-w-0 flex-1 truncate text-sm font-bold">{st?.displayName} · {p?.title}</p>
+                    <p className="min-w-0 flex-1 truncate text-sm font-bold">{who} · {what}</p>
                   </div>
                   <div className="mt-2"><EvidencePanel submission={s} /></div>
                   <Link to={`/admin/review/${s.id}`} className="mt-3 inline-flex min-h-10 items-center rounded-lg border border-border px-3 py-2 text-sm font-semibold hover:bg-canvas">Open review</Link>
@@ -67,7 +69,18 @@ export function ReviewDetailPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getReviewQueue().then((r) => { setItem(r.data.find((s) => s.id === id) ?? null); setLoading(false); });
+    let cancelled = false;
+    getReviewQueue()
+      .then((r) => {
+        if (!cancelled) setItem(r.data.find((s) => s.id === id) ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setItem(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [id]);
 
   if (loading) return <LoadingState label="Loading evidence…" lines={3} />;
@@ -76,13 +89,16 @@ export function ReviewDetailPage() {
   const st = studentById(item.studentId);
   const a = assignmentById(item.assignmentId);
   const p = a ? problemById(a.problemId) : null;
+  const who = item.studentName || st?.displayName || item.studentId;
+  const whoLogin = item.studentLogin || st?.githubLogin || "";
+  const what = item.problemTitle || p?.title || item.assignmentTitle || a?.title || item.assignmentId;
 
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     try {
       await recordReview(item.id, decision, comment);
-      toast.push({ title: decision === "accept" ? "Evidence accepted (demo)" : "Sent back for more evidence (demo)", body: `${item.id} decided and audit-logged locally.` });
+      toast.push({ title: decision === "accept" ? "Evidence accepted" : "Sent back for more evidence", body: `${item.id} decided and audit-logged.` });
       nav("/admin/review");
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   };
@@ -90,7 +106,7 @@ export function ReviewDetailPage() {
   return (
     <div className="grid gap-4">
       <Link to="/admin/review" className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-primary"><ArrowLeft aria-hidden="true" className="size-4" /> Review queue</Link>
-      <PageHeader title={`Review ${item.id}`} description={`${st?.displayName} (@${st?.githubLogin}) · ${p?.title} · ${a?.title}`} actions={<VerificationBadge outcome={item.outcome} />} />
+      <PageHeader title={`Review ${item.id}`} description={`${who} (@${whoLogin}) · ${what}`} actions={<VerificationBadge outcome={item.outcome} />} />
       <div className="grid gap-4 xl:grid-cols-5">
         <div className="xl:col-span-3"><EvidencePanel submission={item} /></div>
         <Card className="h-fit xl:col-span-2">

@@ -6,7 +6,7 @@ import { Badge } from "../../components/ui/Badge.jsx";
 import { Button } from "../../components/ui/Button.jsx";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
 import { Dialog } from "../../components/ui/Dialog.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
+import { useToast } from "../../hooks/useToast.js";
 import { formatDateTime } from "../../lib/format.js";
 
 export function AccessQueuePage() {
@@ -14,24 +14,37 @@ export function AccessQueuePage() {
   const [state, setState] = useState({ loading: true, error: null, items: [] });
   const [confirm, setConfirm] = useState(null); // {item, decision}
   const [busy, setBusy] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-  const load = () => {
-    setState((s) => ({ ...s, loading: true, error: null }));
+  // Fetch-on-mount (+ retry via `attempt`): the loading flag is part of the
+  // initial state and is only reset from the async continuations below, so
+  // no synchronous setState happens inside this effect.
+  useEffect(() => {
+    let live = true;
     getAccessRequests()
-      .then((r) => setState({ loading: false, error: null, items: r.data }))
-      .catch((e) => setState({ loading: false, error: e.message, items: [] }));
+      .then((r) => {
+        if (live) setState({ loading: false, error: null, items: r.data });
+      })
+      .catch((e) => {
+        if (live) setState({ loading: false, error: e.message, items: [] });
+      });
+    return () => { live = false; };
+  }, [attempt]);
+
+  const reload = () => {
+    setState((s) => ({ ...s, loading: true, error: null }));
+    setAttempt((a) => a + 1);
   };
-  useEffect(load, []);
 
   const decide = async () => {
     if (!confirm) return;
     setBusy(true);
     try {
       const r = await decideAccessRequest(confirm.item.id, confirm.decision);
-      setState((s) => ({ ...s, items: s.items.map((x) => (x.id === r.data.id ? r.data : x)) }));
+      setState((s) => ({ ...s, items: s.items.map((x) => (x.id === r.data.id ? { ...x, ...r.data } : x)) }));
       toast.push({
         title: confirm.decision === "approve" ? "Request approved" : "Request rejected",
-        body: confirm.decision === "approve" ? `@${r.data.githubLogin} can now access the program (demo).` : `Rejection starts a 24-hour reapply lock (demo).`,
+        body: confirm.decision === "approve" ? `@${r.data.githubLogin} can now access the program.` : `Rejection starts a 24-hour reapply lock.`,
       });
       setConfirm(null);
     } catch (e) {
@@ -40,7 +53,7 @@ export function AccessQueuePage() {
   };
 
   if (state.loading) return <LoadingState label="Loading access requests…" />;
-  if (state.error) return <ErrorState body={state.error} onRetry={load} />;
+  if (state.error) return <ErrorState body={state.error} onRetry={reload} />;
 
   const pending = state.items.filter((r) => r.status === "PENDING");
   const decided = state.items.filter((r) => r.status !== "PENDING");

@@ -4,7 +4,7 @@ import { Inbox, ScanSearch, BookOpenCheck, Users, ArrowRight, TriangleAlert } fr
 import { getAdminOverview } from "../../services/api.js";
 import { PageHeader, StatCard, Card } from "../../components/ui/Card.jsx";
 import { Badge } from "../../components/ui/Badge.jsx";
-import { LoadingState, ErrorState } from "../../components/ui/States.jsx";
+import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
 const ActivityChart = lazy(() => import("../../components/data-display/ActivityChart.jsx").then((m) => ({ default: m.ActivityChart })));
 import { formatDateTime } from "../../lib/format.js";
 
@@ -47,9 +47,13 @@ export function AdminDashboard() {
         <Card className="xl:col-span-3">
           <h2 className="section-title">Class activity</h2>
           <p className="mb-3 text-[13px] text-muted">Qualifying evidence per day across all students.</p>
-          <Suspense fallback={<LoadingState label="Loading chart…" lines={2} />}>
-            <ActivityChart data={d.activitySeries} />
-          </Suspense>
+          {d.activitySeries.length === 0 ? (
+            <EmptyState title="No trend data" body="Daily class activity is not reported by the server yet. Totals above are live." />
+          ) : (
+            <Suspense fallback={<LoadingState label="Loading chart…" lines={2} />}>
+              <ActivityChart data={d.activitySeries} />
+            </Suspense>
+          )}
         </Card>
         <Card className="xl:col-span-2">
           <h2 className="section-title">Needs attention</h2>

@@ -1,15 +1,16 @@
 import { useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 import { Sidebar, Topbar, Toasts } from "../components/layout/Chrome.jsx";
 import { studentNav, adminNav } from "../config/navigation.js";
 import { useContainedFocus } from "../hooks/useContainedFocus.js";
 
-/** Client-side route guard for the demo. Real enforcement lives server-side (NFR-SEC-01). */
+/** Client-side route guard (convenience only). Real enforcement lives server-side (NFR-SEC-01). */
 export function ProtectedRoute({ allow, children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const loc = useLocation();
+  if (loading) return null;
   if (!user) return <Navigate to="/sign-in" replace state={{ from: loc.pathname }} />;
   if (allow === "admin" && user.role !== "admin") return <Navigate to="/forbidden" replace />;
   if (allow === "student" && user.role !== "student") return <Navigate to="/forbidden" replace />;
@@ -40,6 +41,7 @@ function MobileNavDrawer({ nav, badges, onClose }) {
 
 function Shell({ nav, consoleName, badges }) {
   const [open, setOpen] = useState(false);
+  const { isDemo } = useAuth();
   const close = () => setOpen(false);
   return (
     <div className="min-h-svh bg-canvas">
@@ -58,7 +60,9 @@ function Shell({ nav, consoleName, badges }) {
           <Outlet />
         </main>
         <footer className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
-          <p className="text-xs text-muted">DSA Practice Tracker · frontend demo — evidence shown is illustrative mock data, not live GitHub analysis.</p>
+          <p className="text-xs text-muted">{isDemo
+            ? "DSA Practice Tracker · frontend demo — evidence shown is illustrative mock data, not live GitHub analysis."
+            : "DSA Practice Tracker · live data from the class server. Verification outcomes reflect stored evidence."}</p>
         </footer>
       </div>
       <Toasts />

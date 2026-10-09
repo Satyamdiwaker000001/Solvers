@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Flame, BookOpenCheck, ScanSearch, GitCommitHorizontal, ArrowRight } from "lucide-react";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
 import { getStudentOverview, getStudentAssignments, getLeaderboard } from "../../services/api.js";
 import { PageHeader, StatCard, Card } from "../../components/ui/Card.jsx";
 import { Badge } from "../../components/ui/Badge.jsx";
@@ -77,7 +77,7 @@ export function StudentDashboard() {
           ) : (
             <ul className="grid gap-2">
               {todo.map((a) => {
-                const p = problemById(a.problemId);
+                const p = a.problem ?? problemById(a.problemId);
                 return (
                   <li key={a.id}>
                     <Link to={`/app/problems/${a.problemId}`} className="block min-w-0 rounded-xl border border-border p-3 transition hover:border-primary/50 hover:bg-primary-subtle/40">
@@ -88,7 +88,7 @@ export function StudentDashboard() {
                         </Badge>
                         <span className="tnum ml-auto text-xs text-muted">due {formatDate(a.dueAt)}</span>
                       </div>
-                      <p className="mt-1 truncate font-semibold">{p?.title}</p>
+                      <p className="mt-1 truncate font-semibold">{p?.title ?? a.title ?? "Assignment"}</p>
                       <p className="truncate text-[13px] text-muted">{a.title}</p>
                     </Link>
                   </li>

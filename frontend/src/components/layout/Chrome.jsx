@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { GraduationCap, Menu, X, ShieldCheck, FlaskConical } from "lucide-react";
 import { GithubMark } from "../ui/GithubMark.jsx";
-import { useAuth } from "../../context/AuthContext.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
+import { useToast } from "../../hooks/useToast.js";
 import { cn } from "../ui/cn.js";
 
 function Brand() {
@@ -75,6 +75,8 @@ function SidebarLink({ item, onNavigate, badge }) {
 }
 
 export function DemoBadge() {
+  const { isDemo } = useAuth();
+  if (!isDemo) return null;
   return (
     <p className="flex items-start gap-1.5 rounded-xl border border-dashed border-border bg-canvas/70 p-2.5 text-xs leading-snug text-muted">
       <FlaskConical aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
