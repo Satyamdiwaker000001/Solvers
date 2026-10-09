@@ -37,15 +37,18 @@ export function apiNotFound(req, res, next) {
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(isProd) {
   return (err, req, res, _next) => {
+    if (res.headersSent) return res.end();
     if (!err.status && /CORS blocked/.test(err.message || "")) {
       err = new AppError(403, "FORBIDDEN", "Origin not allowed");
     }
-    const status = err.status && Number.isInteger(err.status) ? err.status : 500;
-    const code = err.code || "INTERNAL_ERROR";
+    const parserError = err?.type === "entity.parse.failed";
+    const sizeError = err?.type === "entity.too.large";
+    const status = parserError || sizeError ? 400 : (err.status && Number.isInteger(err.status) ? err.status : 500);
+    const code = parserError ? "INVALID_JSON" : sizeError ? "PAYLOAD_TOO_LARGE" : (err.code || "INTERNAL_ERROR");
     if (status >= 500) {
       req.log?.error?.({ err: String(err && err.stack || err), reqId: req.id }, "unhandled error");
     }
-    const body = { error: { code, message: status >= 500 && isProd ? "Unexpected server error" : (err.message || "Unexpected server error") } };
+    const body = { error: { code, message: parserError ? "Malformed JSON payload" : sizeError ? "Request payload is too large" : status >= 500 && isProd ? "Unexpected server error" : (err.message || "Unexpected server error") } };
     if (err.details !== undefined && status < 500) body.error.details = err.details;
     if (err.retryAfterSec !== undefined) {
       body.error.retryAfter = err.retryAfterSec;

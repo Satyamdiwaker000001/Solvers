@@ -17,7 +17,9 @@
 - **Leaderboard (FR-LB-01…04, BR-09):** formula + time window displayed next to rankings; reproducible from
   stored qualifying events (mocked for now).
 - **Audit (FR-AUD-01…03):** admin audit-log screen; mutations toast “demo” and append locally.
-- **UI/UX spec:** tokens (canvas `#F5F7FA`, primary `#2859A8`, success/warning/danger + bg pairs), Inter type,
+- **UI/UX spec:** approved tokens (canvas `#E8EBF7`, surface `#FFFFFF`, secondary `#ACBED8`, primary `#D78521`,
+  hover `#A96112`, highlight `#F2D398`, danger `#DE1A1A`, ink `#202538`, muted `#596477`, border `#D1D9E8`,
+  success `#246B49`), Inter type,
   sidebar → drawer responsive shell, tables → cards on narrow screens, loading/empty/error/success states,
   keyboard focus, `prefers-reduced-motion`, non-color status cues (icon + label).
 

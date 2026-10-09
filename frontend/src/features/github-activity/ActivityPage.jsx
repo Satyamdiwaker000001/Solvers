@@ -5,7 +5,6 @@ import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
 import { EvidencePanel } from "../../components/data-display/EvidencePanel.jsx";
 import { VerificationBadge } from "../../components/ui/Badge.jsx";
-import { assignmentById, problemById } from "../../mocks/data.js";
 import { formatDateTime } from "../../lib/format.js";
 
 const OUTCOMES = ["ALL", "VERIFIED", "NEEDS_REVIEW", "INCOMPLETE", "CHECK_FAILED", "INGESTION_PENDING"];
@@ -33,7 +32,7 @@ export function ActivityPage() {
     <div className="grid gap-4">
       <PageHeader
         title="GitHub activity"
-        description="Evidence observed in your folder on the central class repository. The repository is evidence, not infallible proof — verification maps each change to a known problem before it counts."
+        description="Evidence tracked from your branch commits in the class repository."
       />
       <Card>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by verification outcome">
@@ -52,15 +51,14 @@ export function ActivityPage() {
       ) : (
         <ol className="relative grid gap-3 border-l-2 border-border pl-4 sm:pl-6">
           {items.map((s) => {
-            const a = assignmentById(s.assignmentId);
-            const p = a ? problemById(a.problemId) : null;
+            const title = s.problemTitle || s.assignmentTitle || s.path || s.assignmentId || "Submission";
             return (
               <li key={s.id} className="relative">
                 <span aria-hidden="true" className="absolute -left-[21px] top-4 size-3 rounded-full border-2 border-surface bg-primary sm:-left-[29px]" />
                 <Card>
                   <div className="flex flex-wrap items-center gap-2">
                     <VerificationBadge outcome={s.outcome} />
-                    <p className="min-w-0 flex-1 truncate text-sm font-bold">{s.problemTitle || p?.title || s.assignmentTitle || s.assignmentId}</p>
+                    <p className="min-w-0 flex-1 truncate text-sm font-bold">{title}</p>
                     <span className="tnum text-xs text-muted">{formatDateTime(s.observedAt)}</span>
                   </div>
                   <div className="mt-2"><EvidencePanel submission={s} /></div>

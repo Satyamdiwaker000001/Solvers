@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "admin:create": "node scripts/create-admin.js",
     "test": "node --test --test-force-exit --test-concurrency=1 tests/*.test.js",
     "lint": "oxlint"
   },

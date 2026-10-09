@@ -1,7 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { StudentLayout, AdminLayout, ProtectedRoute } from "./layouts/AppLayouts.jsx";
-import { SignInPage, AdminLoginPage, AccessStatusPage, AuthFinishPage } from "./features/auth/AuthPages.jsx";
-import { StudentDashboard } from "./features/dashboard/StudentDashboard.jsx";
+import { AccessStatusPage, AuthFinishPage } from "./features/auth/AuthPages.jsx";
+import { SignInPage, AdminLoginPage } from "./features/auth/LoginPageOnly.jsx";
+import { StudentDashboardConcept as StudentDashboard } from "./features/dashboard/StudentDashboardConcept.jsx";
 import { AdminDashboard } from "./features/dashboard/AdminDashboard.jsx";
 import { ProblemsPage, ProblemDetailPage } from "./features/problems/ProblemsPages.jsx";
 import { ProblemsAdminPage, ProblemFormPage } from "./features/problems/ProblemsAdmin.jsx";

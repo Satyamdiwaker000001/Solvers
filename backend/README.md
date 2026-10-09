@@ -52,7 +52,9 @@ docs/                 # ADRs (sessions, admins, rate limits, integration)
 
 See `.env.example` (placeholders only). Required: `MONGODB_URI`,
 `GITHUB_CLIENT_ID/SECRET/CALLBACK_URL`, `ADMIN_GITHUB_IDS` (exactly two
-numeric GitHub user IDs), `SESSION_SECRET` (production). Optional tuning:
+numeric GitHub user IDs), `SESSION_SECRET` (production). `GITHUB_REPO_TOKEN`
+is optional for public repositories, but recommended as a fine-grained token
+with read-only Contents permission for the central repository. Optional tuning:
 `PORT`, `CLIENT_ORIGIN` (CORS allowlist, comma-separated), `TRUST_PROXY`,
 `JSON_LIMIT`, rate-limit windows/maxima (`RL_*`), concurrency
 (`CONC_WEBHOOK_*`), leaderboard weights (`LB_*`, `REPORT_TIMEZONE`),

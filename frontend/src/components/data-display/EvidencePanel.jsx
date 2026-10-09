@@ -17,14 +17,14 @@ export function EvidencePanel({ submission, compact }) {
       <dl className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
         <div className="min-w-0">
           <dt className="text-xs font-semibold text-muted">File path</dt>
-          <dd className="mono long-path flex items-center gap-1.5">
-            <FileCode2 aria-hidden="true" className="size-3.5 shrink-0 text-muted" />
-            {submission.path}
+          <dd className="mono long-path flex items-start gap-1.5 min-w-0">
+            <FileCode2 aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-muted" />
+            <span className="min-w-0 break-all">{submission.path}</span>
           </dd>
         </div>
         <div className="min-w-0">
           <dt className="text-xs font-semibold text-muted">Commit</dt>
-          <dd className="mono" title={submission.commitSha}>{shortSha(submission.commitSha)}</dd>
+          <dd className="mono truncate" title={submission.commitSha}>{shortSha(submission.commitSha)}</dd>
         </div>
         <div>
           <dt className="text-xs font-semibold text-muted">Change</dt>
@@ -44,7 +44,7 @@ export function EvidencePanel({ submission, compact }) {
         <div className="mt-2 rounded-lg border border-warning/30 bg-warning-bg/60 p-2.5 text-[13px]">
           <p className="font-semibold">Similarity signal {(submission.similarity.score * 100).toFixed(0)}% — review required, not a verdict</p>
           <p className="mt-0.5 text-muted">{submission.similarity.detail}</p>
-          <p className="mono long-path mt-1">vs {submission.similarity.against}</p>
+          <p className="mono long-path mt-1 break-all">vs {submission.similarity.against}</p>
         </div>
       )}
       {!compact && submission.checkFailure && (

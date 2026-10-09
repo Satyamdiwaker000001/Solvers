@@ -1,12 +1,15 @@
 import crypto from "node:crypto";
 import { Router } from "express";
-import { User } from "../models.js";
+import { AdminCredential, User } from "../models.js";
 import { asyncHandler, unauthorized, badRequest } from "../middleware/errors.js";
 import { rateLimit, ipKey } from "../middleware/rateLimit.js";
 import { ensureCsrfToken, rotateCsrfToken } from "../middleware/csrf.js";
 import { serializeUser } from "../services/approvals.js";
 import { nextStudentId } from "../lib/studentIds.js";
 import { buildAuthorizeUrl } from "../lib/github.js";
+import { verifyPassword } from "../lib/passwords.js";
+import { validateBody } from "../middleware/validate.js";
+import { adminLoginSchema } from "./schemas.js";
 
 const OAUTH_STATE_TTL_MS = 10 * 60_000;
 
@@ -27,16 +30,30 @@ function clientOrigin(req) {
  * Resolve a GitHub identity to an internal user. Role is derived ONLY from
  * the ADMIN_GITHUB_IDS allowlist; existing admins removed from the allowlist
  * are demoted (revocation). Students approved earlier keep their status and
- * stable studentId.
+ * stable studentId. GitHub login renames update githubLogin without changing
+ * the internal canonical identity.
  */
 async function resolveUser(cfg, profile) {
-  const isAdmin = cfg.adminGithubIds.includes(profile.githubUserId);
-  let user = await User.findOne({ githubUserId: profile.githubUserId });
+  if (!profile || profile.githubUserId === undefined || profile.githubUserId === null) {
+    throw new Error("GitHub profile is missing numeric user id");
+  }
+  const numericId = String(profile.githubUserId).trim();
+  if (!/^\d+$/.test(numericId)) {
+    throw new Error("Invalid GitHub numeric user id");
+  }
+  const githubLogin = String(profile.githubLogin || "").trim();
+  if (!githubLogin) {
+    throw new Error("GitHub profile is missing login");
+  }
+
+  const isAdmin = cfg.adminGithubIds.includes(numericId);
+  let user = await User.findOne({ githubUserId: numericId });
   if (!user) {
     user = new User({
-      githubUserId: profile.githubUserId,
-      githubLogin: profile.githubLogin,
-      displayName: profile.displayName || profile.githubLogin,
+      githubUserId: numericId,
+      githubLogin,
+      displayName: String(profile.displayName || githubLogin).trim(),
+      avatarUrl: profile.avatarUrl || "",
       role: isAdmin ? "admin" : "student",
       accountStatus: isAdmin ? "approved" : "pending",
     });
@@ -49,8 +66,20 @@ async function resolveUser(cfg, profile) {
     return user;
   }
   let changed = false;
-  if (user.githubLogin !== profile.githubLogin) { user.githubLogin = profile.githubLogin; changed = true; }
-  if (!user.displayName && profile.displayName) { user.displayName = profile.displayName; changed = true; }
+  if (user.githubLogin !== githubLogin) {
+    user.githubLogin = githubLogin;
+    changed = true;
+  }
+  const newDisplayName = String(profile.displayName || "").trim();
+  if (newDisplayName && user.displayName !== newDisplayName) {
+    user.displayName = newDisplayName;
+    changed = true;
+  }
+  const newAvatarUrl = String(profile.avatarUrl || "").trim();
+  if (user.avatarUrl !== newAvatarUrl) {
+    user.avatarUrl = newAvatarUrl;
+    changed = true;
+  }
   if (isAdmin && user.role !== "admin") {
     user.role = "admin";
     if (user.accountStatus !== "suspended") user.accountStatus = "approved";
@@ -126,6 +155,53 @@ export function authRoutes() {
     } catch (err) {
       return next(badRequest(`GitHub sign-in failed: ${err.message}`));
     }
+  }));
+
+  router.post("/admin/login", authRateLimiter(), validateBody(adminLoginSchema), asyncHandler(async (req, res, next) => {
+    const cfg = req.app.get("config");
+    const { username, password } = req.body;
+    const cleanUser = username.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    const credential = await AdminCredential.findOne({ username: cleanUser, active: true }).select("+passwordHash");
+    const passMatch = credential ? verifyPassword(cleanPass, credential.passwordHash) : false;
+
+    const numericAdminId = cfg.adminGithubIds[0];
+    let adminUser = await User.findOne({ githubUserId: numericAdminId });
+    if (adminUser?.githubLogin) {
+      validUsernames.push(adminUser.githubLogin.toLowerCase());
+    }
+
+    if (!credential || !passMatch) {
+      return next(unauthorized("Invalid administrator credentials"));
+    }
+
+    if (!adminUser) {
+      const { studentId, folder } = await nextStudentId(cfg.repo.folderRoot);
+      adminUser = new User({
+        githubUserId: numericAdminId,
+        githubLogin: "professor-admin",
+        displayName: "Professor Admin",
+        role: "admin",
+        accountStatus: "approved",
+        studentId,
+        folder,
+      });
+      await adminUser.save();
+    } else if (adminUser.role !== "admin") {
+      adminUser.role = "admin";
+      adminUser.accountStatus = "approved";
+      await adminUser.save();
+    }
+
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((err) => (err ? reject(err) : resolve()));
+    });
+    req.session.userId = String(adminUser._id);
+    credential.lastLoginAt = new Date();
+    await credential.save();
+    rotateCsrfToken(req);
+    res.json({ data: { user: serializeUser(adminUser) } });
   }));
 
   router.post("/logout", asyncHandler(async (req, res) => {

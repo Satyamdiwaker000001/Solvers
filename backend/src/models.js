@@ -17,6 +17,7 @@ const userSchema = new Schema(
     githubUserId: { type: String, required: true, unique: true, index: true },
     githubLogin: { type: String, required: true },
     displayName: { type: String, default: "" },
+    avatarUrl: { type: String, default: "", maxlength: 2000 },
     role: { type: String, enum: ["student", "admin"], default: "student", required: true },
     accountStatus: {
       type: String,
@@ -25,12 +26,32 @@ const userSchema = new Schema(
       required: true,
       index: true,
     },
-    studentId: { type: String, unique: true, sparse: true, index: true },
+    studentId: { type: String, index: true },
     folder: { type: String, default: "" },
   },
   { timestamps: true },
 );
+userSchema.index(
+  { studentId: 1 },
+  { unique: true, partialFilterExpression: { studentId: { $type: "string", $gt: "" } }, name: "unique_student_id" },
+);
+userSchema.index(
+  { folder: 1 },
+  { unique: true, partialFilterExpression: { folder: { $type: "string", $gt: "" } }, name: "unique_student_folder" },
+);
 export const User = mongoose.model("User", userSchema);
+
+/** ADMIN_CREDENTIAL — username + one-way password hash; plaintext is never stored. */
+const adminCredentialSchema = new Schema(
+  {
+    username: { type: String, required: true, unique: true, trim: true, lowercase: true, maxlength: 160 },
+    passwordHash: { type: String, required: true, select: false, maxlength: 300 },
+    active: { type: Boolean, default: true, index: true },
+    lastLoginAt: { type: Date, default: null },
+  },
+  { timestamps: true },
+);
+export const AdminCredential = mongoose.model("AdminCredential", adminCredentialSchema);
 
 /** ACCESS_REQUEST — at most one *pending* request per user (partial unique index). */
 const accessRequestSchema = new Schema(
@@ -90,6 +111,7 @@ const assignmentSchema = new Schema(
     title: { type: String, default: "", trim: true, maxlength: 200 },
     dueAt: { type: Date, default: null },
     instructions: { type: String, default: "", maxlength: 5000 },
+    dailyMinimum: { type: Number, default: 0, min: 0, max: 100 },
     status: { type: String, enum: ["active", "archived"], default: "active", required: true, index: true },
     targets: { type: [targetSchema], default: [] },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
@@ -100,19 +122,32 @@ assignmentSchema.index({ status: 1, type: 1 });
 assignmentSchema.index({ "targets.student": 1 });
 export const Assignment = mongoose.model("Assignment", assignmentSchema);
 
+/** TRACKING_POLICY — admin-controlled class target used by rolling reports. */
+const trackingPolicySchema = new Schema(
+  {
+    key: { type: String, unique: true, default: "default" },
+    dailyMinimum: { type: Number, min: 0, max: 100, default: 1 },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+  },
+  { timestamps: true },
+);
+export const TrackingPolicy = mongoose.model("TrackingPolicy", trackingPolicySchema);
+
 /**
- * SUBMISSION + verification artifacts. Written by the (deferred) ingestion
- * pipeline; the API only reads them for reports/leaderboard. Kept so the
- * data model matches the approved ERD and leaderboard math is testable.
+ * SUBMISSION + verification artifacts. Written by the ingestion
+ * pipeline; the API reads them for reports/leaderboard. Unresolved evidence
+ * is safely quarantined with student: null rather than guessing identity.
  */
 const submissionSchema = new Schema(
   {
-    student: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    assignment: { type: Schema.Types.ObjectId, ref: "Assignment", required: true, index: true },
+    student: { type: Schema.Types.ObjectId, ref: "User", default: null, index: true },
+    assignment: { type: Schema.Types.ObjectId, ref: "Assignment", default: null, index: true },
     repository: { type: String, default: "" },
     commitSha: { type: String, required: true },
     path: { type: String, default: "" },
     status: { type: String, default: "observed" },
+    sourceType: { type: String, enum: ["push", "pull_request"], default: "push", index: true },
+    pullRequestNumber: { type: Number, default: null },
     outcome: {
       type: String,
       enum: ["VERIFIED", "NEEDS_REVIEW", "INCOMPLETE", "CHECK_FAILED", "INGESTION_PENDING", "ANALYSIS_FAILED"],
@@ -128,11 +163,33 @@ const submissionSchema = new Schema(
     additions: { type: Number, default: 0 },
     deletions: { type: Number, default: 0 },
     note: { type: String, default: "" },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    reviewedAt: { type: Date, default: null },
+    reviewComment: { type: String, default: "" },
     firstObservedAt: { type: Date, default: Date.now, required: true },
   },
   { timestamps: false },
 );
-submissionSchema.index({ student: 1, assignment: 1, commitSha: 1 }, { unique: true });
+submissionSchema.index(
+  { student: 1, assignment: 1, commitSha: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { student: { $type: "objectId" }, assignment: { $type: "objectId" } },
+    name: "unique_student_assignment_submission",
+  },
+);
+submissionSchema.index(
+  { student: 1, commitSha: 1, path: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { student: { $type: "objectId" }, assignment: null },
+    name: "unique_student_unassigned_submission",
+  },
+);
+submissionSchema.index(
+  { commitSha: 1, path: 1 },
+  { unique: true, partialFilterExpression: { student: null }, name: "unique_unresolved_submission" },
+);
 export const Submission = mongoose.model("Submission", submissionSchema);
 
 /** PROGRESS_EVENT — qualifying events only; sourceKey unique => idempotent, no double count. */
@@ -168,6 +225,7 @@ export const AuditLog = mongoose.model("AuditLog", auditLogSchema);
 const webhookEventSchema = new Schema(
   {
     deliveryId: { type: String, required: true, unique: true },
+    student: { type: Schema.Types.ObjectId, ref: "User", default: null, index: true },
     event: { type: String, default: "" },
     repo: { type: String, default: "" },
     status: {
@@ -178,15 +236,22 @@ const webhookEventSchema = new Schema(
       index: true,
     },
     receivedAt: { type: Date, default: Date.now, required: true },
+    payload: { type: Schema.Types.Mixed, default: null },
     // Worker bookkeeping (populated by services/evidence.js; never secrets).
     processedAt: { type: Date, default: null },
     commitSha: { type: String, default: "" },
     branch: { type: String, default: "" },
     retryable: { type: Boolean, default: false },
     error: { type: String, default: "", maxlength: 2000 },
+    attempts: { type: Number, default: 0 },
+    maxAttempts: { type: Number, default: 3 },
+    nextRetryAt: { type: Date, default: null, index: true },
+    claimedAt: { type: Date, default: null },
+    leaseExpiresAt: { type: Date, default: null, index: true },
   },
   { timestamps: false },
 );
+webhookEventSchema.index({ status: 1, leaseExpiresAt: 1, nextRetryAt: 1, receivedAt: 1 });
 export const WebhookEvent = mongoose.model("WebhookEvent", webhookEventSchema);
 
 /** RATE_BUCKET — shared fixed-window counters (works across instances). */

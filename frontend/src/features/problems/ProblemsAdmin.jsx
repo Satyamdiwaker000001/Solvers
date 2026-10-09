@@ -40,7 +40,7 @@ export function ProblemsAdminPage() {
     <div className="grid gap-4">
       <PageHeader
         title="Problems"
-        description="Create, publish, and assign problem statements. Common assignments reach the whole class; individual ones stay visible only to their targets (BR-05)."
+        description="Create, publish, and assign problem statements to the class or selected students."
         actions={<Link to="/admin/problems/new" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-strong"><Plus aria-hidden="true" className="size-4" /> New problem</Link>}
       />
       {state.items.length === 0 ? (
@@ -86,6 +86,7 @@ function AssignDialog({ problem, onClose, onDone }) {
   const [scope, setScope] = useState("COMMON");
   const [due, setDue] = useState("");
   const [instructions, setInstructions] = useState("");
+  const [dailyMinimum, setDailyMinimum] = useState(0);
   const [selected, setSelected] = useState([]);
   const [students, setStudents] = useState({ loading: true, error: null, items: [] });
   const [busy, setBusy] = useState(false);
@@ -135,6 +136,7 @@ function AssignDialog({ problem, onClose, onDone }) {
         title: "",
         dueAt,
         instructions,
+        dailyMinimum,
         studentIds: scope === "INDIVIDUAL" ? selected : [],
       });
       const count = created.data?.targetCount ?? selected.length;
@@ -195,7 +197,7 @@ function AssignDialog({ problem, onClose, onDone }) {
             )}
           </Field>
         )}
-        <Field label="Due date (optional)" htmlFor="due"><TextInput id="due" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
+        <div className="grid gap-3 sm:grid-cols-2"><Field label="Due date (optional)" htmlFor="due"><TextInput id="due" type="date" value={due} onChange={(e) => setDue(e.target.value)} /></Field><Field label="Daily minimum (optional)" htmlFor="daily-min" hint="0 uses the class tracking target."><TextInput id="daily-min" type="number" min="0" max="100" value={dailyMinimum} onChange={(e) => setDailyMinimum(Number(e.target.value))} /></Field></div>
         <Field label="Instructions (optional)" htmlFor="instr" hint="Shown to the assigned students alongside the problem.">
           <TextArea id="instr" rows={3} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="e.g. Push your solution under arrays/ in your folder." />
         </Field>
@@ -263,7 +265,7 @@ export function ProblemFormPage() {
   return (
     <div className="grid gap-4">
       <Link to="/admin/problems" className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-primary"><ArrowLeft aria-hidden="true" className="size-4" /> Problems</Link>
-      <PageHeader title={isNew ? "New problem" : `Edit ${form.id ?? ""}`} description="Title and statement are required. Publishing rules for assignments with existing submissions are still an open decision — editing here never rewrites history silently." />
+      <PageHeader title={isNew ? "New problem" : `Edit ${form.id ?? ""}`} description="Title and statement are required. Published problems can be assigned to students." />
       <form onSubmit={submit} noValidate className="grid gap-4">
         <Card className="grid gap-4">
           {failed && <p role="alert" className="rounded-xl bg-danger-bg/60 p-3 text-sm font-medium text-danger">{failed}</p>}

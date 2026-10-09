@@ -45,7 +45,7 @@ async function resolveCommonTargets() {
  * definition, per-student target records — BR-04). INDIVIDUAL targets exactly
  * the validated selection (BR-05).
  */
-export async function createAssignment({ adminUser, problemId, type, title = "", dueAt = null, instructions = "", studentIds = [] }) {
+export async function createAssignment({ adminUser, problemId, type, title = "", dueAt = null, instructions = "", dailyMinimum = 0, studentIds = [] }) {
   const problem = await getPublishedProblem(problemId);
   const targets = type === "COMMON" ? await resolveCommonTargets() : await resolveIndividualTargets(studentIds);
   const assignment = await Assignment.create({
@@ -54,6 +54,7 @@ export async function createAssignment({ adminUser, problemId, type, title = "",
     title: String(title || "").slice(0, 200),
     dueAt,
     instructions: String(instructions || "").slice(0, 5000),
+    dailyMinimum: Number(dailyMinimum) || 0,
     status: "active",
     targets,
     createdBy: adminUser._id,
@@ -90,6 +91,7 @@ function serializeAssignment(a, { forStudentId = null } = {}) {
     title: a.title || "",
     dueAt: a.dueAt || null,
     instructions: a.instructions || "",
+    dailyMinimum: a.dailyMinimum || 0,
     status: a.status,
     targets: visibleTargets.map((t) => ({
       studentId: String(t.student && t.student._id ? t.student._id : t.student),
@@ -131,7 +133,7 @@ export async function listAssignmentsForAdmin({ page, limit }) {
   const total = await Assignment.countDocuments(filter);
   const docs = await Assignment.find(filter)
     .populate("problem", "title topic difficulty statement examples constraints sourceUrl")
-    .populate("targets.student", "displayName githubLogin studentId")
+    .populate("targets.student", "displayName githubLogin studentId avatarUrl")
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)

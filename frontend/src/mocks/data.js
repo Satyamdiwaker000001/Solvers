@@ -15,14 +15,14 @@ export const CENTRAL_REPO = {
 };
 
 export const students = [
-  { id: "STU001", displayName: "Aarav Sharma", githubLogin: "aarav-codes", githubUserId: "10240111", status: "APPROVED", folder: "students/STU001", streakDays: 12, joinedAt: "2026-07-14T09:00:00Z" },
-  { id: "STU002", displayName: "Diya Patel", githubLogin: "diya-dev", githubUserId: "10240222", status: "APPROVED", folder: "students/STU002", streakDays: 9, joinedAt: "2026-07-14T09:00:00Z" },
-  { id: "STU003", displayName: "Kabir Singh", githubLogin: "kabirsingh", githubUserId: "10240333", status: "APPROVED", folder: "students/STU003", streakDays: 6, joinedAt: "2026-07-15T09:00:00Z" },
-  { id: "STU004", displayName: "Meera Nair", githubLogin: "meera-nair", githubUserId: "10240444", status: "APPROVED", folder: "students/STU004", streakDays: 11, joinedAt: "2026-07-15T09:00:00Z" },
-  { id: "STU005", displayName: "Arjun Rao", githubLogin: "arjunrao", githubUserId: "10240555", status: "APPROVED", folder: "students/STU005", streakDays: 3, joinedAt: "2026-07-22T09:00:00Z" },
-  { id: "STU006", displayName: "Ishita Verma", githubLogin: "ishita-v", githubUserId: "10240666", status: "APPROVED", folder: "students/STU006", streakDays: 7, joinedAt: "2026-07-22T09:00:00Z" },
-  { id: "STU007", displayName: "Rohan Gupta", githubLogin: "rohan-g", githubUserId: "10240777", status: "APPROVED", folder: "students/STU007", streakDays: 1, joinedAt: "2026-08-02T09:00:00Z" },
-  { id: "STU008", displayName: "Ananya Iyer", githubLogin: "ananya-iyer", githubUserId: "10240888", status: "APPROVED", folder: "students/STU008", streakDays: 5, joinedAt: "2026-08-02T09:00:00Z" },
+  { id: "STU001", displayName: "Aarav Sharma", githubLogin: "aarav-codes", githubUserId: "10240111", avatarUrl: "https://avatars.githubusercontent.com/u/10240111?v=4", status: "APPROVED", folder: "students/STU001", streakDays: 12, joinedAt: "2026-07-14T09:00:00Z" },
+  { id: "STU002", displayName: "Diya Patel", githubLogin: "diya-dev", githubUserId: "10240222", avatarUrl: "https://avatars.githubusercontent.com/u/10240222?v=4", status: "APPROVED", folder: "students/STU002", streakDays: 9, joinedAt: "2026-07-14T09:00:00Z" },
+  { id: "STU003", displayName: "Kabir Singh", githubLogin: "kabirsingh", githubUserId: "10240333", avatarUrl: "https://avatars.githubusercontent.com/u/10240333?v=4", status: "APPROVED", folder: "students/STU003", streakDays: 6, joinedAt: "2026-07-15T09:00:00Z" },
+  { id: "STU004", displayName: "Meera Nair", githubLogin: "meera-nair", githubUserId: "10240444", avatarUrl: "https://avatars.githubusercontent.com/u/10240444?v=4", status: "APPROVED", folder: "students/STU004", streakDays: 11, joinedAt: "2026-07-15T09:00:00Z" },
+  { id: "STU005", displayName: "Arjun Rao", githubLogin: "arjunrao", githubUserId: "10240555", avatarUrl: "https://avatars.githubusercontent.com/u/10240555?v=4", status: "APPROVED", folder: "students/STU005", streakDays: 3, joinedAt: "2026-07-22T09:00:00Z" },
+  { id: "STU006", displayName: "Ishita Verma", githubLogin: "ishita-v", githubUserId: "10240666", avatarUrl: "https://avatars.githubusercontent.com/u/10240666?v=4", status: "APPROVED", folder: "students/STU006", streakDays: 7, joinedAt: "2026-07-22T09:00:00Z" },
+  { id: "STU007", displayName: "Rohan Gupta", githubLogin: "rohan-g", githubUserId: "10240777", avatarUrl: "https://avatars.githubusercontent.com/u/10240777?v=4", status: "APPROVED", folder: "students/STU007", streakDays: 1, joinedAt: "2026-08-02T09:00:00Z" },
+  { id: "STU008", displayName: "Ananya Iyer", githubLogin: "ananya-iyer", githubUserId: "10240888", avatarUrl: "https://avatars.githubusercontent.com/u/10240888?v=4", status: "APPROVED", folder: "students/STU008", streakDays: 5, joinedAt: "2026-08-02T09:00:00Z" },
 ];
 
 export const problems = [

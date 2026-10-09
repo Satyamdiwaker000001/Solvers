@@ -76,6 +76,11 @@ export function createApp(cfg, { githubClient = null } = {}) {
   // (body-parser skips already-parsed requests downstream).
   app.use("/api/v1/integrations", express.raw({ type: "application/json", limit: cfg.jsonLimit }), webhookRoutes());
 
+  // Apply the shared API limiter before JSON parsing and session/database work
+  // so abusive traffic is rejected as early as possible.
+  const general = cfg.rateLimit.general;
+  app.use("/api/", rateLimit({ prefix: "rl:general", windowMs: general.windowMs, max: general.max, key: ipKey }));
+
   app.use(express.json({ limit: cfg.jsonLimit }));
   app.use(express.urlencoded({ extended: false, limit: cfg.jsonLimit }));
 
@@ -99,9 +104,6 @@ export function createApp(cfg, { githubClient = null } = {}) {
 
   app.use(loadSessionUser);
   app.use(ensureCsrfToken);
-
-  const general = cfg.rateLimit.general;
-  app.use("/api/", rateLimit({ prefix: "rl:general", windowMs: general.windowMs, max: general.max, key: ipKey }));
 
   const adminWrite = cfg.rateLimit.adminWrite;
   const adminWriteLimit = rateLimit({ prefix: "rl:admin", windowMs: adminWrite.windowMs, max: adminWrite.max, key: (req) => String(req.user?._id || req.ip) });

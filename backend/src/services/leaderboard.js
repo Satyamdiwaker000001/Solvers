@@ -11,7 +11,7 @@ export async function computeLeaderboard(cfg) {
   const since = new Date(Date.now() - windowDays * 24 * 3_600_000);
 
   const students = await User.find({ role: "student", accountStatus: "approved" })
-    .select("displayName githubLogin studentId createdAt")
+    .select("displayName githubLogin githubUserId studentId avatarUrl createdAt")
     .lean();
   const byId = new Map(students.map((s) => [String(s._id), s]));
 
@@ -44,6 +44,7 @@ export async function computeLeaderboard(cfg) {
       studentId: s.studentId || studentId,
       displayName: s.displayName,
       githubLogin: s.githubLogin,
+      avatarUrl: s.avatarUrl || (s.githubUserId ? `https://avatars.githubusercontent.com/u/${s.githubUserId}?v=4` : null),
       verifiedProblems,
       activeDays,
       score: verifiedProblems * verifiedWeight + activeDays * activeDayWeight,

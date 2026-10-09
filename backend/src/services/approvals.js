@@ -36,18 +36,62 @@ export async function submitAccessRequest(user, { note = "" } = {}) {
   }
 }
 
+const SEGMENT_RE = /^[A-Za-z0-9][A-Za-z0-9._ +-]*[A-Za-z0-9._+-]$|^[A-Za-z0-9]$/;
+
+function escapeRegex(s) {
+  return String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Validate and normalize a student repository folder.
+ * Ensures the folder is rooted at folderRoot (e.g. students/) with a valid child segment.
+ * Accepts either "students/Name" or just "Name".
+ */
+export function validateStudentFolder(rawFolder, folderRoot = "students/") {
+  if (typeof rawFolder !== "string" || !rawFolder.trim()) {
+    return { valid: false, error: "Folder path is required and cannot be empty" };
+  }
+  const root = folderRoot.endsWith("/") ? folderRoot : `${folderRoot}/`;
+  let norm = rawFolder.trim().replace(/\\/g, "/");
+  if (!norm.startsWith(root)) {
+    norm = `${root}${norm}`;
+  }
+  norm = norm.replace(/\/+$/, "");
+  if (norm.includes("//") || norm.includes("..") || norm.includes("/./")) {
+    return { valid: false, error: "Folder path contains invalid or traversal segments" };
+  }
+  const rel = norm.slice(root.length);
+  if (!rel || rel.includes("/")) {
+    return { valid: false, error: "Student folder must be a direct subdirectory of the student root" };
+  }
+  if (!SEGMENT_RE.test(rel)) {
+    return { valid: false, error: `Invalid student folder name: '${rel}'` };
+  }
+  return { valid: true, folder: norm };
+}
+
 /**
  * Decide a pending request atomically: only a document still in `pending`
  * transitions, so repeated/stale decisions 404 instead of corrupting state.
  * Approving a first-time student allocates the stable internal ID + folder.
  */
-export async function decideAccessRequest({ requestId, adminUser, decision, folderRoot }) {
+export async function decideAccessRequest({ requestId, adminUser, decision, folderRoot, customFolder }) {
   if (!["approve", "reject"].includes(decision)) {
     throw new AppError(400, "VALIDATION_ERROR", "Decision must be 'approve' or 'reject'");
   }
   if (typeof requestId !== "string" || !/^[0-9a-fA-F]{24}$/.test(requestId)) {
     throw notFound("Access request not found");
   }
+
+  let validatedFolder = null;
+  if (decision === "approve" && customFolder) {
+    const res = validateStudentFolder(customFolder, folderRoot);
+    if (!res.valid) {
+      throw new AppError(400, "VALIDATION_ERROR", res.error);
+    }
+    validatedFolder = res.folder;
+  }
+
   const now = new Date();
   const update = decision === "approve"
     ? { $set: { status: "approved", decidedAt: now, decidedBy: adminUser._id, reapplyAfter: null } }
@@ -69,10 +113,34 @@ export async function decideAccessRequest({ requestId, adminUser, decision, fold
     if (student) {
       let changed = false;
       if (student.accountStatus !== "approved") { student.accountStatus = "approved"; changed = true; }
+
+      if (validatedFolder) {
+        // Enforce uniqueness against other students
+        const existing = await User.findOne({
+          folder: new RegExp(`^${escapeRegex(validatedFolder)}$`, "i"),
+          _id: { $ne: student._id },
+        }).lean();
+        if (existing) {
+          throw conflict("FOLDER_ALREADY_CLAIMED", `Folder '${validatedFolder}' is already claimed by another student`);
+        }
+        student.folder = validatedFolder;
+        changed = true;
+      }
+
       if (!student.studentId) {
         const { studentId, folder } = await nextStudentId(folderRoot);
         student.studentId = studentId;
-        student.folder = folder;
+        if (!student.folder) {
+          // Check that generated folder doesn't conflict
+          const existingGen = await User.findOne({
+            folder: new RegExp(`^${escapeRegex(folder)}$`, "i"),
+            _id: { $ne: student._id },
+          }).lean();
+          if (existingGen) {
+            throw conflict("FOLDER_ALREADY_CLAIMED", `Generated folder '${folder}' is already claimed by another student`);
+          }
+          student.folder = folder;
+        }
         changed = true;
       }
       if (changed) await student.save();
@@ -110,6 +178,7 @@ export function serializeRequest(r) {
     userId: u ? String(u._id) : String(r.user),
     githubLogin: u ? u.githubLogin : undefined,
     displayName: u ? u.displayName : undefined,
+    avatarUrl: u ? (u.avatarUrl || null) : undefined,
     studentId: u ? (u.studentId || null) : undefined,
     status: r.status.toUpperCase(),
     submittedAt: r.submittedAt,
@@ -126,6 +195,7 @@ export function serializeUser(u) {
     id: String(u._id),
     githubLogin: u.githubLogin,
     displayName: u.displayName,
+    avatarUrl: u.avatarUrl || (u.githubUserId ? `https://avatars.githubusercontent.com/u/${u.githubUserId}?v=4` : null),
     role: u.role,
     accessState: String(u.accountStatus).toUpperCase(),
     studentId: u.studentId || null,

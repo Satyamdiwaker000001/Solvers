@@ -5,6 +5,11 @@ export async function connectDb(mongoUri) {
   mongoose.set("strictQuery", true);
   await mongoose.connect(mongoUri, {
     serverSelectionTimeoutMS: 10_000,
+    connectTimeoutMS: 10_000,
+    socketTimeoutMS: 45_000,
+    maxPoolSize: 20,
+    minPoolSize: 2,
+    heartbeatFrequencyMS: 10_000,
   });
   return mongoose.connection;
 }

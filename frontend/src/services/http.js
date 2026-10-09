@@ -98,6 +98,7 @@ export function clearCsrfToken() {
 export const routes = {
   me: "/api/v1/auth/me",
   oauthStart: "/api/v1/auth/github/start",
+  adminLogin: "/api/v1/auth/admin/login",
   logout: "/api/v1/auth/logout",
   csrf: "/api/v1/auth/csrf",
   leaderboard: "/api/v1/leaderboard",
@@ -109,6 +110,7 @@ export const routes = {
   adminProblems: "/api/v1/admin/problems",
   adminAssignments: "/api/v1/admin/assignments",
   adminStudents: "/api/v1/admin/students",
+  adminSubmissions: "/api/v1/admin/submissions",
   reviewQueue: "/api/v1/admin/submissions/review-queue",
   auditLog: "/api/v1/admin/audit-log",
   integrationStatus: "/api/v1/admin/github/integration-status",

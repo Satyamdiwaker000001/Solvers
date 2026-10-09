@@ -34,6 +34,7 @@ function normSessionUser(u) {
     name: u.displayName || u.githubLogin,
     displayName: u.displayName || u.githubLogin,
     githubLogin: u.githubLogin,
+    avatarUrl: u.avatarUrl || null,
     role: u.role,
     accessState: u.accessState,
     studentId: u.studentId || null,
@@ -49,6 +50,7 @@ function normStudent(s) {
     displayName: s.displayName || s.githubLogin,
     name: s.displayName || s.githubLogin,
     githubLogin: s.githubLogin,
+    avatarUrl: s.avatarUrl || (s.githubUserId ? `https://avatars.githubusercontent.com/u/${s.githubUserId}?v=4` : null),
     status: s.accessState,
     accessState: s.accessState,
     role: s.role,
@@ -86,6 +88,7 @@ function normRequest(r) {
     userId: r.userId,
     githubLogin: r.githubLogin || r.displayName || "unknown",
     displayName: r.displayName || r.githubLogin || "unknown",
+    avatarUrl: r.avatarUrl || null,
     studentId: r.studentId || null,
     status: String(r.status || "").toUpperCase(),
     submittedAt: r.submittedAt,
@@ -98,15 +101,24 @@ function normRequest(r) {
 
 function normSubmission(s, assignmentById) {
   const rawAssignment = s.assignment && typeof s.assignment === "object" ? s.assignment : null;
+  const rawStudent = s.student && typeof s.student === "object" ? s.student : null;
   const assignmentId = String(rawAssignment?._id ?? s.assignment ?? s.assignmentId ?? "");
   const assignment = (assignmentById && assignmentId && assignmentById(assignmentId)) || null;
+  const studentId = String(rawStudent?._id ?? (typeof s.student === "string" ? s.student : s.studentId ?? ""));
+  const studentName = rawStudent?.displayName || rawStudent?.githubLogin || s.studentName || "";
+  const studentLogin = rawStudent?.githubLogin || s.studentLogin || "";
+  const problemTitle = rawAssignment?.problem?.title || rawAssignment?.title || assignment?.problem?.title || s.problemTitle || "";
+  const assignmentTitle = rawAssignment?.title || assignment?.title || s.assignmentTitle || "";
+
   return {
     id: String(s._id ?? s.id),
-    studentId: String(rawAssignment ? (s.student?._id ?? s.student ?? "") : (s.student ?? s.studentId ?? "")),
+    studentId,
+    studentName,
+    studentLogin,
     assignmentId,
-    assignmentTitle: rawAssignment?.title || assignment?.title || "",
-    problemTitle: assignment?.problem?.title || "",
-    problemId: assignment?.problemId || (assignment?.problem?.id ?? ""),
+    assignmentTitle,
+    problemTitle,
+    problemId: assignment?.problemId || (rawAssignment?.problem?._id ?? assignment?.problem?.id ?? s.problemId ?? ""),
     commitSha: s.commitSha || "",
     path: s.path || "",
     outcome: s.outcome,
@@ -116,6 +128,9 @@ function normSubmission(s, assignmentById) {
     additions: s.additions ?? 0,
     deletions: s.deletions ?? 0,
     note: s.note || "",
+    reviewedBy: s.reviewedBy || null,
+    reviewedAt: s.reviewedAt || null,
+    reviewComment: s.reviewComment || "",
   };
 }
 
@@ -233,6 +248,7 @@ export async function getStudentOverview(studentId) {
       needsReview: subs.filter((s) => s.outcome === "NEEDS_REVIEW").length,
       totalCommitsEvidence: subs.length,
       activitySeries: bucketActivitySeries(subs),
+      report: progress.report || null,
     },
   };
 }
@@ -273,6 +289,16 @@ export async function getLeaderboard() {
   return { data: body.data };
 }
 
+export async function getTrackingPolicy() {
+  if (!isLive()) return { data: { dailyMinimum: 1, updatedAt: null } };
+  return { data: (await apiFetch("/admin/tracking-policy")).data };
+}
+
+export async function updateTrackingPolicy(dailyMinimum) {
+  if (!isLive()) return { data: { dailyMinimum, updatedAt: new Date().toISOString() } };
+  return { data: (await apiFetch("/admin/tracking-policy", { method: "PATCH", body: { dailyMinimum } })).data };
+}
+
 /* ================= admin reads ================= */
 
 export async function getAdminOverview() {
@@ -290,23 +316,31 @@ export async function getAdminOverview() {
       },
     };
   }
-  const [pending, review, studentList, assignmentList, lb, integration] = await Promise.all([
-    apiFetch(`${routes.adminRequests}?status=pending&limit=1`),
-    apiFetch(`${routes.reviewQueue}?limit=1`),
-    apiFetch(`${routes.adminStudents}?limit=1`),
-    apiFetch(`${routes.adminAssignments}?limit=1`),
-    apiFetch(routes.leaderboard),
+  const overview = await apiFetch("/admin/overview").catch(() => null);
+  const [integration, legacy] = await Promise.all([
     apiFetch(routes.integrationStatus).catch(() => ({ data: null })),
+    overview ? Promise.resolve(null) : Promise.all([
+      apiFetch(`${routes.adminRequests}?status=pending&limit=1`),
+      apiFetch(`${routes.reviewQueue}?limit=1`),
+      apiFetch(`${routes.adminStudents}?limit=1`),
+      apiFetch(`${routes.adminAssignments}?limit=1`),
+      apiFetch(routes.leaderboard),
+    ]),
   ]);
-  const verifiedTotal = (lb.data?.entries || []).reduce((n, e) => n + (e.verifiedProblems || 0), 0);
-  return {
-    data: {
+  const summary = overview?.data || (() => {
+    const [pending, review, studentList, assignmentList, lb] = legacy;
+    return {
       pendingRequests: pending.pagination?.total ?? (pending.data || []).length,
       needsReview: review.pagination?.total ?? (review.data || []).length,
-      verifiedWeek: verifiedTotal,
+      verifiedWeek: (lb.data?.entries || []).reduce((n, e) => n + (e.verifiedProblems || 0), 0),
       totalStudents: studentList.pagination?.total ?? (studentList.data || []).length,
       activeAssignments: assignmentList.pagination?.total ?? (assignmentList.data || []).length,
       activitySeries: [],
+    };
+  })();
+  return {
+    data: {
+      ...summary,
       integration: integration.data ? {
         status: integration.data.status,
         message: integration.data.note || "GitHub integration status reported by the server.",
@@ -627,6 +661,58 @@ export async function recordReview(submissionId, decision, comment) {
   return { data: body.data };
 }
 
+export async function assignStudentToSubmission(submissionId, studentId) {
+  if (!isLive()) {
+    const s = submissions.find((x) => x.id === submissionId);
+    if (s) s.studentId = studentId;
+    return { data: { id: submissionId, studentId } };
+  }
+  const body = await apiFetch(`${routes.adminSubmissions}/${submissionId}/assign-student`, {
+    method: "PATCH",
+    body: { studentId },
+  });
+  return { data: body.data };
+}
+
+export async function assignAssignmentToSubmission(submissionId, assignmentId) {
+  if (!isLive()) {
+    const s = submissions.find((x) => x.id === submissionId);
+    if (s) s.assignmentId = assignmentId;
+    return { data: { id: submissionId, assignmentId } };
+  }
+  const body = await apiFetch(`${routes.adminSubmissions}/${submissionId}/assign-assignment`, {
+    method: "PATCH",
+    body: { assignmentId },
+  });
+  return { data: body.data };
+}
+
+export async function archiveAssignment(assignmentId) {
+  if (!isLive()) {
+    const a = assignments.find((x) => x.id === assignmentId);
+    if (a) a.status = "archived";
+    return { data: a };
+  }
+  const body = await apiFetch(`${routes.adminAssignments}/${assignmentId}/archive`, {
+    method: "POST",
+    body: {},
+  });
+  return { data: body.data };
+}
+
+export async function updateStudentFolder(studentId, folder) {
+  if (!isLive()) {
+    const s = students.find((x) => x.id === studentId);
+    if (s) s.folder = folder;
+    return { data: s };
+  }
+  const body = await apiFetch(`${routes.adminStudents}/${studentId}/folder`, {
+    method: "PATCH",
+    body: { folder },
+  });
+  return { data: body.data };
+}
+
 /* ================= session ================= */
 
 export async function getMe() {
@@ -639,6 +725,17 @@ export async function startOAuth() {
   return body.data?.authorizeUrl;
 }
 
+export async function adminLogin(username, password) {
+  if (!isLive()) {
+    return { data: { user: { role: "admin", accessState: "APPROVED", displayName: "Professor Admin (Demo)", githubLogin: "professor-admin" } } };
+  }
+  const body = await apiFetch(routes.adminLogin, {
+    method: "POST",
+    body: { username, password },
+  });
+  return { data: { user: normSessionUser(body.data?.user) } };
+}
+
 export async function logout() {
   try {
     await apiFetch(routes.logout, { method: "POST", body: {} });
@@ -648,3 +745,5 @@ export async function logout() {
   }
   return { data: { ok: true } };
 }
+
+
