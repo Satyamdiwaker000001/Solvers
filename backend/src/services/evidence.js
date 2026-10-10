@@ -136,7 +136,7 @@ export async function matchAssignmentForEvidence({ user, sp }) {
     status: "active",
     $or: [{ type: "COMMON" }, { targets: { $elemMatch: { student: user._id } } }],
   })
-    .populate("problem", "topic title")
+    .populate("problem", "problemCode topic title")
     .lean();
 
   if (!assignments || assignments.length === 0) {
@@ -161,9 +161,12 @@ export async function matchAssignmentForEvidence({ user, sp }) {
 
     const probTopic = normalizeToken(a.problem.topic);
     const probTitle = normalizeToken(a.problem.title);
+    const probCode = normalizeToken(a.problem.problemCode);
 
     // 1. Problem title match: exact normalized slug comparison (never loose substring)
-    const titleMatches = probTitle === normFile;
+    const titleMatches = probTitle === normFile
+      || (probCode && normFile.startsWith(`${probCode} `)
+        && normalizeToken(normFile.slice(probCode.length)) === probTitle);
     if (!titleMatches) continue;
 
     // 2. Topic match: if problem has topic, submitted topic must be compatible

@@ -59,7 +59,7 @@ export function ProblemsAdminPage() {
                     <Badge tone={p.difficulty === "Hard" ? "danger" : p.difficulty === "Medium" ? "warning" : "success"}>{p.difficulty}</Badge>
                     <span className="tnum ml-auto text-xs text-muted">{p.id}</span>
                   </div>
-                  <p className="mt-1.5 font-bold">{p.title}</p>
+                  <p className="mt-1.5 font-bold">{p.problemCode && <span className="mono mr-2 text-xs text-primary">{p.problemCode}</span>}{p.title}</p>
                   <p className="line-clamp-2 text-sm text-muted">{p.statement}</p>
                   <p className="tnum mt-1 text-xs text-muted">
                     {linked.length === 0 ? "Not assigned yet" : linked.map((a) => `${a.id} · ${a.type} · due ${formatDate(a.dueAt)}`).join("  ·  ")}

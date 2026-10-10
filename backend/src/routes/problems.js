@@ -5,10 +5,12 @@ import { validateBody, validateQuery } from "../middleware/validate.js";
 import { problemCreateSchema, problemPatchSchema, problemListSchema } from "./schemas.js";
 import { isValidObjectId, pageEnvelope, pagination } from "../lib/http.js";
 import { recordAudit } from "../middleware/audit.js";
+import { nextProblemCode } from "../lib/problemIds.js";
 
 function serializeProblem(p) {
   return {
     id: String(p._id),
+    problemCode: p.problemCode || null,
     title: p.title,
     statement: p.statement,
     topic: p.topic || "",
@@ -36,7 +38,7 @@ export function adminProblemRoutes() {
   }));
 
   router.post("/", validateBody(problemCreateSchema), asyncHandler(async (req, res) => {
-    const doc = await Problem.create({ ...req.body, createdBy: req.user._id });
+    const doc = await Problem.create({ ...req.body, problemCode: await nextProblemCode(), createdBy: req.user._id });
     await recordAudit({ actorId: req.user._id, action: "PROBLEM_CREATE", targetType: "problem", targetId: doc._id, detail: doc.title });
     res.status(201).json({ data: serializeProblem(doc.toObject()) });
   }));

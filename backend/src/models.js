@@ -76,6 +76,7 @@ export const AccessRequest = mongoose.model("AccessRequest", accessRequestSchema
 /** PROBLEM — problem statement catalog. */
 const problemSchema = new Schema(
   {
+    problemCode: { type: String, trim: true, uppercase: true, default: "", maxlength: 20 },
     title: { type: String, required: true, trim: true, maxlength: 200 },
     statement: { type: String, required: true, maxlength: 20_000 },
     topic: { type: String, default: "", trim: true, maxlength: 100 },
@@ -89,6 +90,10 @@ const problemSchema = new Schema(
   { timestamps: true },
 );
 problemSchema.index({ status: 1, createdAt: -1 });
+problemSchema.index(
+  { problemCode: 1 },
+  { unique: true, partialFilterExpression: { problemCode: { $type: "string", $gt: "" } }, name: "unique_problem_code" },
+);
 export const Problem = mongoose.model("Problem", problemSchema);
 
 /** ASSIGNMENT — one definition + per-student target records (BR-04). */

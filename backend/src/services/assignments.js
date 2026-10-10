@@ -79,6 +79,7 @@ function serializeAssignment(a, { forStudentId = null } = {}) {
     problemId: String(a.problem),
     problem: a.problem && a.problem.title ? {
       id: String(a.problem._id),
+      problemCode: a.problem.problemCode || null,
       title: a.problem.title,
       topic: a.problem.topic,
       difficulty: a.problem.difficulty,
@@ -108,7 +109,7 @@ export async function listAssignmentsForUser(user) {
     status: "active",
     $or: [{ type: "COMMON" }, { "targets.student": user._id }],
   })
-    .populate("problem", "title topic difficulty statement examples constraints sourceUrl")
+    .populate("problem", "problemCode title topic difficulty statement examples constraints sourceUrl")
     .sort({ createdAt: -1 })
     .lean();
   // COMMON assignments apply to every approved student by definition; an
@@ -132,7 +133,7 @@ export async function listAssignmentsForAdmin({ page, limit }) {
   const filter = {};
   const total = await Assignment.countDocuments(filter);
   const docs = await Assignment.find(filter)
-    .populate("problem", "title topic difficulty statement examples constraints sourceUrl")
+    .populate("problem", "problemCode title topic difficulty statement examples constraints sourceUrl")
     .populate("targets.student", "displayName githubLogin studentId avatarUrl")
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)

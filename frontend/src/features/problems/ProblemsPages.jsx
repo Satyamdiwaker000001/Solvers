@@ -80,7 +80,8 @@ export function ProblemsPage() {
                       <Badge tone={a.type === "COMMON" ? "info" : "neutral"}>{a.type === "COMMON" ? "Common" : "Individual"}</Badge>
                       {statusBadge(a.status)}
                     </div>
-                    <p className="mt-1.5 font-bold truncate">{p?.title ?? "Problem"}</p>
+                    <p className="mt-1.5 font-bold truncate">{p?.problemCode && <span className="mono mr-1.5 text-xs text-primary">{p.problemCode}</span>}{p?.title ?? "Problem"}</p>
+                    <p className="mono mt-1 truncate text-[11px] text-muted">File: students/{user.studentId}/{String(p?.topic || "topic").toLowerCase().replace(/[^a-z0-9]+/g, "-")}/{p?.problemCode || "problem"}-solution.ext</p>
                     <p className="text-[13px] text-muted truncate">{p?.topic} · {p?.difficulty} · due {formatDate(a.dueAt)}</p>
                   </Link>
                 </li>
@@ -101,7 +102,7 @@ export function ProblemsPage() {
                     return (
                       <tr key={a.id} className="border-b border-border/60 last:border-0 hover:bg-canvas/60">
                         <td className="px-4 py-3">
-                          <Link to={`/app/problems/${a.problemId || a.id}`} className="font-semibold text-primary hover:underline">{p?.title ?? "Problem"}</Link>
+                          <Link to={`/app/problems/${a.problemId || a.id}`} className="font-semibold text-primary hover:underline">{p?.problemCode && <span className="mono mr-1.5 text-xs">{p.problemCode}</span>}{p?.title ?? "Problem"}</Link>
                           <p className="text-[13px] text-muted">{p?.topic} · {p?.difficulty}</p>
                         </td>
                         <td className="px-4 py-3"><Badge tone={a.type === "COMMON" ? "info" : "neutral"}>{a.type}</Badge></td>

@@ -67,6 +67,7 @@ function normProblem(p) {
   if (!p) return null;
   return {
     id: String(p.id ?? p._id),
+    problemCode: p.problemCode || null,
     title: p.title,
     statement: p.statement,
     topic: p.topic || "",
