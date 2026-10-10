@@ -81,7 +81,7 @@ export function ProblemsPage() {
                       {statusBadge(a.status)}
                     </div>
                     <p className="mt-1.5 font-bold truncate">{p?.problemCode && <span className="mono mr-1.5 text-xs text-primary">{p.problemCode}</span>}{p?.title ?? "Problem"}</p>
-                    <p className="mono mt-1 truncate text-[11px] text-muted">File: students/{user.studentId}/{String(p?.topic || "topic").toLowerCase().replace(/[^a-z0-9]+/g, "-")}/{p?.problemCode || "problem"}-solution.ext</p>
+                    <p className="mono mt-1 truncate text-[11px] text-muted">File: students/{user.studentId}/{String(p?.topic || "topic").toLowerCase().replace(/[^a-z0-9]+/g, "-")}/{p?.problemCode || "problem"}-{String(p?.title || "solution").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.ext</p>
                     <p className="text-[13px] text-muted truncate">{p?.topic} · {p?.difficulty} · due {formatDate(a.dueAt)}</p>
                   </Link>
                 </li>

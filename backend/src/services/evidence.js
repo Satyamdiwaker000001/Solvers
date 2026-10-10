@@ -165,8 +165,9 @@ export async function matchAssignmentForEvidence({ user, sp }) {
 
     // 1. Problem title match: exact normalized slug comparison (never loose substring)
     const titleMatches = probTitle === normFile
-      || (probCode && normFile.startsWith(`${probCode} `)
-        && normalizeToken(normFile.slice(probCode.length)) === probTitle);
+      || (probCode && (normFile === probCode
+        || (normFile.startsWith(`${probCode} `)
+          && normalizeToken(normFile.slice(probCode.length)) === probTitle)));
     if (!titleMatches) continue;
 
     // 2. Topic match: if problem has topic, submitted topic must be compatible
