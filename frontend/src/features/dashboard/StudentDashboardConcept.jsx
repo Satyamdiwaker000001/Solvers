@@ -39,12 +39,30 @@ function RecentSubmissions({ submissions }) {
 }
 
 function ProblemDistribution({ assignments }) {
+  if (!assignments || assignments.length === 0) return <p className="concept-empty-note">No problems assigned yet.</p>;
+
   const counts = new Map();
-  assignments.forEach((item) => { const topic = item.problem?.topic; if (topic) counts.set(topic, (counts.get(topic) || 0) + 1); });
-  const items = [...counts.entries()].slice(0, 4);
-  if (!items.length) return <p className="concept-empty-note">Category data is not available yet.</p>;
+  assignments.forEach((item) => { 
+    let topic = "Uncategorized";
+    if (item.problem && typeof item.problem === 'object') {
+      topic = item.problem.topic || item.problem.difficulty || "Uncategorized";
+    }
+    counts.set(topic, (counts.get(topic) || 0) + 1); 
+  });
+
+  const items = [...counts.entries()].sort((a,b) => b[1] - a[1]).slice(0, 4);
   const total = items.reduce((sum, [, count]) => sum + count, 0);
-  return <div className="concept-distribution-compact">{items.map(([topic, count], index) => <div key={topic}><span><i className={`distribution-dot dot-${index}`} />{topic}</span><b>{count}</b><small><i style={{ width: `${(count / total) * 100}%` }} /></small></div>)}</div>;
+  return (
+    <div className="concept-distribution-compact">
+      {items.map(([topic, count], index) => (
+        <div key={topic}>
+          <span><i className={`distribution-dot dot-${index % 4}`} />{topic}</span>
+          <b>{count}</b>
+          <small><i style={{ width: `${(count / total) * 100}%` }} /></small>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function LeaderboardPreview({ entries, studentId }) {
