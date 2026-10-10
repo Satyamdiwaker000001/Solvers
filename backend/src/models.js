@@ -232,6 +232,10 @@ const webhookEventSchema = new Schema(
     deliveryId: { type: String, required: true, unique: true },
     student: { type: Schema.Types.ObjectId, ref: "User", default: null, index: true },
     event: { type: String, default: "" },
+    pullRequestId: { type: String, default: "", index: true },
+    pullRequestNumber: { type: Number, default: null },
+    pullRequestAction: { type: String, default: "" },
+    pullRequestUrl: { type: String, default: "", maxlength: 2000 },
     repo: { type: String, default: "" },
     status: {
       type: String,

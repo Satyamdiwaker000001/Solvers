@@ -31,11 +31,18 @@ export async function buildProgressReport({ studentId, period = "all" }) {
   const since = periodStart(period);
   const query = { student: studentId };
   if (since) query.firstObservedAt = { $gte: since };
-  const [submissions, policy, pullRequests] = await Promise.all([
+  const pullRequestQuery = { student: studentId, event: "pull_request" };
+  if (since) pullRequestQuery.receivedAt = { $gte: since };
+  const [submissions, policy, pullRequestEvents] = await Promise.all([
     Submission.find(query).sort({ firstObservedAt: 1 }).lean(),
     TrackingPolicy.findOne({ key: "default" }).lean(),
-    WebhookEvent.countDocuments({ student: studentId, event: "pull_request" }),
+    WebhookEvent.find(pullRequestQuery).select("pullRequestId deliveryId").lean(),
   ]);
+  // A single PR emits multiple events (opened, synchronize, closed). Count
+  // unique PRs, while retaining a delivery fallback for legacy events.
+  const pullRequests = new Set(pullRequestEvents.map((event) => event.pullRequestId
+    ? `pr:${event.pullRequestId}`
+    : `delivery:${event.deliveryId}`)).size;
   const dailyMinimum = policy?.dailyMinimum ?? 1;
   const verified = submissions.filter((item) => item.outcome === "VERIFIED" || item.eventType === "NEW_PROBLEM_VERIFIED");
   const review = submissions.filter((item) => ["NEEDS_REVIEW", "CHECK_FAILED", "INGESTION_PENDING"].includes(item.outcome));
