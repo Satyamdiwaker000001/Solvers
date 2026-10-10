@@ -14,6 +14,12 @@ export function buildAuthorizeUrl({ oauthBase, clientId, callbackUrl, scope, sta
 }
 
 export function createGithubClient({ fetchImpl = fetch, oauthBase, apiBase, clientId, clientSecret, callbackUrl }) {
+  function assertSha(value, label) {
+    if (!/^[0-9a-f]{7,64}$/i.test(String(value || ""))) {
+      throw new Error(`Invalid ${label}`);
+    }
+  }
+
   async function postForm(url, params, timeoutMs = 10_000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -156,6 +162,58 @@ export function createGithubClient({ fetchImpl = fetch, oauthBase, apiBase, clie
         files,
         message: data.commit?.message || "",
         author: data.commit?.author || null,
+      };
+    },
+
+    async fetchCompare({ repoFullName, before, after, token = null, timeoutMs = 10_000 } = {}) {
+      if (!repoFullName) throw new Error("Missing repository full name");
+      assertSha(before, "before sha");
+      assertSha(after, "after sha");
+
+      const headers = {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      let res;
+      try {
+        res = await fetchImpl(`${apiBase}/repos/${repoFullName}/compare/${before}...${after}`, {
+          method: "GET",
+          headers,
+          signal: controller.signal,
+        });
+      } catch (err) {
+        if (err.name === "AbortError") {
+          const timeoutErr = new Error(`GitHub compare request timed out after ${timeoutMs}ms`);
+          timeoutErr.status = 504;
+          timeoutErr.retryable = true;
+          throw timeoutErr;
+        }
+        err.retryable = true;
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (!res.ok) {
+        const error = new Error(`GitHub API compare fetch failed (HTTP ${res.status})`);
+        error.status = res.status;
+        const remaining = res.headers?.get?.("x-ratelimit-remaining");
+        error.retryable = res.status === 429 || (res.status === 403 && remaining === "0") || res.status >= 500;
+        error.rateLimited = res.status === 429 || (res.status === 403 && remaining === "0");
+        throw error;
+      }
+
+      const data = await res.json();
+      const commits = Array.isArray(data?.commits)
+        ? data.commits.map((commit) => String(commit?.sha || "")).filter((sha) => /^[0-9a-f]{7,64}$/i.test(sha))
+        : [];
+      return {
+        commits,
+        totalCommits: Number.isInteger(data?.total_commits) ? data.total_commits : commits.length,
       };
     },
   };

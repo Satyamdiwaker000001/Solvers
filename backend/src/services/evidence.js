@@ -247,7 +247,7 @@ export function classifyChanges({ additions = 0, deletions = 0, files = [] } = {
  *
  * Returns a summary { deliveryId, status, evidence, errors, retryable }.
  */
-export async function processWebhookPayload({ cfg, deliveryId, payload, fetchCommit = null }) {
+export async function processWebhookPayload({ cfg, deliveryId, payload, fetchCommit = null, fetchPushCommits = null }) {
   const summary = { deliveryId, status: "PROCESSED", evidence: 0, errors: [], retryable: false };
   const repoFull = payload?.repository?.full_name || "";
   if (repoFull && repoFull !== cfg.repo.fullName) {
@@ -257,7 +257,36 @@ export async function processWebhookPayload({ cfg, deliveryId, payload, fetchCom
   if (payload?.ref && payload.ref !== expectedRef) {
     return { ...summary, status: "PROCESSED", errors: [`Ignored ref ${payload.ref} (expected ${expectedRef})`] };
   }
-  const commits = Array.isArray(payload?.commits) ? payload.commits : [];
+  let commits = Array.isArray(payload?.commits) ? payload.commits : [];
+  const declaredCommitCount = Number(payload?.distinct_size ?? payload?.size ?? 0);
+  const isTruncatedPush = payload?.ref && declaredCommitCount > commits.length;
+  if (isTruncatedPush) {
+    if (typeof fetchPushCommits !== "function") {
+      return {
+        ...summary,
+        status: "FAILED",
+        retryable: true,
+        errors: [`GitHub push payload is truncated (${commits.length}/${declaredCommitCount} commits); compare hydration is unavailable`],
+      };
+    }
+    try {
+      const hydrated = await fetchPushCommits(payload);
+      if (!Array.isArray(hydrated) || hydrated.length !== declaredCommitCount) {
+        return {
+          ...summary,
+          status: "FAILED",
+          retryable: true,
+          errors: [`GitHub compare returned an incomplete push (${hydrated?.length || 0}/${declaredCommitCount} commits)`],
+        };
+      }
+      commits = hydrated;
+    } catch (err) {
+      summary.status = "FAILED";
+      summary.retryable = err?.retryable !== undefined ? Boolean(err.retryable) : true;
+      summary.errors.push(`Push compare hydration failed: ${err.message}`);
+      return summary;
+    }
+  }
   if (commits.length === 0) {
     return { ...summary, status: "PROCESSED", errors: ["No commits in payload"] };
   }
@@ -459,6 +488,7 @@ export async function processPendingWebhookEvents({
   cfg,
   payloadByDelivery = {},
   fetchCommit = null,
+  fetchPushCommits = null,
   limit = 20,
   leaseDurationMs = 30_000,
   baseBackoffMs = 1_000,
@@ -534,7 +564,7 @@ export async function processPendingWebhookEvents({
     }
 
     try {
-      const out = await processWebhookPayload({ cfg, deliveryId: evt.deliveryId, payload, fetchCommit });
+      const out = await processWebhookPayload({ cfg, deliveryId: evt.deliveryId, payload, fetchCommit, fetchPushCommits });
       const failed = out.status === "FAILED";
       const attemptsSoFar = evt.attempts || 1;
       const maxAttempts = evt.maxAttempts || 3;
@@ -619,11 +649,33 @@ export function startWebhookWorker({
     try {
       const activeCfg = cfg || app?.get("config");
       const github = app?.get("github");
-      const activeFetchCommit = fetchCommit || (github ? (sha) => github.fetchCommit({ repoFullName: activeCfg?.repo?.fullName, sha, token: activeCfg?.github?.repoToken }) : null);
+      const commitCache = new Map();
+      const activeFetchCommit = fetchCommit || (github ? (sha) => {
+        if (!commitCache.has(sha)) commitCache.set(sha, github.fetchCommit({ repoFullName: activeCfg?.repo?.fullName, sha, token: activeCfg?.github?.repoToken }));
+        return commitCache.get(sha);
+      } : null);
+      const activeFetchPushCommits = github ? async (payload) => {
+        const comparison = await github.fetchCompare({
+          repoFullName: activeCfg?.repo?.fullName,
+          before: payload.before,
+          after: payload.after,
+          token: activeCfg?.github?.repoToken,
+        });
+        if (comparison.totalCommits !== comparison.commits.length || comparison.commits.length > 250) {
+          const err = new Error("Push is larger than the supported GitHub compare window; split the push into smaller pushes");
+          err.retryable = false;
+          throw err;
+        }
+        return Promise.all(comparison.commits.map(async (sha) => {
+          const details = await activeFetchCommit(sha);
+          return { id: sha, added: details.files || [], modified: [], removed: [] };
+        }));
+      } : null;
       if (activeCfg) {
         await processPendingWebhookEvents({
           cfg: activeCfg,
           fetchCommit: activeFetchCommit,
+          fetchPushCommits: activeFetchPushCommits,
           limit,
           leaseDurationMs,
         });
@@ -670,9 +722,25 @@ export function triggerWebhookWorker(app) {
     try {
       const cfg = app?.get("config");
       const github = app?.get("github");
-      const fetchCommit = github ? (sha) => github.fetchCommit({ repoFullName: cfg?.repo?.fullName, sha, token: cfg?.github?.repoToken }) : null;
+      const commitCache = new Map();
+      const fetchCommit = github ? (sha) => {
+        if (!commitCache.has(sha)) commitCache.set(sha, github.fetchCommit({ repoFullName: cfg?.repo?.fullName, sha, token: cfg?.github?.repoToken }));
+        return commitCache.get(sha);
+      } : null;
+      const fetchPushCommits = github ? async (payload) => {
+        const comparison = await github.fetchCompare({ repoFullName: cfg?.repo?.fullName, before: payload.before, after: payload.after, token: cfg?.github?.repoToken });
+        if (comparison.totalCommits !== comparison.commits.length || comparison.commits.length > 250) {
+          const err = new Error("Push is larger than the supported GitHub compare window; split the push into smaller pushes");
+          err.retryable = false;
+          throw err;
+        }
+        return Promise.all(comparison.commits.map(async (sha) => {
+          const details = await fetchCommit(sha);
+          return { id: sha, added: details.files || [], modified: [], removed: [] };
+        }));
+      } : null;
       if (cfg) {
-        await processPendingWebhookEvents({ cfg, fetchCommit });
+        await processPendingWebhookEvents({ cfg, fetchCommit, fetchPushCommits });
       }
     } catch (err) {
       console.error(`[webhook-worker] Error in triggered pass: ${err.message}`);

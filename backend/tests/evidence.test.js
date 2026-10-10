@@ -116,6 +116,37 @@ describe("evidence worker: paths, idempotency, failure handling", () => {
     assert.equal(out.retryable, true);
   });
 
+  it("hydrates truncated direct-main pushes instead of processing only the first 20 commits", async () => {
+    const hydratedSha = "def1234567890abcdef1234567890abcdef1234";
+    const out = await processWebhookPayload({
+      cfg: t.cfg,
+      deliveryId: "w-large-main",
+      payload: pushPayload(studentFile, {
+        distinct_size: 2,
+        commits: [{ id: "abc1234567890abcdef1234567890abcdef12", added: [], modified: [], removed: [] }],
+        before: "abc1234567890abcdef1234567890abcdef12",
+        after: hydratedSha,
+      }),
+      fetchPushCommits: async () => [
+        { id: "abc1234567890abcdef1234567890abcdef12", added: [], modified: [], removed: [] },
+        { id: hydratedSha, added: [studentFile], modified: [], removed: [] },
+      ],
+    });
+    assert.equal(out.status, "PROCESSED");
+    assert.equal(out.evidence, 1);
+  });
+
+  it("fails safely when a truncated push cannot be hydrated", async () => {
+    const out = await processWebhookPayload({
+      cfg: t.cfg,
+      deliveryId: "w-large-unavailable",
+      payload: pushPayload(studentFile, { distinct_size: 21 }),
+    });
+    assert.equal(out.status, "FAILED");
+    assert.equal(out.retryable, true);
+    assert.match(out.errors[0], /truncated/i);
+  });
+
   it("batch processor claims PENDING once and marks PROCESSED/FAILED observably", async () => {
     const body = JSON.stringify(pushPayload(studentFile));
     const postWebhook = (delivery) => agent(t.app).post("/api/v1/integrations/github/webhook")
