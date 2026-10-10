@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Crown, Flame, Info, Medal, TrendingUp, Trophy } from "lucide-react";
+import { Crown, Flame, Info, Medal, TrendingUp, Trophy, Clock } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { getLeaderboard } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
@@ -72,14 +72,23 @@ export function Leaderboard({
     <div className="grid gap-4">
       <PageHeader title={title} description={description} />
       <div className="leaderboard-intro"><div className="leaderboard-intro-icon"><Trophy aria-hidden="true" /></div><div><p className="leaderboard-kicker">COMPETITION HUB</p><h2>Climb the ranks</h2><p>Earn points through consistent, verified problem solving.</p></div><div className="leaderboard-streak"><Flame aria-hidden="true" /><b>Keep your streak alive</b></div></div>
-      <Card className="flex gap-2.5 border-info/25 bg-info-bg/50 text-sm">
-        <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-info" />
-        <div className="min-w-0">
-          <p className="font-semibold">How ranking works</p>
-          <p className="text-muted">{formula}</p>
-          <p className="tnum mt-0.5 text-xs text-muted">{window}</p>
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <div className="absolute -right-10 -top-10 size-40 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex items-start gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Info className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-bold tracking-tight text-ink">How ranking works</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted max-w-3xl">{formula}</p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-[10px] font-semibold text-muted tracking-wide uppercase">
+                <Clock className="size-3" /> {window}
+              </span>
+            </div>
+          </div>
         </div>
-      </Card>
+      </div>
       <Podium entries={entries} highlightId={effectiveHighlight} />
       {/* Compact list on narrow screens */}
       <ol className="grid gap-2 lg:hidden">
@@ -117,7 +126,15 @@ export function Leaderboard({
                 return (
                   <tr key={e.studentId} className={`border-b border-border/60 last:border-0 ${hot ? "bg-primary-subtle/50" : "hover:bg-canvas/60"}`}>
                     <td className="px-4 py-3"><RankBadge rank={e.rank} /></td>
-                    <td className="px-4 py-3"><p className="font-semibold">{name} {hot && <span className="text-xs text-primary">(you)</span>}</p>{login && <p className="mono text-xs text-muted">@{login} · {e.studentId}</p>}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar src={e.avatarUrl} name={name} className="size-8 shrink-0 rounded-full border border-border object-cover text-center text-xs font-bold leading-8 text-primary" />
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">{name} {hot && <span className="text-xs font-semibold text-primary">(you)</span>}</p>
+                          {login && <p className="mono truncate text-xs text-muted">@{login} · {e.studentId}</p>}
+                        </div>
+                      </div>
+                    </td>
                     <td className="tnum px-4 py-3 text-right font-bold">{e.verifiedProblems}</td>
                     <td className="tnum px-4 py-3 text-right">{e.activeDays}</td>
                     <td className="tnum px-4 py-3 text-right font-extrabold">{e.score}</td>

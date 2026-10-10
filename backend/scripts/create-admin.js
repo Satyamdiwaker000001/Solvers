@@ -37,10 +37,13 @@ if (password.length < 12) throw new Error("Password must contain at least 12 cha
 try {
   if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is required");
   await connectDb(process.env.MONGODB_URI);
+  const adminCount = await AdminCredential.countDocuments();
+  if (adminCount >= 2) throw new Error("Maximum of 2 admins are allowed according to SRS.");
+  
   const exists = await AdminCredential.exists({ username });
   if (exists) throw new Error(`Admin username already exists: ${username}`);
   await AdminCredential.create({ username, passwordHash: hashPassword(password) });
-  console.log(`Admin credential created for ${username}. Plaintext password was not stored.`);
+  console.log(`Admin credential created for ${username}. Plaintext password was not stored. (Total Admins: ${adminCount + 1}/2)`);
 } finally {
   await disconnectDb();
 }

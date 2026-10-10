@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowUpRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { siC, siCplusplus, siDotnet, siJavascript, siOpenjdk } from "simple-icons";
@@ -53,8 +53,26 @@ function LoginForm({ isDemo, isAdminRoute }) {
 
 export function LoginPage() {
   const auth = useAuth(); const location = useLocation(); const navigate = useNavigate(); const isAdminRoute = location.pathname === "/admin-login";
+
+  useEffect(() => {
+    if (auth.user && !auth.loading) {
+      navigate(auth.user.role === "admin" ? "/admin/dashboard" : auth.user.accessState === "APPROVED" ? "/app/dashboard" : "/access-status", { replace: true });
+    }
+  }, [auth.user, auth.loading, navigate, location]);
+
+  useEffect(() => {
+    // Force history push state to prevent back navigation entirely
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+      window.history.go(1);
+    };
+    return () => {
+      window.onpopstate = null;
+    };
+  }, []);
+
   if (!auth.isDemo && auth.loading) return <main className="auth-page"><LanguageBackground /><div className="auth-card"><LoadingState label="Checking your session…" /></div></main>;
-  if (auth.user) { navigate(auth.user.role === "admin" ? "/admin/dashboard" : auth.user.accessState === "APPROVED" ? "/app/dashboard" : "/access-status", { replace: true }); return null; }
+  if (auth.user) return null;
   return <main className="auth-page"><LanguageBackground /><div className="auth-layout"><section className="auth-intro" aria-label="Solvers introduction"><div className="auth-intro-brand"><SolversLogo /><div><b>Solvers</b><small>DSA Practice Tracker</small></div></div><div className="auth-intro-copy"><p className="auth-kicker">YOUR DAILY EDGE IN DSA</p><h1>Think clearly.<br /><em>Code boldly.</em></h1><p>Turn every assignment into momentum with focused practice, verified progress, and a leaderboard that keeps you moving.</p><div className="auth-proof"><span><ShieldCheck aria-hidden="true" /><b>Evidence-based progress</b></span><span><ArrowUpRight aria-hidden="true" /><b>Built for consistency</b></span></div></div><div className="auth-intro-footer"><span>01</span><i /><span>Practice · Progress · Prove</span></div></section><div className="auth-stage"><section className="auth-card" aria-labelledby="login-heading"><header className="auth-brand"><span className="auth-brand-mark" aria-hidden="true"><SolversLogo compact /></span><div><p className="auth-brand-name">Welcome back</p><p className="auth-brand-descriptor">Sign in to continue your practice session</p></div></header><div className="auth-title-block"><p className="auth-card-eyebrow">READY WHEN YOU ARE</p><h2 id="login-heading" className="auth-heading">Let’s get solving.</h2></div><LoginForm isDemo={auth.isDemo} isAdminRoute={isAdminRoute} /></section></div></div></main>;
 }
 
