@@ -52,22 +52,56 @@ function ProblemDistribution({ assignments }) {
 
   const items = [...counts.entries()].sort((a,b) => b[1] - a[1]).slice(0, 4);
   const total = items.reduce((sum, [, count]) => sum + count, 0);
+  
+  const colors = ["var(--color-primary)", "var(--color-success)", "var(--color-warning)", "var(--color-secondary)"];
+  let gradientStops = [];
+  let currentPercent = 0;
+  items.forEach(([_, count], index) => {
+    const percent = (count / total) * 100;
+    gradientStops.push(`${colors[index]} ${currentPercent}% ${currentPercent + percent}%`);
+    currentPercent += percent;
+  });
+  const gradient = `conic-gradient(${gradientStops.join(', ')})`;
+
   return (
-    <div className="concept-distribution-compact">
-      {items.map(([topic, count], index) => (
-        <div key={topic}>
-          <span><i className={`distribution-dot dot-${index % 4}`} />{topic}</span>
-          <b>{count}</b>
-          <small><i style={{ width: `${(count / total) * 100}%` }} /></small>
-        </div>
-      ))}
+    <div className="concept-lower-grid items-center">
+      <div className="concept-donut relative" style={{ background: gradient }}>
+        <span>{total}<small>total</small></span>
+      </div>
+      <div className="concept-distribution">
+        {items.map(([topic, count], index) => (
+          <div key={topic} style={{ display: 'flex', alignItems: 'center', fontSize: '11px' }}>
+             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-muted)' }}>
+               <i style={{ width: '8px', height: '8px', borderRadius: '50%', background: colors[index] }} /> <span className="truncate max-w-[90px] inline-block">{topic}</span>
+             </span>
+             <b style={{ marginLeft: 'auto', color: 'var(--color-ink)' }}>{count}</b>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function LeaderboardPreview({ entries, studentId }) {
   if (!entries.length) return <p className="concept-empty-note">Leaderboard data is not available yet.</p>;
-  return <div className="concept-leaderboard-compact">{entries.slice(0, 3).map((entry) => <div className={entry.studentId === studentId ? "current" : ""} key={entry.studentId}><strong>#{entry.rank}</strong><Avatar src={entry.avatarUrl} name={entry.displayName || entry.studentId} className="concept-avatar object-cover" /><b>{entry.displayName || entry.studentId}</b><em>{entry.verifiedProblems}</em></div>)}</div>;
+  return (
+    <div className="flex flex-col gap-3">
+      {entries.slice(0, 3).map((entry) => (
+        <div key={entry.studentId} className={`flex items-center gap-3 rounded-xl border p-2 transition-colors ${entry.studentId === studentId ? 'bg-primary-subtle/30 border-primary' : 'bg-surface border-border hover:bg-canvas'}`}>
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-canvas text-[11px] font-bold text-primary shadow-sm border border-border">#{entry.rank}</div>
+          <Avatar src={entry.avatarUrl} name={entry.displayName || entry.studentId} className="size-8 shrink-0 rounded-full object-cover border border-border" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] leading-tight font-bold text-ink">{entry.displayName || entry.studentId}</p>
+            <p className="text-[10px] text-muted leading-tight mt-0.5">{entry.verifiedProblems} verified</p>
+          </div>
+          <div className="text-right leading-none pr-1">
+            <p className="text-[13px] font-extrabold text-primary">{entry.score}</p>
+            <p className="text-[9px] font-bold text-muted uppercase tracking-wider mt-1">pts</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function StudentDashboardConcept() {
