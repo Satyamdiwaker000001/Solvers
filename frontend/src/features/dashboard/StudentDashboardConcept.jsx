@@ -143,6 +143,41 @@ export function StudentDashboardConcept() {
     return calculateStreakAndWeeklyActivity(state.submissions);
   }, [state.submissions]);
 
+  // Practice topics breakdown for "Today's Progress" dynamically derived from assignments or submissions
+  const topicBreakdown = useMemo(() => {
+    if (!state.assignments || state.assignments.length === 0) return [];
+    // Aggregate by problem topic or title
+    const map = new Map();
+    for (const asg of state.assignments) {
+      const topic = asg.problem?.topic || asg.title || "General";
+      const existing = map.get(topic) || { name: topic, solved: 0, total: 0 };
+      existing.total += 1;
+      if (asg.myStatus === "verified" || asg.myStatus === "VERIFIED") {
+        existing.solved += 1;
+      }
+      map.set(topic, existing);
+    }
+    return Array.from(map.values()).map((t) => ({
+      ...t,
+      done: t.solved >= t.total && t.total > 0,
+    }));
+  }, [state.assignments]);
+
+  // Topic Progress items for "Assignment Progress" purely derived from real assignments
+  const topicProgress = useMemo(() => {
+    if (!state.assignments || state.assignments.length === 0) return [];
+    const colors = ["bg-[#4F46E5]", "bg-[#F59E0B]", "bg-[#16A765]", "bg-[#E11D48]"];
+    return state.assignments.slice(0, 4).map((asg, idx) => {
+      const isVerified = asg.myStatus === "verified" || asg.myStatus === "VERIFIED";
+      return {
+        title: asg.title || asg.problem?.title || `Assignment ${idx + 1}`,
+        completed: isVerified ? 1 : 0,
+        total: 1,
+        color: colors[idx % colors.length],
+      };
+    });
+  }, [state.assignments]);
+
   if (state.loading && !state.overview) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -188,42 +223,6 @@ export function StudentDashboardConcept() {
       (s.outcome === "VERIFIED" || s.eventType === "NEW_PROBLEM_VERIFIED")
   ).length;
   const goalPercent = Math.min(100, Math.round((solvedToday / dailyGoal) * 100));
-
-  // Practice topics breakdown for "Today's Progress" dynamically derived from assignments or submissions
-  const topicBreakdown = useMemo(() => {
-    if (!state.assignments || state.assignments.length === 0) return [];
-    // Aggregate by problem topic or title
-    const map = new Map();
-    for (const asg of state.assignments) {
-      const topic = asg.problem?.topic || asg.title || "General";
-      const existing = map.get(topic) || { name: topic, solved: 0, total: 0 };
-      existing.total += 1;
-      if (asg.myStatus === "verified" || asg.myStatus === "VERIFIED") {
-        existing.solved += 1;
-      }
-      map.set(topic, existing);
-    }
-    return Array.from(map.values()).map((t) => ({
-      ...t,
-      done: t.solved >= t.total && t.total > 0,
-    }));
-  }, [state.assignments]);
-
-  // Topic Progress items for "Assignment Progress" purely derived from real assignments
-  const topicProgress = useMemo(() => {
-    if (!state.assignments || state.assignments.length === 0) return [];
-    const colors = ["bg-[#4F46E5]", "bg-[#F59E0B]", "bg-[#16A765]", "bg-[#E11D48]"];
-    return state.assignments.slice(0, 4).map((asg, idx) => {
-      const isVerified = asg.myStatus === "verified" || asg.myStatus === "VERIFIED";
-      const completed = isVerified ? 1 : asg.myStatus === "in_progress" ? 0.5 : 0;
-      return {
-        title: asg.title || asg.problem?.title || `Assignment ${idx + 1}`,
-        completed: isVerified ? 1 : 0,
-        total: 1,
-        color: colors[idx % colors.length],
-      };
-    });
-  }, [state.assignments]);
 
   const currentRankNumber = state.rank?.rank || (state.leaderboard.length > 0 ? "1" : "—");
 
