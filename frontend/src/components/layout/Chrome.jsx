@@ -42,25 +42,9 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
         <DemoBadge />
         {user && (
           <div className="mt-2 flex items-center gap-2.5 rounded-xl border border-border/80 bg-surface p-2.5 shadow-xs">
-            <button
-              type="button"
-              onClick={() => user.role === "admin" && setShowAvatarModal(true)}
-              title={user.role === "admin" ? "Change profile avatar" : undefined}
-              className={`relative shrink-0 rounded-full transition ${user.role === "admin" ? "cursor-pointer hover:ring-2 hover:ring-primary/50 group" : ""}`}
-            >
-              <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-subtle object-cover text-xs font-bold text-primary" />
-              {user.role === "admin" && (
-                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition group-hover:opacity-100">
-                  <Camera className="size-3.5" />
-                </span>
-              )}
-            </button>
-            <div
-              className={`min-w-0 flex-1 leading-tight ${user.role === "admin" ? "cursor-pointer" : ""}`}
-              onClick={() => user.role === "admin" && setShowAvatarModal(true)}
-              title={user.role === "admin" ? "Edit profile" : undefined}
-            >
-              <p className="truncate text-[13px] font-semibold text-ink hover:text-primary transition">{user.displayName || user.name}</p>
+            <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-subtle object-cover text-xs font-bold text-primary" />
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="truncate text-[13px] font-semibold text-ink">{user.displayName || user.name}</p>
               <p className="truncate text-xs text-muted">{user.role === "admin" ? "Course Admin" : `@${user.githubLogin}`}</p>
             </div>
             <button
@@ -75,7 +59,6 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
           </div>
         )}
       </div>
-      {showAvatarModal && <AvatarEditModal onClose={() => setShowAvatarModal(false)} />}
     </div>
   );
 }

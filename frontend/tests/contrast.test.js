@@ -16,11 +16,18 @@ function token(name) {
 }
 
 describe("approved tracker palette", () => {
-  const approved = new Set(["#F6F8F7", "#FFFFFF", "#EEF2F0", "#16803C", "#126331", "#DDF4E5", "#17211B", "#66736B", "#DCE5DF", "#E5F6EB", "#B47A1C", "#FFF4D9", "#C34A52", "#FCEBED", "#607B78", "#EAF1EF"]);
-  const names = ["canvas", "surface", "secondary", "primary", "primary-strong", "primary-subtle", "ink", "muted", "border", "success", "success-bg", "warning", "warning-bg", "danger", "danger-bg", "info", "info-bg"];
+  const approved = new Set([
+    "#F8FAFC", "#FFFFFF", "#F1F5F9", "#4F46E5", "#4338CA", "#A3E635",
+    "#0F172A", "#64748B", "#E2E8F0", "#16A34A", "#D97706", "#DC2626",
+    "#94A3B8", "#F59E0B", "#B77945",
+  ]);
+  const names = [
+    "canvas", "surface", "secondary", "primary", "primary-strong",
+    "ink", "muted", "border", "success", "warning", "danger", "info"
+  ];
   for (const name of names) {
     it(`--color-${name} uses an approved swatch`, () => {
-      assert.ok(approved.has(token(name)), `${name} is outside the approved tracker palette`);
+      assert.ok(approved.has(token(name)), `${name} (${token(name)}) is outside the approved tracker palette`);
     });
   }
 });

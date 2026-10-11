@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Camera, Upload, Check, RefreshCw, X, Sparkles, User, Palette } from "lucide-react";
+import { useState } from "react";
+import { Check, Sparkles } from "lucide-react";
 import { Dialog } from "../ui/Dialog.jsx";
 import { Button } from "../ui/Button.jsx";
 import { Avatar } from "../ui/Avatar.jsx";
@@ -46,7 +46,6 @@ const AVATAR_COLLECTIONS = [
 export function AvatarEditModal({ onClose }) {
   const { user, updateProfile } = useAuth();
   const toast = useToast();
-  const fileInputRef = useRef(null);
 
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
   const [displayName, setDisplayName] = useState(user?.displayName || user?.name || "");
@@ -54,31 +53,6 @@ export function AvatarEditModal({ onClose }) {
   const [activeCategory, setActiveCategory] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image (PNG, JPG, SVG, WebP).");
-      return;
-    }
-
-    if (file.size > 2.5 * 1024 * 1024) {
-      setError("Image size should be less than 2.5MB.");
-      return;
-    }
-
-    setError(null);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result;
-      if (typeof result === "string") {
-        setAvatarUrl(result);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleSave = async () => {
     setBusy(true);
@@ -103,7 +77,7 @@ export function AvatarEditModal({ onClose }) {
   return (
     <Dialog
       title="Admin Profile & Avatar"
-      description="Choose from developer & mentor avatars, or upload your custom photo."
+      description="Choose from developer & mentor preset avatars to represent your profile."
       wide
       onClose={onClose}
     >
@@ -116,55 +90,16 @@ export function AvatarEditModal({ onClose }) {
 
         {/* Top Header Card */}
         <div className="flex flex-col sm:flex-row items-center gap-4 rounded-xl border border-border bg-canvas/60 p-3.5 sm:p-4 shadow-xs">
-          <div className="relative group shrink-0">
-            <Avatar
-              src={avatarUrl}
-              name={displayName || user?.name}
-              className="size-16 sm:size-20 rounded-full border-2 border-primary bg-surface object-cover text-lg font-bold shadow-md"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              title="Upload your own picture"
-              className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition group-hover:opacity-100 backdrop-blur-xs cursor-pointer"
-            >
-              <Camera className="size-5" />
-            </button>
-          </div>
+          <Avatar
+            src={avatarUrl}
+            name={displayName || user?.name}
+            className="size-16 sm:size-20 shrink-0 rounded-full border-2 border-primary bg-surface object-cover text-lg font-bold shadow-md"
+          />
 
           <div className="min-w-0 flex-1 w-full text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
-              <div>
-                <h4 className="text-base font-bold text-ink truncate">{displayName || "Course Admin"}</h4>
-                <p className="text-[11px] text-muted mt-0.5">Role: <strong className="text-ink">Course Admin</strong> · Access: Verified</p>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-                <Button
-                  type="button"
-                  tone="secondary"
-                  className="!min-h-8 !py-1 !px-2.5 !text-xs"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="size-3.5" /> Upload Photo
-                </Button>
-                {avatarUrl && (
-                  <Button
-                    type="button"
-                    tone="secondary"
-                    className="!min-h-8 !py-1 !px-2.5 !text-xs text-danger hover:border-danger/40"
-                    onClick={() => setAvatarUrl("")}
-                  >
-                    <X className="size-3.5" /> Reset
-                  </Button>
-                )}
-              </div>
+            <div>
+              <h4 className="text-base font-bold text-ink truncate">{displayName || "Course Admin"}</h4>
+              <p className="text-[11px] text-muted mt-0.5">Role: <strong className="text-ink">Course Admin</strong> · Access: Verified</p>
             </div>
 
             <div className="mt-2.5 flex flex-col gap-1">
