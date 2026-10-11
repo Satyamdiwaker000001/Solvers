@@ -107,20 +107,20 @@ export function AvatarEditModal({ onClose }) {
       wide
       onClose={onClose}
     >
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
         {error && (
-          <div role="alert" className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm font-medium text-danger">
+          <div role="alert" className="rounded-xl border border-danger/30 bg-danger/10 p-2.5 text-xs font-medium text-danger">
             {error}
           </div>
         )}
 
         {/* Top Header Card */}
-        <div className="flex flex-col sm:flex-row items-center gap-5 rounded-2xl border border-border bg-canvas/70 p-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-center gap-4 rounded-xl border border-border bg-canvas/60 p-3.5 sm:p-4 shadow-xs">
           <div className="relative group shrink-0">
             <Avatar
               src={avatarUrl}
               name={displayName || user?.name}
-              className="size-24 rounded-full border-2 border-primary bg-surface object-cover text-xl font-bold shadow-md"
+              className="size-16 sm:size-20 rounded-full border-2 border-primary bg-surface object-cover text-lg font-bold shadow-md"
             />
             <button
               type="button"
@@ -128,15 +128,15 @@ export function AvatarEditModal({ onClose }) {
               title="Upload your own picture"
               className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition group-hover:opacity-100 backdrop-blur-xs cursor-pointer"
             >
-              <Camera className="size-6" />
+              <Camera className="size-5" />
             </button>
           </div>
 
-          <div className="min-w-0 flex-1 text-center sm:text-left">
+          <div className="min-w-0 flex-1 w-full text-center sm:text-left">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
               <div>
-                <h4 className="text-lg font-bold text-ink truncate">{displayName || "Course Admin"}</h4>
-                <p className="text-xs text-muted mt-0.5">Role: <strong className="text-ink">Course Admin</strong> · Access: Verified</p>
+                <h4 className="text-base font-bold text-ink truncate">{displayName || "Course Admin"}</h4>
+                <p className="text-[11px] text-muted mt-0.5">Role: <strong className="text-ink">Course Admin</strong> · Access: Verified</p>
               </div>
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                 <input
@@ -149,32 +149,32 @@ export function AvatarEditModal({ onClose }) {
                 <Button
                   type="button"
                   tone="secondary"
-                  className="!min-h-9 !py-1.5 !px-3 !text-xs"
+                  className="!min-h-8 !py-1 !px-2.5 !text-xs"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Upload className="size-3.5" /> Upload File
+                  <Upload className="size-3.5" /> Upload Photo
                 </Button>
                 {avatarUrl && (
                   <Button
                     type="button"
                     tone="secondary"
-                    className="!min-h-9 !py-1.5 !px-3 !text-xs text-danger hover:border-danger/40"
+                    className="!min-h-8 !py-1 !px-2.5 !text-xs text-danger hover:border-danger/40"
                     onClick={() => setAvatarUrl("")}
                   >
-                    <X className="size-3.5" /> Remove
+                    <X className="size-3.5" /> Reset
                   </Button>
                 )}
               </div>
             </div>
 
-            <div className="mt-3 flex flex-col gap-1.5">
-              <label htmlFor="edit-name-inp" className="text-xs font-semibold uppercase tracking-wider text-muted text-left">
+            <div className="mt-2.5 flex flex-col gap-1">
+              <label htmlFor="edit-name-inp" className="text-[11px] font-semibold uppercase tracking-wider text-muted text-left">
                 Admin Display Name
               </label>
               <input
                 id="edit-name-inp"
                 type="text"
-                className="w-full rounded-xl border border-border bg-surface px-3.5 py-2 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="e.g. Professor Admin"
@@ -184,20 +184,20 @@ export function AvatarEditModal({ onClose }) {
         </div>
 
         {/* Avatar Categories Tabs */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-              <Sparkles className="size-3.5 text-primary" /> Choose Developer / Tech Avatar
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+              <Sparkles className="size-3.5 text-primary" /> Preset Avatars (Click to select)
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2 border-b border-border/80 pb-2">
+          <div className="flex flex-wrap gap-1.5 border-b border-border/80 pb-2">
             {AVATAR_COLLECTIONS.map((col, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setActiveCategory(idx)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
                   activeCategory === idx
                     ? "bg-primary text-white shadow-xs"
                     : "bg-surface border border-border text-muted hover:text-ink hover:bg-canvas"
@@ -209,7 +209,7 @@ export function AvatarEditModal({ onClose }) {
           </div>
 
           {/* Grid of Avatars */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 pt-1">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 pt-0.5">
             {AVATAR_COLLECTIONS[activeCategory].items.map((item) => {
               const isSelected = avatarUrl === item.url;
               return (
@@ -217,21 +217,21 @@ export function AvatarEditModal({ onClose }) {
                   key={item.id}
                   type="button"
                   onClick={() => setAvatarUrl(item.url)}
-                  className={`group relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border-2 transition text-center cursor-pointer ${
+                  className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition text-center cursor-pointer ${
                     isSelected
-                      ? "border-primary bg-primary/10 shadow-sm scale-105"
+                      ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary"
                       : "border-border/80 bg-surface hover:border-primary/50 hover:bg-canvas"
                   }`}
                 >
-                  <div className="size-14 rounded-full overflow-hidden border border-border/60 bg-canvas flex items-center justify-center p-1">
+                  <div className="size-12 rounded-full overflow-hidden border border-border/60 bg-canvas flex items-center justify-center p-0.5">
                     <img src={item.url} alt={item.name} className="w-full h-full object-contain" />
                   </div>
-                  <span className="text-[11px] font-semibold text-ink/80 group-hover:text-ink truncate max-w-full">
+                  <span className="text-[10px] font-medium text-ink/80 group-hover:text-ink truncate max-w-full">
                     {item.name}
                   </span>
                   {isSelected && (
-                    <span className="absolute top-1.5 right-1.5 size-4 rounded-full bg-primary text-white flex items-center justify-center">
-                      <Check className="size-2.5 stroke-[3]" />
+                    <span className="absolute top-1 right-1 size-3.5 rounded-full bg-primary text-white flex items-center justify-center">
+                      <Check className="size-2 stroke-[3]" />
                     </span>
                   )}
                 </button>
@@ -241,15 +241,15 @@ export function AvatarEditModal({ onClose }) {
         </div>
 
         {/* Paste Web Image URL */}
-        <div className="flex flex-col gap-1.5 pt-2 border-t border-border/80">
-          <label htmlFor="direct-url-inp" className="text-xs font-semibold uppercase tracking-wider text-muted">
-            Or paste any image URL
+        <div className="flex flex-col gap-1 pt-2 border-t border-border/80">
+          <label htmlFor="direct-url-inp" className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+            Or paste custom image URL
           </label>
           <div className="flex gap-2">
             <input
               id="direct-url-inp"
               type="url"
-              className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3.5 py-2 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+              className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
               placeholder="https://example.com/photo.png"
@@ -257,7 +257,7 @@ export function AvatarEditModal({ onClose }) {
             <Button
               type="button"
               tone="secondary"
-              className="!min-h-9 !py-1.5 !px-3 text-xs"
+              className="!min-h-8 !py-1 !px-2.5 text-xs"
               onClick={() => {
                 if (customUrl.trim()) {
                   setAvatarUrl(customUrl.trim());
@@ -271,11 +271,11 @@ export function AvatarEditModal({ onClose }) {
         </div>
 
         {/* Footer actions */}
-        <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-border">
-          <Button tone="secondary" onClick={onClose} disabled={busy}>
+        <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-border">
+          <Button tone="secondary" onClick={onClose} disabled={busy} className="!min-h-9 !py-1.5 !px-3 text-xs">
             Cancel
           </Button>
-          <Button tone="primary" onClick={handleSave} loading={busy}>
+          <Button tone="primary" onClick={handleSave} loading={busy} className="!min-h-9 !py-1.5 !px-4 text-xs font-semibold">
             Save Changes
           </Button>
         </div>
