@@ -68,8 +68,13 @@ export function createApp(cfg, { githubClient = null } = {}) {
     callbackUrl: cfg.github.callbackUrl,
   }));
 
-  app.use(helmet({ crossOriginResourcePolicy: { policy: "same-site" } }));
-  app.use(cors({ origin: corsOriginFn(cfg.clientOrigins), credentials: true }));
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+  app.use(cors({
+    origin: corsOriginFn(cfg.clientOrigins),
+    credentials: true,
+    allowedHeaders: ["Content-Type", "x-session-id", "x-csrf-token", "Authorization"],
+    exposedHeaders: ["x-session-id", "x-csrf-token"],
+  }));
   app.use(requestLogger);
 
   // Webhook needs the RAW body for HMAC validation; mounted before express.json
@@ -86,6 +91,23 @@ export function createApp(cfg, { githubClient = null } = {}) {
 
   const sessionStore = MongoStore.create({ mongoUrl: cfg.mongoUri, collectionName: "sessions", ttl: Math.floor(cfg.sessionMaxAgeMs / 1000) });
   app.set("sessionStore", sessionStore);
+
+  function signSessionId(val, secret) {
+    return `${val}.${crypto.createHmac("sha256", secret).update(val).digest("base64").replace(/=+$/, "")}`;
+  }
+
+  // Fallback for browsers (like Chrome) blocking 3rd-party cross-site cookies on onrender.com
+  app.use((req, _res, next) => {
+    const rawSid = req.headers["x-session-id"];
+    if (rawSid) {
+      const signed = `s:${signSessionId(String(rawSid).trim(), cfg.sessionSecret)}`;
+      const cookies = (req.headers.cookie || "").split("; ").filter((c) => c && !c.startsWith("dsa.sid="));
+      cookies.push(`dsa.sid=${encodeURIComponent(signed)}`);
+      req.headers.cookie = cookies.join("; ");
+    }
+    next();
+  });
+
   app.use(session({
     name: "dsa.sid",
     secret: cfg.sessionSecret,
@@ -97,6 +119,7 @@ export function createApp(cfg, { githubClient = null } = {}) {
       httpOnly: true,
       secure: cfg.isProd,
       sameSite: cfg.isProd ? "none" : "lax",
+      partitioned: cfg.isProd,
       maxAge: cfg.sessionMaxAgeMs,
       path: "/",
     },

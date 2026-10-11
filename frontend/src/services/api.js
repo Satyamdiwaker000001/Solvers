@@ -12,7 +12,7 @@
  * Backend contract: backend route map + `06-api-spec.md` / `05-data-model.md`.
  */
 
-import { apiFetch, clearCsrfToken, isLive, routes } from "./http.js";
+import { apiFetch, clearCsrfToken, isLive, routes, setSessionId } from "./http.js";
 import {
   accessRequests, activitySeries, assignments, auditLog, leaderboard,
   leaderboardFormula, problems, studentById, submissions, students, CENTRAL_REPO,
@@ -734,6 +734,9 @@ export async function adminLogin(username, password) {
     method: "POST",
     body: { username, password },
   });
+  if (body?.data?.sessionId) {
+    setSessionId(body.data.sessionId);
+  }
   return { data: { user: normSessionUser(body.data?.user) } };
 }
 
@@ -742,6 +745,7 @@ export async function logout() {
     await apiFetch(routes.logout, { method: "POST", body: {} });
   } finally {
     clearCsrfToken();
+    setSessionId(null);
     clearStudentCache();
   }
   return { data: { ok: true } };

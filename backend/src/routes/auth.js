@@ -198,7 +198,7 @@ export function authRoutes() {
     credential.lastLoginAt = new Date();
     await credential.save();
     rotateCsrfToken(req);
-    res.json({ data: { user: serializeUser(adminUser) } });
+    res.json({ data: { user: serializeUser(adminUser), sessionId: req.sessionID } });
   }));
 
   router.post("/logout", asyncHandler(async (req, res) => {

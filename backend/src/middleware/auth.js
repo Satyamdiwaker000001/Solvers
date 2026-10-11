@@ -9,7 +9,15 @@ import { unauthorized, forbidden } from "./errors.js";
 export async function loadSessionUser(req, _res, next) {
   req.user = null;
   try {
-    const userId = req.session && req.session.userId;
+    let userId = req.session && req.session.userId;
+    if (!userId && req.headers["x-session-id"]) {
+      const store = req.app.get("sessionStore");
+      const sid = String(req.headers["x-session-id"]).trim();
+      if (store && sid) {
+        const sess = await new Promise((resolve) => store.get(sid, (_err, s) => resolve(s)));
+        if (sess?.userId) userId = sess.userId;
+      }
+    }
     if (!userId) return next();
     const user = await User.findById(userId).lean();
     if (!user) {

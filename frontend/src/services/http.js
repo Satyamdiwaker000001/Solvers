@@ -26,10 +26,30 @@ export function apiBaseUrl() {
   return BASE;
 }
 
+let storedSessionId = typeof localStorage !== "undefined" ? (localStorage.getItem("dsa_session_id") || null) : null;
+
+export function setSessionId(id) {
+  storedSessionId = id;
+  if (id && typeof localStorage !== "undefined") {
+    localStorage.setItem("dsa_session_id", id);
+  } else if (!id && typeof localStorage !== "undefined") {
+    localStorage.removeItem("dsa_session_id");
+  }
+}
+
+export function getSessionId() {
+  return storedSessionId;
+}
+
 let csrfToken = null;
 
 async function fetchCsrfToken() {
-  const res = await fetch(`${BASE}/api/v1/auth/csrf`, { credentials: "include" });
+  const res = await fetch(`${BASE}/api/v1/auth/csrf`, {
+    credentials: "include",
+    headers: {
+      ...(storedSessionId ? { "x-session-id": storedSessionId } : {}),
+    },
+  });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error("Could not establish a session with the server.");
   csrfToken = body?.data?.csrfToken ?? null;
@@ -71,6 +91,7 @@ export async function apiFetch(path, { method = "GET", body, headers } = {}) {
       headers: {
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(token && mutating ? { "x-csrf-token": token } : {}),
+        ...(storedSessionId ? { "x-session-id": storedSessionId } : {}),
         ...(headers ?? {}),
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
