@@ -28,6 +28,7 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { Button } from "../../components/ui/Button.jsx";
 import { Card } from "../../components/ui/Card.jsx";
 import { LoadingState } from "../../components/ui/States.jsx";
+import { SolversLogo } from "../../components/ui/SolversLogo.jsx";
 import { setSessionId } from "../../services/http.js";
 import { getMyRequest, isLiveMode, submitAccessRequest } from "../../services/api.js";
 import { useToast } from "../../hooks/useToast.js";
@@ -92,18 +93,10 @@ function AuthLeftBranding({ isFaculty = false }) {
     <div className="hidden lg:flex flex-col justify-between py-4 pr-6">
       <div>
         <div className="flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-2xl border border-primary/30 bg-primary/15 text-primary shadow-[0_0_20px_rgba(67,217,174,0.25)]">
-            <GraduationCap aria-hidden="true" className="size-6" />
+          <SolversLogo size="large" />
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase tracking-wider">
+            DSA 2027
           </span>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-extrabold tracking-tight text-ink">Solvers</span>
-              <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase tracking-wider">
-                DSA 2027
-              </span>
-            </div>
-            <p className="text-xs font-medium text-muted">DSA Practice & Verification Engine</p>
-          </div>
         </div>
 
         <div className="mt-10">
@@ -157,31 +150,18 @@ function AuthShell({ children, eyebrow, split = false, isFaculty = false }) {
             <AuthLeftBranding isFaculty={isFaculty} />
             <div className="mx-auto w-full max-w-md min-w-0 lg:max-w-none">
               {/* Mobile Branding Header */}
-              <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-                <span className="grid size-10 place-items-center rounded-xl border border-primary/30 bg-primary/15 text-primary shadow-xs">
-                  <GraduationCap aria-hidden="true" className="size-5" />
-                </span>
-                <div className="leading-tight">
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-extrabold tracking-tight text-ink">Solvers</p>
-                    <span className="text-[10px] rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.2 text-primary font-bold">2027</span>
-                  </div>
-                  <p className="text-xs text-muted">{eyebrow}</p>
-                </div>
+              <div className="mb-6 flex items-center justify-between lg:hidden">
+                <SolversLogo size="default" />
+                <span className="text-[10px] rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-primary font-bold">2027</span>
               </div>
               {children}
             </div>
           </div>
         ) : (
           <div className="mx-auto w-full max-w-md min-w-0">
-            <div className="mb-6 flex items-center gap-2.5">
-              <span className="grid size-10 place-items-center rounded-xl border border-primary/30 bg-primary/15 text-primary shadow-xs">
-                <GraduationCap aria-hidden="true" className="size-6" />
-              </span>
-              <div className="leading-tight">
-                <p className="font-extrabold tracking-tight text-ink">Solvers</p>
-                <p className="text-xs text-muted">{eyebrow}</p>
-              </div>
+            <div className="mb-6 flex items-center justify-between">
+              <SolversLogo size="default" />
+              <span className="text-[10px] rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-primary font-bold">2027</span>
             </div>
             {children}
           </div>
@@ -367,11 +347,9 @@ export function AuthFinishPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="relative flex size-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-primary-strong text-white shadow-lg shadow-primary/25">
-              <GraduationCap className="size-7 animate-pulse" />
-            </div>
+            <SolversLogo size="large" showText={false} />
             <h2 className="mt-4 text-base font-bold text-ink">Completing Secure Handshake</h2>
-            <p className="mt-1 text-xs text-muted max-w-xs">Connecting your GitHub credentials with Solvers 2027 and setting up workspace…</p>
+            <p className="mt-1 text-xs text-muted max-w-xs">Connecting your GitHub credentials with Solvers and setting up workspace…</p>
           </div>
         )}
       </Card>
@@ -449,9 +427,7 @@ function LiveAccessStatus() {
       <AuthShell eyebrow="Access verification status">
         <Card className="glass-panel border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="relative flex size-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-primary-strong text-white shadow-lg shadow-primary/25">
-              <GraduationCap className="size-7 animate-pulse" />
-            </div>
+            <SolversLogo size="large" showText={false} />
             <h2 className="mt-4 text-base font-bold text-ink">Connecting to Solvers Central</h2>
             <p className="mt-1 text-xs text-muted max-w-xs">Connecting to university practice portal and checking review queues…</p>
           </div>
@@ -495,20 +471,8 @@ function LiveAccessStatus() {
             {/* Top Brand Logo & Status Pulse */}
             <div className="flex items-center justify-between border-b border-border/80 pb-4">
               <div className="flex items-center gap-3">
-                <div className="relative flex size-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-primary-strong text-white shadow-md shadow-primary/25">
-                  <GraduationCap className="size-6" />
-                  <span className="absolute -top-1 -right-1 flex size-3.5">
-                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex size-3.5 rounded-full border-2 border-surface bg-emerald-500" />
-                  </span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-extrabold tracking-tight text-ink">Solvers 2027</span>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">DSA Lab</span>
-                  </div>
-                  <p className="text-xs text-muted">Continuous Assessment & Verification Platform</p>
-                </div>
+                <SolversLogo size="default" />
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">DSA Lab</span>
               </div>
 
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
