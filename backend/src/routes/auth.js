@@ -202,9 +202,11 @@ export function authRoutes() {
   }));
 
   router.post("/logout", asyncHandler(async (req, res) => {
+    const isProd = req.app.get("config").isProd;
     await new Promise((resolve) => req.session.destroy(() => resolve()));
-    res.clearCookie("dsa.sid", { path: "/" });
-    res.clearCookie("csrf-token", { path: "/" });
+    const cookieOpts = { path: "/", secure: isProd, sameSite: isProd ? "none" : "lax" };
+    res.clearCookie("dsa.sid", cookieOpts);
+    res.clearCookie("csrf-token", cookieOpts);
     res.json({ data: { ok: true } });
   }));
 

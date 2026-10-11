@@ -96,7 +96,7 @@ export function createApp(cfg, { githubClient = null } = {}) {
     cookie: {
       httpOnly: true,
       secure: cfg.isProd,
-      sameSite: "lax",
+      sameSite: cfg.isProd ? "none" : "lax",
       maxAge: cfg.sessionMaxAgeMs,
       path: "/",
     },

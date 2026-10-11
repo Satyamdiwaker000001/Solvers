@@ -15,10 +15,11 @@ export function ensureCsrfToken(req, res, next) {
     if (!req.session.csrfToken) {
       req.session.csrfToken = crypto.randomBytes(32).toString("hex");
     }
+    const isSecure = req.app.get("csrfSecureCookies") === true;
     const cookieOpts = {
       httpOnly: false,
-      sameSite: "lax",
-      secure: req.app.get("csrfSecureCookies") === true,
+      sameSite: isSecure ? "none" : "lax",
+      secure: isSecure,
       maxAge: 12 * 3_600_000,
       path: "/",
     };
