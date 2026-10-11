@@ -26,15 +26,24 @@ export function apiBaseUrl() {
   return BASE;
 }
 
-let storedSessionId = typeof localStorage !== "undefined" ? (localStorage.getItem("dsa_session_id") || null) : null;
+let storedSessionId = typeof sessionStorage !== "undefined" ? (sessionStorage.getItem("dsa_session_id") || null) : null;
 
 export function setSessionId(id) {
   storedSessionId = id;
-  if (id && typeof localStorage !== "undefined") {
-    localStorage.setItem("dsa_session_id", id);
-  } else if (!id && typeof localStorage !== "undefined") {
-    localStorage.removeItem("dsa_session_id");
+  if (id && typeof sessionStorage !== "undefined") {
+    sessionStorage.setItem("dsa_session_id", id);
+    // Also remove from permanent localStorage to avoid stale re-auth
+    try { localStorage.removeItem("dsa_session_id"); } catch {}
+  } else if (!id && typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem("dsa_session_id");
+    try { localStorage.removeItem("dsa_session_id"); } catch {}
   }
+}
+
+export function clearSessionId() {
+  storedSessionId = null;
+  if (typeof sessionStorage !== "undefined") sessionStorage.removeItem("dsa_session_id");
+  if (typeof localStorage !== "undefined") localStorage.removeItem("dsa_session_id");
 }
 
 export function getSessionId() {
