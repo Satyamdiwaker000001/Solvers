@@ -23,6 +23,7 @@ import { Button } from "../../components/ui/Button.jsx";
 import { Card } from "../../components/ui/Card.jsx";
 import { LoadingState } from "../../components/ui/States.jsx";
 import { DemoBadge } from "../../components/layout/Chrome.jsx";
+import { setSessionId } from "../../services/http.js";
 import { getMyRequest, isLiveMode, submitAccessRequest } from "../../services/api.js";
 import { useToast } from "../../hooks/useToast.js";
 import { formatDateTime, timeUntil } from "../../lib/format.js";
@@ -525,10 +526,14 @@ export function AuthFinishPage() {
   const [failed, setFailed] = useState(null);
 
   const providerError = params.get("error");
+  const sid = params.get("sid");
 
   useEffect(() => {
     let cancelled = false;
     if (providerError) return undefined;
+    if (sid) {
+      setSessionId(sid);
+    }
     refresh()
       .then((user) => {
         if (cancelled) return;
