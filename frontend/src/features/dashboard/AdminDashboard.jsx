@@ -152,41 +152,39 @@ export function AdminDashboard() {
   return (
     <div className="flex flex-col gap-6 font-sans antialiased text-[#151936]">
       {/* ============================================================== */}
-      {/* 1. TOP WELCOME BANNER & STATS ROW (EXACT REFERENCE REPRODUCTION) */}
+      {/* 1. TOP WELCOME BANNER & STATS ROW (MOBILE-OPTIMIZED)           */}
       {/* ============================================================== */}
-      <div className="relative overflow-hidden rounded-3xl bg-white bg-[url('/background.png')] bg-cover bg-center border border-[#E2E6F5] p-6 lg:p-8 shadow-xs">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white bg-[url('/background.png')] bg-cover bg-center border border-[#E2E6F5] p-4 sm:p-6 lg:p-8 shadow-xs">
         {/* Soft background light blooms and text contrast overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent pointer-events-none" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-transparent pointer-events-none" aria-hidden="true" />
         <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-[#E9E7FF]/60 blur-3xl" />
         <div className="pointer-events-none absolute top-1/2 right-1/4 size-96 rounded-full bg-[#E0E7FF]/40 blur-3xl" />
 
-        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6 z-10">
+        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 z-10">
           {/* Left Text Column */}
           <div className="flex-1 max-w-xl">
-            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-black tracking-tight text-[#151936] flex items-center gap-2">
-              Welcome back,
-              <br className="sm:hidden" />
-              <span>{adminName}!</span>
+            <h1 className="text-xl sm:text-3xl lg:text-[34px] font-black tracking-tight text-[#151936] flex items-center gap-1.5 sm:gap-2">
+              <span>Welcome back, {adminName}!</span>
               <span className="inline-block animate-wave origin-bottom-right">👋</span>
             </h1>
 
-            <p className="mt-2 text-sm text-[#647096] italic">
+            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#647096] italic">
               "Consistency today, stronger tomorrow."
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-xl bg-white/80 px-3 py-1.5 text-xs font-semibold text-[#151936] border border-[#E2E6F5] shadow-2xs">
+            <div className="mt-3 sm:mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
+              <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-white/80 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-[#151936] border border-[#E2E6F5] shadow-2xs">
                 <span className="size-2 rounded-full bg-[#4F46E5]" />
                 Admin Overview
               </span>
-              <span className="text-xs text-[#647096]">
+              <span className="text-[11px] sm:text-xs text-[#647096] hidden sm:inline">
                 Review submissions, manage assignments, and track student progress.
               </span>
             </div>
           </div>
 
-          {/* Center Mascot Artwork (Same exact 3D student character from image.png) */}
-          <div className="relative flex items-center justify-center lg:w-[320px] h-[150px] sm:h-[190px] shrink-0">
+          {/* Center Mascot Artwork (Responsive on mobile) */}
+          <div className="relative flex items-center justify-center lg:w-[320px] h-[120px] sm:h-[180px] lg:h-[190px] shrink-0 my-1 lg:my-0">
             {/* Playful curved quote beside character matching reference */}
             <span
               className="hidden xl:block absolute -left-6 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
@@ -198,7 +196,7 @@ export function AdminDashboard() {
             <img
               src="/mascot.png"
               alt="Solvers 3D Student Character"
-              className="h-[160px] sm:h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-2 sm:-mb-3 z-10"
+              className="h-[120px] sm:h-[180px] lg:h-[210px] object-contain filter drop-shadow-md select-none pointer-events-none z-10"
             />
 
             {/* Desk books detail matching reference image */}
@@ -215,33 +213,33 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Right Floating Quick Status Widgets matching Reference Right Banner Cards */}
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:w-[250px] shrink-0">
+          {/* Right Floating Quick Status Widgets */}
+          <div className="flex flex-row lg:flex-col gap-2.5 sm:gap-3 lg:w-[250px] shrink-0">
             {/* Widget 1: Pending Access Requests */}
             <Link
               to="/admin/requests"
-              className="flex items-center justify-between gap-3 rounded-2xl bg-white/95 p-3.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/40 transition group"
+              className="flex-1 flex items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl bg-white/95 p-2.5 sm:p-3.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/40 transition group"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-                  <Flame className="size-5 fill-amber-500 text-amber-500" />
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+                  <Flame className="size-4 sm:size-5 fill-amber-500 text-amber-500" />
                 </div>
                 <div className="min-w-0 leading-tight">
-                  <span className="text-lg font-black text-[#151936]">{pendingRequests}</span>
-                  <p className="text-[11px] font-semibold text-[#647096] truncate">Access Requests</p>
+                  <span className="text-base sm:text-lg font-black text-[#151936]">{pendingRequests}</span>
+                  <p className="text-[10px] sm:text-[11px] font-semibold text-[#647096] truncate">Access Requests</p>
                 </div>
               </div>
-              <ChevronRight className="size-4 text-[#8F9BB3] group-hover:text-[#4F46E5] group-hover:translate-x-0.5 transition" />
+              <ChevronRight className="size-3.5 sm:size-4 text-[#8F9BB3] group-hover:text-[#4F46E5] group-hover:translate-x-0.5 transition" />
             </Link>
 
             {/* Widget 2: Motivational Motto Tag */}
-            <div className="flex items-center gap-3 rounded-2xl bg-white/95 p-3.5 border border-[#E2E6F5] shadow-xs">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
-                <Target className="size-5 text-purple-600" />
+            <div className="flex-1 flex items-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl bg-white/95 p-2.5 sm:p-3.5 border border-[#E2E6F5] shadow-xs">
+              <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+                <Target className="size-4 sm:size-5 text-purple-600" />
               </div>
               <div className="min-w-0 leading-tight">
-                <p className="text-xs font-bold text-[#151936] truncate">"Solve. Submit. Grow."</p>
-                <p className="text-[10px] text-[#647096] truncate mt-0.5">Empowering engineers daily! 🚀</p>
+                <p className="text-[11px] sm:text-xs font-bold text-[#151936] truncate">"Solve. Submit. Grow."</p>
+                <p className="text-[9px] sm:text-[10px] text-[#647096] truncate mt-0.5">Empowering engineers! 🚀</p>
               </div>
             </div>
           </div>
@@ -251,14 +249,14 @@ export function AdminDashboard() {
       {/* ============================================================== */}
       {/* 2. FOUR KPI CARDS (MATCHING REFERENCE EXACT SHAPE & COLORS)    */}
       {/* ============================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1: Pending Reviews */}
         <Link
           to="/admin/review"
-          className="group flex items-center gap-4 rounded-2xl bg-white p-4.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/50 hover:shadow-sm transition"
+          className="group flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/50 hover:shadow-sm transition"
         >
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
-            <ScanSearch className="size-6" />
+          <div className="flex size-9 sm:size-12 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
+            <ScanSearch className="size-4.5 sm:size-6" />
           </div>
           <div className="min-w-0 leading-tight">
             <span className="text-2xl font-black text-[#151936]">{pendingReviews}</span>
@@ -272,14 +270,14 @@ export function AdminDashboard() {
         {/* KPI 2: Active Students */}
         <Link
           to="/admin/students"
-          className="group flex items-center gap-4 rounded-2xl bg-white p-4.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/50 hover:shadow-sm transition"
+          className="group flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/50 hover:shadow-sm transition"
         >
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
-            <Users className="size-6" />
+          <div className="flex size-9 sm:size-12 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
+            <Users className="size-4.5 sm:size-6" />
           </div>
-          <div className="min-w-0 leading-tight flex-1">
-            <span className="text-2xl font-black text-[#151936]">{activeStudents}</span>
-            <p className="text-xs font-semibold text-[#647096] mt-0.5">Active Students</p>
+          <div className="min-w-0 leading-tight w-full flex-1">
+            <span className="text-xl sm:text-2xl font-black text-[#151936]">{activeStudents}</span>
+            <p className="text-[11px] sm:text-xs font-semibold text-[#647096] mt-0.5 truncate">Active Students</p>
             {/* Progress bar visual matching reference */}
             <div className="w-full bg-[#E2E6F5] h-1.5 rounded-full mt-2 overflow-hidden">
               <div className="bg-[#4F46E5] h-full rounded-full" style={{ width: "85%" }} />
@@ -290,29 +288,29 @@ export function AdminDashboard() {
         {/* KPI 3: Problems Assigned */}
         <Link
           to="/admin/problems"
-          className="group flex items-center gap-4 rounded-2xl bg-white p-4.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/50 hover:shadow-sm transition"
+          className="group flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/50 hover:shadow-sm transition"
         >
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
-            <BookOpenCheck className="size-6" />
+          <div className="flex size-9 sm:size-12 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
+            <BookOpenCheck className="size-4.5 sm:size-6" />
           </div>
           <div className="min-w-0 leading-tight">
-            <span className="text-2xl font-black text-[#151936]">{assignedProblems}</span>
-            <p className="text-xs font-semibold text-[#647096] mt-0.5">Problems Assigned</p>
-            <span className="inline-block text-[10px] font-bold text-[#16A765] mt-1">
+            <span className="text-xl sm:text-2xl font-black text-[#151936]">{assignedProblems}</span>
+            <p className="text-[11px] sm:text-xs font-semibold text-[#647096] mt-0.5 truncate">Problems Assigned</p>
+            <span className="inline-block text-[9px] sm:text-[10px] font-bold text-[#16A765] mt-1">
               ↑ Active catalog
             </span>
           </div>
         </Link>
 
         {/* KPI 4: Verified Submissions */}
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-4.5 border border-[#E2E6F5] shadow-xs">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
-            <CheckCircle2 className="size-6 text-[#16A765]" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4.5 border border-[#E2E6F5] shadow-xs">
+          <div className="flex size-9 sm:size-12 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#E9E7FF] text-[#4F46E5] border border-[#E0E7FF]">
+            <CheckCircle2 className="size-4.5 sm:size-6 text-[#16A765]" />
           </div>
           <div className="min-w-0 leading-tight">
-            <span className="text-2xl font-black text-[#151936]">{verifiedSubmissions}</span>
-            <p className="text-xs font-semibold text-[#647096] mt-0.5">Verified Submissions</p>
-            <span className="inline-block text-[10px] font-bold text-[#16A765] mt-1">
+            <span className="text-xl sm:text-2xl font-black text-[#151936]">{verifiedSubmissions}</span>
+            <p className="text-[11px] sm:text-xs font-semibold text-[#647096] mt-0.5 truncate">Verified Submissions</p>
+            <span className="inline-block text-[9px] sm:text-[10px] font-bold text-[#16A765] mt-1">
               + {verifiedSubmissions} this week
             </span>
           </div>

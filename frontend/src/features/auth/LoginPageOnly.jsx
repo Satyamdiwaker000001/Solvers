@@ -128,7 +128,7 @@ export function LoginPage() {
   if (auth.user) return null;
 
   return (
-    <main className="min-h-svh w-full bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5]">
+    <main className="min-h-svh w-full bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-3 sm:p-5 md:p-6 lg:p-8 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5]">
       {/* Background ambient soft glows on outer canvas */}
       <div
         className="absolute top-0 right-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-br from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"
@@ -140,38 +140,39 @@ export function LoginPage() {
       />
 
       {/* Main Login Card Container:
-          - Desktop (lg+): Compact split card that fits nicely inside standard 1440x900 viewport without scroll.
-          - Mobile/Tablet (<lg): Fluid mobile app card matching reference phone mockup. */}
-      <div className="w-full max-w-[440px] sm:max-w-xl lg:max-w-[1080px] xl:max-w-[1140px] bg-white border border-[#E2E6F5] rounded-3xl sm:rounded-[32px] shadow-[0_20px_60px_-15px_rgba(79,70,229,0.07)] overflow-hidden relative z-10 flex flex-col lg:flex-row my-auto">
+          - Mobile (<md): Full available width card with proper padding (nearly 100% of screen).
+          - Tablet (md): Split card 820px.
+          - Desktop (lg+): 1080px split card. */}
+      <div className="w-full max-w-full sm:max-w-xl md:max-w-[820px] lg:max-w-[1080px] xl:max-w-[1140px] bg-white border border-[#E2E6F5] rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_-10px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col md:flex-row my-auto">
         
         {/* ========================================================================= */}
         {/* BRANDING & HERO PANEL                                                     */}
-        {/* Mobile: App-like Hero at top. Desktop: Left split banner.                 */}
+        {/* Mobile: App-like Hero at top. Tablet & Desktop: Left split banner.        */}
         {/* ========================================================================= */}
         <section
           aria-label="Solvers introduction and features"
-          className="w-full lg:w-[56%] relative p-4.5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0"
+          className="w-full md:w-[54%] lg:w-[56%] relative p-5 sm:p-6 md:p-6 lg:p-8 xl:p-9 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0"
         >
           {/* Soft contrast overlay so headline and text stay readable */}
           <div
-            className="absolute inset-0 bg-gradient-to-b lg:bg-gradient-to-r from-[#F8F8FF]/95 via-[#F8F8FF]/80 to-[#F8F8FF]/40 pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#F8F8FF]/95 via-[#F8F8FF]/80 to-[#F8F8FF]/40 pointer-events-none"
             aria-hidden="true"
           />
 
           {/* Top Row: Wordmark */}
-          <div className="relative z-10 flex items-center justify-between mb-3 sm:mb-5 lg:mb-4">
+          <div className="relative z-10 flex items-center justify-between mb-4 sm:mb-5 md:mb-4">
             <SolversWordmark />
-            <span className="lg:hidden text-[11px] font-bold text-[#4F46E5] bg-[#EEECFF] px-2.5 py-0.5 rounded-full border border-[#4F46E5]/20 select-none">
+            <span className="md:hidden text-xs font-bold text-[#4F46E5] bg-[#EEECFF] px-2.5 py-0.5 rounded-full border border-[#4F46E5]/20 select-none">
               2027
             </span>
           </div>
 
           {/* Hero Content & Mascot Area:
-              - Mobile (<lg): Stacked hero layout matching reference phone screen.
-              - Desktop (lg+): 2-column layout (Headline+Features left, Mascot right). */}
+              - Mobile (<md): Stacked hero layout.
+              - Tablet & Desktop (md+): 2-column layout (Headline+Features left, Mascot right). */}
           <div className="relative z-10 my-auto">
-            {/* Desktop 2-column grid */}
-            <div className="hidden lg:grid grid-cols-12 gap-5 xl:gap-6 items-center">
+            {/* Tablet & Desktop 2-column grid */}
+            <div className="hidden md:grid grid-cols-12 gap-3.5 lg:gap-5 xl:gap-6 items-center">
               {/* Left: Headlines & Features */}
               <div className="col-span-7 flex flex-col justify-center">
                 <h1 className="text-3xl xl:text-4xl font-black text-[#151936] tracking-tight leading-[1.1]">
@@ -290,8 +291,8 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Mobile / Tablet Hero Layout (Exactly matching reference mobile screen) */}
-            <div className="lg:hidden flex flex-col items-center text-center">
+            {/* Mobile Hero Layout (<md: 768px) */}
+            <div className="md:hidden flex flex-col items-center text-center">
               <div className="relative w-full flex items-center justify-between gap-4">
                 <div className="text-left flex-1">
                   <h1 className="text-2xl sm:text-3xl font-black text-[#151936] tracking-tight leading-[1.1]">
@@ -325,19 +326,20 @@ export function LoginPage() {
             </div>
           </div>
 
-          {/* Bottom Desk Book Stack (Desktop only) */}
-          <div className="relative z-10 pt-3 hidden lg:flex items-center gap-3">
-            <div className="flex flex-col select-none" aria-hidden="true">
-              <div className="w-16 h-3 bg-[#4F46E5] text-[6.5px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs">
-                DSA
-              </div>
-              <div className="w-18 h-3 bg-[#151936] text-[6.5px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
-                Algorithms
-              </div>
+          {/* Bottom Trust Badges (Tablet & Desktop matching reference) */}
+          <div className="relative z-10 pt-4 hidden md:flex items-center justify-between gap-2 border-t border-[#E2E6F5]/80">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#647096]">
+              <ShieldCheck className="size-3.5 text-[#4F46E5]" />
+              <span>Secure Authentication</span>
             </div>
-            <span className="text-[11px] font-semibold text-[#8C98BA] italic select-none">
-              Build your competitive foundation
-            </span>
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#647096]">
+              <Users className="size-3.5 text-[#16A765]" />
+              <span>Academic Integrity</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#647096]">
+              <Zap className="size-3.5 text-[#F59E0B]" />
+              <span>Real Learning</span>
+            </div>
           </div>
         </section>
 
@@ -347,10 +349,10 @@ export function LoginPage() {
         {/* ========================================================================= */}
         <section
           aria-labelledby="login-surface-heading"
-          className="w-full lg:w-[44%] bg-white border-t lg:border-t-0 lg:border-l border-[#E2E6F5] p-5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between items-center relative"
+          className="w-full md:w-[46%] lg:w-[44%] bg-white border-t md:border-t-0 md:border-l border-[#E2E6F5] p-5 sm:p-7 md:p-6 lg:p-8 xl:p-9 flex flex-col justify-between items-center relative"
         >
-          {/* Top Tag on Desktop */}
-          <div className="w-full hidden lg:flex justify-end select-none">
+          {/* Top Tag on Tablet & Desktop */}
+          <div className="w-full hidden md:flex justify-end select-none">
             <span
               className="text-xs font-semibold text-[#9BA8CD] italic select-none pointer-events-none"
               style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
@@ -360,11 +362,11 @@ export function LoginPage() {
           </div>
 
           {/* Centered Login / Admin Form Block */}
-          <div className="w-full max-w-[340px] sm:max-w-[360px] my-auto py-2 sm:py-4 flex flex-col items-center text-center">
+          <div className="w-full max-w-full sm:max-w-[380px] my-auto py-3 sm:py-4 flex flex-col items-center text-center">
             {/* Header: Welcome to Solvers */}
             <h2
               id="login-surface-heading"
-              className="text-xl sm:text-2xl font-black text-[#151936] tracking-tight"
+              className="text-2xl sm:text-2xl font-black text-[#151936] tracking-tight"
             >
               Welcome to <span className="text-[#4F46E5]">Solvers</span>
             </h2>
