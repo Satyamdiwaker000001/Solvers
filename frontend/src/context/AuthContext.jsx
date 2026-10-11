@@ -1,17 +1,62 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { AuthContext } from "./contexts.js";
 import { getMe, logout as apiLogout, startOAuth, adminLogin, updateAdminProfile } from "../services/api.js";
+import { clearSessionId } from "../services/http.js";
 
-/**
- * Session state for Solvers.
- *
- * Session lives in an HttpOnly cookie / session token with the live Express backend.
- * Role and approval state are fetched from `GET /api/v1/auth/me` on mount and refreshed on demand.
- */
+// Professional security standard: 15 minutes idle timeout (900,000 ms)
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const lastActiveRef = useRef(Date.now());
+
+  const signOut = useCallback(() => {
+    setUser(null);
+    clearSessionId();
+    apiLogout().catch(() => {});
+  }, []);
+
+  // Monitor user activity and tab visibility
+  useEffect(() => {
+    if (!user) return;
+
+    const recordActivity = () => {
+      lastActiveRef.current = Date.now();
+    };
+
+    const checkInactivity = () => {
+      const now = Date.now();
+      if (now - lastActiveRef.current > IDLE_TIMEOUT_MS) {
+        console.warn("[Session] Inactivity limit reached. Signing out for security.");
+        signOut();
+      }
+    };
+
+    // Activity events
+    const events = ["mousedown", "keydown", "touchstart", "scroll"];
+    events.forEach((ev) => window.addEventListener(ev, recordActivity, { passive: true }));
+
+    // Visibility change (tab switch or backgrounding)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkInactivity();
+      } else {
+        recordActivity();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    // Periodic idle checker every 30 seconds
+    const interval = setInterval(checkInactivity, 30000);
+
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, recordActivity));
+      document.removeEventListener("visibilitychange", handleVisibility);
+      clearInterval(interval);
+    };
+  }, [user, signOut]);
 
   useEffect(() => {
     let cancelled = false;
@@ -24,10 +69,12 @@ export function AuthProvider({ children }) {
       })
       .catch((e) => {
         if (!cancelled) {
-          // 401 simply means "not signed in"; anything else is surfaced so
-          // the sign-in screen can say the backend is unreachable.
-          if (e.status === 401) setUser(null);
-          else setError(e.message);
+          if (e.status === 401) {
+            setUser(null);
+            clearSessionId();
+          } else {
+            setError(e.message);
+          }
         }
       })
       .finally(() => {
@@ -44,8 +91,12 @@ export function AuthProvider({ children }) {
       setError(null);
       return r.data.user;
     } catch (e) {
-      if (e.status === 401) setUser(null);
-      else setError(e.message);
+      if (e.status === 401) {
+        setUser(null);
+        clearSessionId();
+      } else {
+        setError(e.message);
+      }
       return null;
     } finally {
       setLoading(false);
@@ -55,11 +106,6 @@ export function AuthProvider({ children }) {
   const signIn = useCallback(async () => {
     const url = await startOAuth();
     window.location.assign(url);
-  }, []);
-
-  const signOut = useCallback(() => {
-    setUser(null);
-    apiLogout().catch(() => {});
   }, []);
 
   const signInAdmin = useCallback(async (username, password) => {
