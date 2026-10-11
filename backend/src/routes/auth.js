@@ -4,7 +4,7 @@ import { AdminCredential, User } from "../models.js";
 import { asyncHandler, unauthorized, badRequest } from "../middleware/errors.js";
 import { rateLimit, ipKey } from "../middleware/rateLimit.js";
 import { ensureCsrfToken, rotateCsrfToken } from "../middleware/csrf.js";
-import { serializeUser } from "../services/approvals.js";
+import { serializeUser, submitAccessRequest } from "../services/approvals.js";
 import { nextStudentId } from "../lib/studentIds.js";
 import { buildAuthorizeUrl } from "../lib/github.js";
 import { verifyPassword } from "../lib/passwords.js";
@@ -85,6 +85,13 @@ async function resolveUser(cfg, profile) {
       user.folder = folder;
     }
     await user.save();
+    if (!isAdmin) {
+      try {
+        await submitAccessRequest(user, { note: "First-time sign-in access request" });
+      } catch {
+        // Ignored if already pending or locked
+      }
+    }
     return user;
   }
   let changed = false;
@@ -123,6 +130,13 @@ async function resolveUser(cfg, profile) {
     changed = true;
   }
   if (changed) await user.save();
+  if (!isAdmin && user.role === "student" && user.accountStatus === "pending") {
+    try {
+      await submitAccessRequest(user, { note: "Student sign-in access request" });
+    } catch {
+      // Ignored if already pending or locked
+    }
+  }
   return user;
 }
 
@@ -181,7 +195,7 @@ export function authRoutes() {
     }
   }));
 
-  router.post("/admin/login", authRateLimiter(), validateBody(adminLoginSchema), asyncHandler(async (req, res, next) => {
+  router.post("/admin/login", validateBody(adminLoginSchema), asyncHandler(async (req, res, next) => {
     const cfg = req.app.get("config");
     const { username, password } = req.body;
     const cleanUser = username.trim().toLowerCase();

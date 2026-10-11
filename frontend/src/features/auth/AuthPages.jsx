@@ -16,6 +16,8 @@ import {
   ShieldAlert,
   ArrowLeft,
   KeyRound,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import { GithubMark } from "../../components/ui/GithubMark.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -649,29 +651,67 @@ function LiveAccessStatus() {
   const nav = useNavigate();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [lastChecked, setLastChecked] = useState(null);
+
+  const fetchStatus = async (showToast = false) => {
+    try {
+      if (showToast) setChecking(true);
+      const updatedUser = await refresh();
+      if (updatedUser?.role === "admin") {
+        nav("/admin/dashboard", { replace: true });
+        return;
+      }
+      if (updatedUser?.accessState === "APPROVED") {
+        toast.push({ tone: "success", title: "Access Approved!", body: "Redirecting to your student dashboard…" });
+        nav("/app/dashboard", { replace: true });
+        return;
+      }
+
+      let r = await getMyRequest();
+      // If student is pending but no AccessRequest exists yet, auto-submit to ensure admin sees it
+      if (!r?.data && updatedUser?.accessState === "PENDING") {
+        try {
+          const created = await submitAccessRequest("");
+          r = { data: created.data || created };
+        } catch {
+          // Handled or duplicate
+        }
+      }
+      setRequest(r?.data || null);
+      setLastChecked(new Date());
+
+      if (showToast) {
+        if (updatedUser?.accessState === "PENDING") {
+          toast.push({
+            title: "Request in Admin Queue",
+            body: "Your request is currently waiting for professor approval.",
+          });
+        }
+      }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      if (showToast) setChecking(false);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    refresh()
-      .then(() => getMyRequest())
-      .then((r) => {
-        if (!cancelled) setRequest(r.data);
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [refresh]);
+    fetchStatus(false);
+    // Auto-poll every 6 seconds so user transitions immediately when approved
+    const interval = setInterval(() => {
+      fetchStatus(false);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
       <AuthShell eyebrow="Access status">
-        <Card className="glass-panel"><LoadingState label="Checking your access status…" /></Card>
+        <Card className="glass-panel"><LoadingState label="Checking your access status with admin…" /></Card>
       </AuthShell>
     );
   }
@@ -682,7 +722,7 @@ function LiveAccessStatus() {
 
   const state = user.accessState;
 
-  const submit = async () => {
+  const submitNew = async () => {
     setBusy(true);
     setError(null);
     try {
@@ -694,7 +734,7 @@ function LiveAccessStatus() {
       if (e.code === "REAPPLICATION_LOCKED") {
         setError(`Your previous request was rejected. You can reapply ${e.retryAfter ? `in ${timeUntil(e.retryAfter)}` : "after the 24-hour lock expires"}. The lock is enforced by server time.`);
       } else if (e.code === "IDEMPOTENCY_CONFLICT") {
-        setError("You already have an active pending request.");
+        setError("You already have an active pending request in the admin queue.");
       } else {
         setError(e.message);
       }
@@ -704,22 +744,90 @@ function LiveAccessStatus() {
   };
 
   return (
-    <AuthShell eyebrow="Access status">
+    <AuthShell eyebrow="Access verification status">
       <Card className="glass-panel border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         {state === "PENDING" && (
-          <>
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-bg px-2.5 py-1 text-xs font-bold text-warning">
-              <Clock3 aria-hidden="true" className="size-3.5" /> Pending review
-            </p>
-            <h1 className="page-title mt-2">Your request is in the queue</h1>
-            <p className="mt-1 text-sm text-muted">
-              Signed in as <strong>@{user.githubLogin}</strong>
-              {request?.submittedAt && <> · submitted <strong className="tnum">{formatDateTime(request.submittedAt)}</strong></>}.
-              A professor will approve or reject your request. Protected pages stay locked until then.
-            </p>
-            <Button tone="secondary" className="mt-4" onClick={() => nav("/sign-in")}>Use a different account</Button>
-          </>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-bg px-2.5 py-1 text-xs font-bold text-warning">
+                <Clock3 aria-hidden="true" className="size-3.5" /> Pending Faculty Approval
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] text-success font-semibold bg-success-bg/40 px-2 py-0.5 rounded-full border border-success/30">
+                <span className="size-1.5 rounded-full bg-success animate-pulse" /> Delivered to Admin
+              </span>
+            </div>
+
+            <div>
+              <h1 className="page-title text-ink">Request Sent to Admin Queue</h1>
+              <p className="mt-1 text-sm text-muted">
+                Aapki access request course administrator ke paas successfully queue ho chuki hai. Jaise hi professor approve karenge, aapka dashboard live ho jayega.
+              </p>
+            </div>
+
+            {/* Request Summary Box */}
+            <div className="rounded-xl border border-white/10 bg-canvas/70 p-3.5 space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-muted font-medium">Applicant GitHub</span>
+                <span className="font-mono font-bold text-ink">@{user.githubLogin}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-muted font-medium">Admin Queue Status</span>
+                <span className="font-semibold text-warning">In Review Queue (Pending)</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-muted font-medium">Submitted At</span>
+                <span className="font-mono text-muted">
+                  {request?.submittedAt ? formatDateTime(request.submittedAt) : "Active (Delivered)"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-muted font-medium">Auto-sync</span>
+                <span className="text-muted">Live polling every 6s</span>
+              </div>
+            </div>
+
+            {error && (
+              <p role="alert" className="rounded-xl border border-danger/30 bg-danger-bg p-3 text-xs font-medium text-danger">
+                {error}
+              </p>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+              <Button
+                loading={checking}
+                onClick={() => fetchStatus(true)}
+                className="w-full sm:w-auto text-xs font-bold bg-primary text-ink hover:bg-primary-strong"
+              >
+                <RefreshCw className={`size-3.5 ${checking ? "animate-spin" : ""}`} /> Check Status Now
+              </Button>
+              <Button
+                tone="secondary"
+                onClick={() => nav("/sign-in")}
+                className="w-full sm:w-auto text-xs"
+              >
+                Sign in as different user
+              </Button>
+            </div>
+
+            {/* Faculty testing helper callout */}
+            <div className="mt-4 rounded-xl border border-warning/20 bg-warning/5 p-3 text-xs text-muted">
+              <p className="font-semibold text-ink flex items-center gap-1.5">
+                <ShieldAlert className="size-3.5 text-warning" /> Course Faculty / Admin Note:
+              </p>
+              <p className="mt-1">
+                To approve this student, sign in at{" "}
+                <Link to="/admin-login" className="font-semibold text-primary hover:underline">
+                  Admin Login
+                </Link>{" "}
+                and visit the{" "}
+                <Link to="/admin/requests" className="font-semibold text-primary hover:underline">
+                  Access Requests Queue
+                </Link>.
+              </p>
+            </div>
+          </div>
         )}
+
         {state === "REJECTED" && (
           <>
             <h1 className="page-title text-danger">Request not approved</h1>
@@ -731,10 +839,11 @@ function LiveAccessStatus() {
             </div>
             {error && <p role="alert" className="mt-2 text-sm font-medium text-danger">{error}</p>}
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button loading={busy} onClick={submit} className="w-full sm:w-auto">Submit a new access request</Button>
+              <Button loading={busy} onClick={submitNew} className="w-full sm:w-auto">Submit a new access request</Button>
             </div>
           </>
         )}
+
         {state === "APPROVED" && (
           <>
             <p className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success-bg px-2.5 py-1 text-xs font-bold text-success">
@@ -745,6 +854,7 @@ function LiveAccessStatus() {
             <Button className="mt-3" onClick={() => nav("/app/dashboard")}>Open student dashboard</Button>
           </>
         )}
+
         {state !== "PENDING" && state !== "REJECTED" && state !== "APPROVED" && (
           <>
             <h1 className="page-title">Account unavailable</h1>

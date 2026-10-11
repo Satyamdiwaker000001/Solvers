@@ -89,7 +89,7 @@ export function loadConfig(env = process.env) {
 
     rateLimit: {
       general: { windowMs: optionalInt(env.RL_GENERAL_WINDOW_MS, 60_000, "RL_GENERAL_WINDOW_MS"), max: optionalInt(env.RL_GENERAL_MAX, 300, "RL_GENERAL_MAX") },
-      auth: { windowMs: optionalInt(env.RL_AUTH_WINDOW_MS, 15 * 60_000, "RL_AUTH_WINDOW_MS"), max: optionalInt(env.RL_AUTH_MAX, 10, "RL_AUTH_MAX") },
+      auth: { windowMs: optionalInt(env.RL_AUTH_WINDOW_MS, 15 * 60_000, "RL_AUTH_WINDOW_MS"), max: optionalInt(env.RL_AUTH_MAX, 60, "RL_AUTH_MAX") },
       accessRequest: { windowMs: optionalInt(env.RL_ACCESS_WINDOW_MS, 3_600_000, "RL_ACCESS_WINDOW_MS"), max: optionalInt(env.RL_ACCESS_MAX, 5, "RL_ACCESS_MAX") },
       adminWrite: { windowMs: optionalInt(env.RL_ADMIN_WINDOW_MS, 60_000, "RL_ADMIN_WINDOW_MS"), max: optionalInt(env.RL_ADMIN_MAX, 60, "RL_ADMIN_MAX") },
       webhook: { windowMs: optionalInt(env.RL_WEBHOOK_WINDOW_MS, 60_000, "RL_WEBHOOK_WINDOW_MS"), max: optionalInt(env.RL_WEBHOOK_MAX, 120, "RL_WEBHOOK_MAX") },

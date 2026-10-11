@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, RefreshCw, ShieldCheck, User } from "lucide-react";
 import { getAccessRequests, decideAccessRequest } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { Badge } from "../../components/ui/Badge.jsx";
@@ -16,9 +16,7 @@ export function AccessQueuePage() {
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
-  // Fetch-on-mount (+ retry via `attempt`): the loading flag is part of the
-  // initial state and is only reset from the async continuations below, so
-  // no synchronous setState happens inside this effect.
+  // Fetch-on-mount (+ retry via `attempt`):
   useEffect(() => {
     let live = true;
     getAccessRequests()
@@ -30,6 +28,18 @@ export function AccessQueuePage() {
       });
     return () => { live = false; };
   }, [attempt]);
+
+  // Periodic polling every 7 seconds to keep queue live for admin
+  useEffect(() => {
+    const timer = setInterval(() => {
+      getAccessRequests()
+        .then((r) => {
+          setState((s) => ({ ...s, items: r.data }));
+        })
+        .catch(() => {});
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
 
   const reload = () => {
     setState((s) => ({ ...s, loading: true, error: null }));
@@ -60,7 +70,15 @@ export function AccessQueuePage() {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title="Access requests" description="Approve or reject student access requests. Rejections apply a 24-hour waiting period before reapplication." />
+      <PageHeader
+        title="Access requests"
+        description="Approve or reject student access requests. Rejections apply a 24-hour waiting period before reapplication."
+        actions={
+          <Button tone="secondary" onClick={reload} className="text-xs">
+            <RefreshCw className="size-3.5" /> Refresh Queue
+          </Button>
+        }
+      />
       {pending.length === 0 ? (
         <EmptyState title="Queue is clear" body="No pending access requests. New GitHub sign-ins that request access will appear here." />
       ) : (

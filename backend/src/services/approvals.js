@@ -163,7 +163,15 @@ export async function decideAccessRequest({ requestId, adminUser, decision, fold
 }
 
 export async function getOwnRequest(user) {
-  const latest = await AccessRequest.findOne({ user: user._id }).sort({ submittedAt: -1 }).lean();
+  let latest = await AccessRequest.findOne({ user: user._id }).sort({ submittedAt: -1 }).lean();
+  if (!latest && user && user.role === "student" && user.accountStatus === "pending") {
+    try {
+      const created = await submitAccessRequest(user, { note: "First-time sign-in access request" });
+      latest = created;
+    } catch {
+      // Ignored if duplicate or locked
+    }
+  }
   return latest;
 }
 
