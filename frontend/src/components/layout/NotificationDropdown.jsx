@@ -226,7 +226,7 @@ export function NotificationDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-[#E2E6F5] bg-white p-3 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in zoom-in-95 duration-100">
+        <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-w-[calc(100vw-24px)] rounded-2xl border border-[#E2E6F5] bg-white p-3 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in zoom-in-95 duration-100">
           <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-[#E2E6F5]">
             <div className="flex items-center gap-2">
               <span className="text-[13px] font-bold text-[#151936]">Notifications</span>
