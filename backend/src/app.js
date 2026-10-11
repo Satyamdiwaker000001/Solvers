@@ -58,7 +58,7 @@ function corsOriginFn(allowlist) {
 export function createApp(cfg, { githubClient = null } = {}) {
   const app = express();
   app.set("config", cfg);
-  app.set("trust proxy", cfg.trustProxy);
+  app.set("trust proxy", 1);
   app.set("csrfSecureCookies", cfg.isProd);
   app.set("github", githubClient || createGithubClient({
     oauthBase: cfg.github.oauthBase,
@@ -108,8 +108,9 @@ export function createApp(cfg, { githubClient = null } = {}) {
   const adminWrite = cfg.rateLimit.adminWrite;
   const adminWriteLimit = rateLimit({ prefix: "rl:admin", windowMs: adminWrite.windowMs, max: adminWrite.max, key: (req) => String(req.user?._id || req.ip) });
 
-  // Mutations require a CSRF token (OAuth handshake + webhook use their own proofs).
+  // Mutations require a CSRF token (login & webhook use their own credentials).
   const mutating = (req, res, next) => {
+    if (req.path === "/admin/login") return next();
     if (["POST", "PATCH", "PUT", "DELETE"].includes(req.method)) return checkCsrfToken(req, res, next);
     return next();
   };
