@@ -8,12 +8,12 @@ import {
   Clock,
   Home,
   RefreshCw,
-  GraduationCap,
   ArrowLeft,
   ChevronRight,
   ExternalLink,
 } from "lucide-react";
 import { Button } from "../components/ui/Button.jsx";
+import { SolversLogo } from "../components/ui/SolversLogo.jsx";
 
 function ErrorLayout({ icon: Icon, tone = "primary", code, title, subtitle, description, details, actions }) {
   const toneMap = {
@@ -53,16 +53,7 @@ function ErrorLayout({ icon: Icon, tone = "primary", code, title, subtitle, desc
         {/* Brand Header */}
         <div className="mb-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <span className="grid size-10 place-items-center rounded-xl border border-primary/30 bg-primary/15 text-primary shadow-xs group-hover:scale-105 transition-transform">
-              <GraduationCap className="size-5" />
-            </span>
-            <div>
-              <div className="flex items-center gap-1.5 leading-tight">
-                <span className="font-extrabold tracking-tight text-ink text-base">Solvers</span>
-                <span className="text-[10px] rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.2 text-primary font-bold">2027</span>
-              </div>
-              <p className="text-[11px] text-muted">DSA Practice & Verification</p>
-            </div>
+            <SolversLogo size="default" />
           </Link>
           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border ${theme.badge}`}>
             {code}

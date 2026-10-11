@@ -12,13 +12,8 @@ import { NotificationDropdown } from "./NotificationDropdown.jsx";
 
 function Brand() {
   return (
-    <Link to="/" className="flex min-w-0 items-center gap-2.5 px-1 py-1" aria-label="Solvers home">
-      <span className="flex items-center text-primary font-mono text-xl font-bold tracking-tight">
-        &lt;&gt;
-      </span>
-      <span className="text-[20px] font-black tracking-tight text-[#151936]">
-        Solvers
-      </span>
+    <Link to="/" className="flex min-w-0 items-center px-1 py-1" aria-label="Solvers home">
+      <SolversLogo size="default" />
     </Link>
   );
 }

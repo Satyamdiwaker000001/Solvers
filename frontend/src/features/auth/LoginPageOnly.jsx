@@ -15,29 +15,8 @@ import {
 } from "lucide-react";
 import { GithubMark } from "../../components/ui/GithubMark.jsx";
 import { LoadingState } from "../../components/ui/States.jsx";
+import { SolversLogo } from "../../components/ui/SolversLogo.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
-
-function SolversWordmark({ size = "default" }) {
-  const isCompact = size === "compact";
-  return (
-    <div className="flex items-center gap-2 select-none" aria-label="Solvers">
-      <div
-        className={`flex items-center justify-center font-mono font-bold text-white rounded-xl shadow-xs shrink-0 ${
-          isCompact ? "w-7 h-7 text-xs" : "w-8 h-8 sm:w-9 sm:h-9 text-sm"
-        } bg-[#4F46E5]`}
-      >
-        <span className="tracking-tighter">&lt;&#39;&gt;</span>
-      </div>
-      <span
-        className={`font-black tracking-tight text-[#151936] ${
-          isCompact ? "text-lg" : "text-xl sm:text-2xl"
-        }`}
-      >
-        Solvers
-      </span>
-    </div>
-  );
-}
 
 export function LoginPage() {
   const auth = useAuth();
@@ -159,7 +138,7 @@ export function LoginPage() {
 
           {/* Top Row: Wordmark */}
           <div className="relative z-10 flex items-center justify-between mb-1.5 sm:mb-4">
-            <SolversWordmark />
+            <SolversLogo size="default" />
             <span className="md:hidden text-[11px] font-bold text-[#4F46E5] bg-[#EEECFF] px-2 py-0.5 rounded-full border border-[#4F46E5]/20 select-none">
               2027
             </span>
