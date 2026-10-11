@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Bookmark,
+  BookOpenCheck,
   CheckCircle2,
   Clock,
   FileCode2,
@@ -95,10 +96,19 @@ export function StudentDashboardConcept() {
 
   useEffect(() => {
     let active = true;
+    const studentId = user?.studentId;
+    if (!studentId) {
+      // If user profile is still hydrating or has no studentId yet
+      if (user) {
+        setState((c) => ({ ...c, loading: false, overview: {} }));
+      }
+      return;
+    }
+
     Promise.all([
-      getStudentOverview(user.studentId).catch(() => ({ data: {} })),
-      getStudentAssignments(user.studentId).catch(() => ({ data: [] })),
-      getStudentSubmissions(user.studentId).catch(() => ({ data: [] })),
+      getStudentOverview(studentId).catch(() => ({ data: {} })),
+      getStudentAssignments(studentId).catch(() => ({ data: [] })),
+      getStudentSubmissions(studentId).catch(() => ({ data: [] })),
       getLeaderboard().catch(() => ({ data: { entries: [] } })),
     ])
       .then(([overview, assignments, submissions, leaderboard]) => {
@@ -111,7 +121,7 @@ export function StudentDashboardConcept() {
           assignments: assignments.data || [],
           submissions: submissions.data || [],
           leaderboard: entries,
-          rank: entries.find((item) => item.studentId === user.studentId) || null,
+          rank: entries.find((item) => item.studentId === studentId) || null,
         });
       })
       .catch((err) => {
@@ -120,7 +130,7 @@ export function StudentDashboardConcept() {
     return () => {
       active = false;
     };
-  }, [user.studentId, attempt]);
+  }, [user?.studentId, user, attempt]);
 
   // Periodic refresh
   useEffect(() => {
