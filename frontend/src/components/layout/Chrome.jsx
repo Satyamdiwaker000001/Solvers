@@ -11,11 +11,12 @@ import { AvatarEditModal } from "./AvatarEditModal.jsx";
 
 function Brand() {
   return (
-    <Link to="/" className="flex min-w-0 items-center gap-2.5" aria-label="DSA Practice Tracker home">
-      <SolversLogo compact />
-      <span className="min-w-0 leading-tight">
-        <span className="block truncate text-sm font-extrabold tracking-tight text-ink">Solvers</span>
-        <span className="block truncate text-xs text-muted">DSA Practice &amp; Verification</span>
+    <Link to="/" className="flex min-w-0 items-center gap-2.5 px-1 py-1" aria-label="Solvers home">
+      <span className="flex items-center text-primary font-mono text-xl font-bold tracking-tight">
+        &lt;&gt;
+      </span>
+      <span className="text-[20px] font-black tracking-tight text-[#151936]">
+        Solvers
       </span>
     </Link>
   );
@@ -24,13 +25,17 @@ function Brand() {
 export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
   const { user, signOut } = useAuth();
   const handleSignOut = onRequestSignOut || signOut;
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-border p-4 pr-12 lg:pr-4"><Brand /></div>
-      <nav aria-label="Primary" className="scroll-region min-h-0 flex-1 overflow-y-auto p-3">
-        <ul className="grid gap-1">
+    <div className="flex h-full min-h-0 flex-col bg-[#F8F8FF] border-r border-[#E2E6F5]">
+      {/* Brand logo header */}
+      <div className="px-5 pt-6 pb-4">
+        <Brand />
+      </div>
+
+      {/* Navigation items */}
+      <nav aria-label="Primary" className="scroll-region min-h-0 flex-1 overflow-y-auto px-3 py-2">
+        <ul className="flex flex-col gap-1.5">
           {nav.map((item) => (
             <li key={item.to}>
               <SidebarLink item={item} onNavigate={onNavigate} badge={item.badgeKey ? badges?.[item.badgeKey] : null} />
@@ -38,23 +43,48 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
           ))}
         </ul>
       </nav>
-      <div className="border-t border-border p-3">
-        <DemoBadge />
+
+      {/* Mascot character with quote matching reference exactly */}
+      <div className="px-3 pb-3 pt-2">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#EDE9FE]/50 to-[#E0E7FF]/70 p-3 pt-4 border border-[#E0E7FF] text-center shadow-xs">
+          <div className="relative mx-auto w-32 h-36 flex items-center justify-center">
+            <img
+              src="/mascot.png"
+              alt="Solvers Student Mascot"
+              className="h-full object-contain filter drop-shadow-md select-none pointer-events-none"
+            />
+            {/* Playful floating quote tag matching reference */}
+            <span
+              className="absolute -top-1 -right-1 rotate-12 text-[10px] font-bold text-primary bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-xs border border-primary/20 pointer-events-none"
+              style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
+            >
+              Keep Solving!
+            </span>
+          </div>
+          <div className="mt-2 rounded-xl bg-white/95 px-2.5 py-2 text-left border border-[#E2E6F5] shadow-2xs">
+            <p className="text-[11px] font-bold text-[#151936] leading-tight flex items-center gap-1.5">
+              <span className="text-amber-500 text-xs">👑</span>
+              Consistency Builds Great Developers.
+            </p>
+          </div>
+        </div>
+
+        {/* User bar at bottom */}
         {user && (
-          <div className="mt-2 flex items-center gap-2.5 rounded-xl border border-border/80 bg-surface p-2.5 shadow-xs">
-            <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-subtle object-cover text-xs font-bold text-primary" />
+          <div className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-[#E2E6F5] bg-white p-2 shadow-2xs">
+            <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="size-7.5 shrink-0 rounded-full border border-[#E2E6F5] object-cover text-xs font-bold text-primary" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[13px] font-semibold text-ink">{user.displayName || user.name}</p>
-              <p className="truncate text-xs text-muted">{user.role === "admin" ? "Course Admin" : `@${user.githubLogin}`}</p>
+              <p className="truncate text-[12px] font-bold text-[#151936]">{user.displayName || user.name}</p>
+              <p className="truncate text-[10px] text-[#647096]">{user.role === "admin" ? "Course Admin" : `@${user.githubLogin}`}</p>
             </div>
             <button
               type="button"
               onClick={handleSignOut}
               title="Sign out"
               aria-label="Sign out"
-              className="shrink-0 rounded-lg p-1.5 text-muted transition hover:bg-canvas hover:text-danger cursor-pointer"
+              className="shrink-0 rounded-lg p-1 text-[#647096] transition hover:bg-[#F3F4FF] hover:text-[#DC4545] cursor-pointer"
             >
-              <LogOut aria-hidden="true" className="size-4" />
+              <LogOut aria-hidden="true" className="size-3.5" />
             </button>
           </div>
         )}
@@ -69,16 +99,16 @@ function SidebarLink({ item, onNavigate, badge }) {
     <NavLink
       to={item.to} end={item.end} onClick={onNavigate}
       className={({ isActive }) => cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+        "flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13.5px] font-medium transition duration-150",
         isActive
-          ? "border border-primary/30 bg-primary/15 font-semibold text-primary shadow-xs"
-          : "text-ink/80 hover:bg-canvas hover:text-ink",
+          ? "bg-[#E9E7FF] font-bold text-primary shadow-xs"
+          : "text-[#647096] hover:bg-[#E9E7FF]/50 hover:text-[#151936]",
       )}
     >
-      <Icon aria-hidden="true" className="size-[18px] shrink-0" />
+      <Icon aria-hidden="true" className="size-4.5 shrink-0" />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
       {badge != null && badge > 0 && (
-        <span className="tnum grid min-w-5 place-items-center rounded-full border border-warning/30 bg-warning-bg px-1.5 py-0.5 text-xs font-bold text-warning">{badge}</span>
+        <span className="grid min-w-5 place-items-center rounded-full bg-amber-100 px-1.5 py-0.2 text-[10px] font-bold text-amber-700">{badge}</span>
       )}
     </NavLink>
   );
@@ -88,9 +118,9 @@ export function DemoBadge() {
   const { isDemo } = useAuth();
   if (!isDemo) return null;
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-canvas/80 px-2.5 py-1.5 text-xs text-muted">
+    <div className="flex items-center gap-2 rounded-xl border border-[#E2E6F5] bg-white px-2.5 py-1.5 text-xs text-[#647096]">
       <FlaskConical aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
-      <span className="truncate leading-tight"><strong className="text-ink">Demo mode</strong> · in-memory data</span>
+      <span className="truncate leading-tight"><strong className="text-[#151936]">Demo mode</strong> · in-memory</span>
     </div>
   );
 }
@@ -115,54 +145,74 @@ export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut })
   }, [menuOpen]);
 
   return (
-    <header className="app-topbar fixed inset-x-0 top-0 z-30 border-b border-border bg-surface/90 backdrop-blur-md lg:left-72">
-      <div className="app-topbar-inner mx-auto flex h-16 max-w-[1440px] items-center gap-2 sm:gap-3 px-3 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={onMenu}
-          aria-label="Open navigation menu"
-          aria-expanded={Boolean(menuExpanded)}
-          aria-controls="mobile-nav"
-          className="shrink-0 rounded-lg p-2 text-ink hover:bg-canvas lg:hidden"
-        >
-          <Menu aria-hidden="true" className="size-5" />
-        </button>
-        <div className="min-w-0 flex-1 lg:hidden"><Brand /></div>
-        <div className="app-topbar-heading hidden min-w-0 flex-1 items-center gap-2 lg:flex">
-          <span className="app-topbar-kicker">Workspace</span>
-          <span className="app-topbar-divider" aria-hidden="true" />
-          <p className="truncate text-sm font-semibold text-ink">{title}</p>
+    <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-[#E2E6F5] bg-[#F8F8FF]/80 backdrop-blur-md lg:left-64">
+      <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-7">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={onMenu}
+            aria-label="Open navigation menu"
+            aria-expanded={Boolean(menuExpanded)}
+            aria-controls="mobile-nav"
+            className="shrink-0 rounded-lg p-2 text-[#151936] hover:bg-[#F3F4FF] lg:hidden"
+          >
+            <Menu aria-hidden="true" className="size-5" />
+          </button>
+
+          {/* Top Search bar matching reference */}
+          <div className="relative hidden sm:flex items-center w-full max-w-md">
+            <span className="absolute left-3.5 text-[#8F9BB3] pointer-events-none">
+              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Search problems, topics, tags..."
+              className="w-full rounded-xl border border-[#E2E6F5] bg-white py-2 pl-10 pr-4 text-xs text-[#151936] placeholder-[#8F9BB3] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 shadow-2xs"
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* Right side controls: Notification bell + User profile */}
+        <div className="flex items-center gap-3 shrink-0">
           {right}
+
+          {/* Notification bell button */}
+          <button
+            type="button"
+            aria-label="Notifications"
+            className="relative flex size-9 items-center justify-center rounded-xl border border-[#E2E6F5] bg-white text-[#647096] hover:text-[#151936] hover:border-primary/40 shadow-2xs transition"
+          >
+            <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span className="absolute top-2 right-2 size-1.5 rounded-full bg-[#DC4545] ring-2 ring-white" />
+          </button>
+
           {user && (
             <div className="relative" ref={dropdownRef}>
-              {/* Unified Profile Trigger Button */}
               <button
                 type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 rounded-full border border-border bg-surface hover:bg-canvas/80 p-1 pl-1.5 pr-3 shadow-xs transition hover:border-primary/40 cursor-pointer"
+                className="flex items-center gap-2.5 rounded-full border border-transparent hover:border-[#E2E6F5] hover:bg-white p-1 pr-2.5 transition cursor-pointer"
                 aria-expanded={menuOpen}
                 aria-haspopup="true"
               >
-                <div className="relative">
-                  <Avatar
-                    src={user.avatarUrl}
-                    name={user.displayName || user.name}
-                    className="size-7 rounded-full border border-border object-cover text-center text-xs font-bold leading-7 text-primary"
-                  />
-                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
-                </div>
+                <Avatar
+                  src={user.avatarUrl}
+                  name={user.displayName || user.name}
+                  className="size-8.5 rounded-full border border-[#E2E6F5] object-cover text-center text-xs font-bold leading-8 text-primary shadow-2xs"
+                />
                 <div className="hidden sm:flex flex-col items-start leading-tight min-w-0">
-                  <span className="text-xs font-bold text-ink truncate max-w-28">
+                  <span className="text-[13px] font-bold text-[#151936] truncate max-w-32">
                     {user.displayName || user.name}
                   </span>
-                  <span className="text-[10px] text-muted flex items-center gap-1 font-medium">
-                    {user.role === "admin" ? <ShieldCheck className="size-3 text-primary" /> : null}
-                    {user.role === "admin" ? "Admin" : `@${user.githubLogin}`}
+                  <span className="text-[10px] text-[#647096] font-medium">
+                    {user.role === "admin" ? "Admin" : "Student"}
                   </span>
                 </div>
-                <ChevronDown className={`size-3.5 text-muted transition duration-200 ${menuOpen ? "rotate-180 text-primary" : ""}`} />
+                <ChevronDown className={`size-3.5 text-[#647096] transition duration-200 ${menuOpen ? "rotate-180 text-primary" : ""}`} />
               </button>
 
               {/* Perfectly Aligned Profile Dropdown Menu */}

@@ -142,8 +142,9 @@ async function resolveUser(cfg, profile) {
 
 export function authRoutes() {
   const router = Router();
+  const authLimit = authRateLimiter();
 
-  router.get("/github/start", asyncHandler(async (req, res) => {
+  router.get("/github/start", authLimit, asyncHandler(async (req, res) => {
     const cfg = req.app.get("config");
     const state = generateSignedState(cfg.sessionSecret);
     req.session.oauthState = { state, createdAt: Date.now() };
@@ -159,7 +160,7 @@ export function authRoutes() {
 
   // Browser callback: validates state, exchanges code server-side, establishes
   // a session, then redirects to the SPA finish page (which calls GET /me).
-  router.get("/github/callback", asyncHandler(async (req, res, next) => {
+  router.get("/github/callback", authLimit, asyncHandler(async (req, res, next) => {
     const cfg = req.app.get("config");
     const { code, state, error } = req.query;
     const finish = (params) => res.redirect(`${clientOrigin(req)}/auth/finish${params}`);
@@ -195,7 +196,7 @@ export function authRoutes() {
     }
   }));
 
-  router.post("/admin/login", validateBody(adminLoginSchema), asyncHandler(async (req, res, next) => {
+  router.post("/admin/login", authLimit, validateBody(adminLoginSchema), asyncHandler(async (req, res, next) => {
     const cfg = req.app.get("config");
     const { username, password } = req.body;
     const cleanUser = username.trim().toLowerCase();

@@ -3,6 +3,7 @@ import { loadConfig } from "./config.js";
 import { connectDb, disconnectDb } from "./db.js";
 import { createApp } from "./app.js";
 import { startWebhookWorker, stopWebhookWorker } from "./services/evidence.js";
+import { RateBucket } from "./models.js";
 
 dotenv.config();
 
@@ -10,6 +11,11 @@ async function main() {
   const cfg = loadConfig();
   await connectDb(cfg.mongoUri);
   console.log(`[backend] MongoDB connected (${cfg.nodeEnv})`);
+
+  if (!cfg.isProd) {
+    // Clear any lingering auth rate buckets on dev restart so developers aren't locked out
+    await RateBucket.deleteMany({ _id: { $regex: "^rl:auth:" } }).catch(() => {});
+  }
 
   const app = createApp(cfg);
   const server = app.listen(cfg.port, () => {
