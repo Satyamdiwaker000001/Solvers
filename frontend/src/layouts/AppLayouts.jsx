@@ -94,16 +94,16 @@ function Shell({ nav, consoleName, badges }) {
   };
 
   return (
-    <div className="relative min-h-svh bg-canvas text-ink overflow-x-hidden">
-      {/* Quiet atmospheric background lighting */}
+    <div className="relative min-h-svh bg-[#F3F4FF] text-ink overflow-x-hidden font-sans">
+      {/* Soft lavender and subtle blue atmospheric background highlights matching reference */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden select-none" aria-hidden="true">
         <div
-          className="absolute -top-40 -left-40 size-[500px] rounded-full blur-[140px] opacity-[0.12]"
-          style={{ background: "radial-gradient(circle, #DDF4E5 0%, transparent 70%)" }}
+          className="absolute -top-32 left-1/4 size-[600px] rounded-full blur-[140px] opacity-[0.25]"
+          style={{ background: "radial-gradient(circle, #E9E7FF 0%, transparent 70%)" }}
         />
         <div
-          className="absolute top-1/3 -right-40 size-[550px] rounded-full blur-[160px] opacity-[0.07]"
-          style={{ background: "radial-gradient(circle, #EEF2F0 0%, transparent 70%)" }}
+          className="absolute top-1/2 -right-32 size-[500px] rounded-full blur-[160px] opacity-[0.20]"
+          style={{ background: "radial-gradient(circle, #EDE9FE 0%, transparent 70%)" }}
         />
       </div>
 
@@ -111,14 +111,14 @@ function Shell({ nav, consoleName, badges }) {
         Skip to main content
       </a>
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-border bg-surface/95 backdrop-blur-xl lg:block" aria-label="Primary">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-[#E2E6F5] bg-[#F8F8FF] lg:block" aria-label="Primary">
         <Sidebar nav={nav} badges={badges} onRequestSignOut={handleRequestSignOut} />
       </aside>
       {/* Mobile drawer */}
       {open && <MobileNavDrawer nav={nav} badges={badges} onClose={close} onRequestSignOut={handleRequestSignOut} />}
-      <div className="lg:pl-72 relative z-10 pt-16">
+      <div className="lg:pl-64 relative z-10 pt-16">
         <Topbar title={consoleName} onMenu={() => setOpen(true)} menuExpanded={open} onRequestSignOut={handleRequestSignOut} />
-        <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+        <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 px-4 py-4 sm:px-6 sm:py-6 lg:px-7 lg:py-6">
           <Outlet />
         </main>
       </div>

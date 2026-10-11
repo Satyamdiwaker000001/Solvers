@@ -25,6 +25,10 @@ export function rateLimit({ prefix, windowMs, max, key = (req) => req.ip }) {
       }
       return next();
     } catch (err) {
+      if (err.name === "MongoError" || err.name === "MongooseError" || err.name === "MongoNetworkError" || err.name === "MongoServerSelectionError") {
+        console.warn(`[rateLimit] DB error during rate limit check for ${prefix}: ${err.message}. Failing open.`);
+        return next();
+      }
       return next(err);
     }
   };
@@ -74,7 +78,7 @@ export async function releaseSlot(slotKey) {
 
 /**
  * Express middleware wrapper around the slot guard (429 when saturated).
- * The lease is released when the response finishes so intake slots do not
+ * The lease is released when the response finishes or closes so intake slots do not
  * leak across requests; stale slots still self-heal via the TTL window.
  */
 export function concurrencyLimit({ key, max, ttlMs }) {
@@ -84,9 +88,15 @@ export function concurrencyLimit({ key, max, ttlMs }) {
       if (!ok) {
         return next(new AppError(429, "RATE_LIMITED", "Server is busy processing similar work; please retry shortly", undefined, 5));
       }
-      res.on("finish", () => {
-        releaseSlot(key).catch(() => {});
-      });
+      let released = false;
+      const release = () => {
+        if (!released) {
+          released = true;
+          releaseSlot(key).catch(() => {});
+        }
+      };
+      res.on("finish", release);
+      res.on("close", release);
       return next();
     } catch (err) {
       return next(err);

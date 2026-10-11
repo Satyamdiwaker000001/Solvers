@@ -145,7 +145,7 @@ export function createApp(cfg, { githubClient = null } = {}) {
     if (dbState() !== 1) return res.status(503).json({ error: { code: "NOT_READY", message: "Database not connected" } });
     return res.json({ data: { ok: true } });
   });
-  app.use("/api/v1/auth", authRateLimiter(), mutating, authRoutes());
+  app.use("/api/v1/auth", mutating, authRoutes());
   app.use("/api/v1/access-requests", mutating, accessRequestRoutes());
 
   // Admin (mounted before the student catch-all at /api/v1 so the

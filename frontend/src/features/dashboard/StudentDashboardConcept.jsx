@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, Check, Code2, FileCode2, GitPullRequest, Hourglass, Search, Trophy } from "lucide-react";
+import { ArrowRight, BarChart3, Check, Code2, FileCode2, GitPullRequest, Hourglass, Search, Trophy, Flame, Target } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { getLeaderboard, getStudentAssignments, getStudentOverview, getStudentSubmissions } from "../../services/api.js";
 import { LoadingState, ErrorState } from "../../components/ui/States.jsx";
@@ -118,5 +118,124 @@ export function StudentDashboardConcept() {
   const verified = state.overview.verified || 0;
   const activeAssignments = state.assignments.filter((item) => item.status !== "VERIFIED").length;
   const filteredAssignments = state.assignments.filter((item) => { const overdue = item.dueAt && Date.parse(item.dueAt) < now && item.status !== "VERIFIED"; if (assignmentFilter === "completed") return item.status === "VERIFIED"; if (assignmentFilter === "overdue") return overdue; if (assignmentFilter === "upcoming") return item.status !== "VERIFIED" && !overdue; return true; });
-  return <div className="concept-dashboard concept-dashboard-minimal"><div className="concept-search"><Search aria-hidden="true" /><input type="search" placeholder="Search assignments, problems, or submissions…" /><kbd>Ctrl</kbd><kbd>K</kbd></div><div className="concept-welcome"><div><p className="concept-eyebrow">STUDENT CONSOLE</p><h1>Welcome back, {firstName}</h1><p>Small, consistent progress compounds.</p></div><Link className="concept-primary-action" to="/app/problems">Browse problems <ArrowRight aria-hidden="true" /></Link></div><div className="concept-metrics"><Metric icon={Check} value={verified} label="Verified problems" detail="Qualifying solutions" tone="green" /><Metric icon={Hourglass} value={activeAssignments} label="In progress" detail="Still to complete" tone="amber" /><Metric icon={FileCode2} value={state.assignments.length} label="Total assignments" detail="Assigned to you" tone="blue" /><Metric icon={Trophy} value={state.rank ? `#${state.rank.rank}` : "—"} label="Current rank" detail="Official leaderboard" tone="violet" /></div><div className="concept-main-grid"><div className="concept-primary-column"><Panel title="Progress overview" action={<Link to="/app/report" className="concept-view-link">View report <ArrowRight aria-hidden="true" /></Link>}><div className="concept-legend"><span className="verified">Verified</span><span className="progress">In progress</span><span className="not-started">Needs review</span></div><ProgressChart data={state.overview.activitySeries} /></Panel><Panel title="My assignments" action={<Link to="/app/problems" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}><div className="concept-tabs"><button className={assignmentFilter === "all" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("all")}>All <b>({state.assignments.length})</b></button><button className={assignmentFilter === "upcoming" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("upcoming")}>Upcoming</button><button className={assignmentFilter === "overdue" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("overdue")}>Overdue</button><button className={assignmentFilter === "completed" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("completed")}>Completed</button></div><AssignmentTable assignments={filteredAssignments} /></Panel></div><aside className="concept-secondary-column"><Panel title="Upcoming deadlines" action={<Link to="/app/problems" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}><DeadlineList assignments={state.assignments} now={now} /></Panel><Panel title="Recent submissions" action={<Link to="/app/activity" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}><RecentSubmissions submissions={state.submissions} /></Panel><Panel title="Quick links"><div className="concept-quick-links"><Link to="/app/leaderboard"><Trophy aria-hidden="true" />Leaderboard</Link><Link to="/app/activity"><BarChart3 aria-hidden="true" />Progress report</Link><Link to="/app/problems"><FileCode2 aria-hidden="true" />Problem bank</Link></div></Panel></aside></div><div className="concept-support-grid"><Panel title="Problem distribution"><ProblemDistribution assignments={state.assignments} /></Panel><Panel title="Leaderboard" action={<Link to="/app/leaderboard" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}><LeaderboardPreview entries={state.leaderboard} studentId={user.studentId} /></Panel></div></div>;
+  return (
+    <div className="concept-dashboard concept-dashboard-minimal">
+      {/* Welcome banner matching reference image */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FFFFFF] via-[#F8F9FF] to-[#EBE9FE] border border-[#E2E6F5] p-6 lg:p-8 shadow-xs">
+        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6 z-10">
+          <div className="flex-1 max-w-xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-black tracking-tight text-[#151936] flex items-center gap-2">
+              Welcome back,
+              <span>{firstName}!</span>
+              <span className="inline-block animate-wave origin-bottom-right">👋</span>
+            </h1>
+            <p className="mt-2 text-sm text-[#647096] italic">
+              "Consistency today, stronger tomorrow."
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 rounded-xl bg-white/80 px-3 py-1.5 text-xs font-semibold text-[#151936] border border-[#E2E6F5] shadow-2xs">
+                <span className="size-2 rounded-full bg-[#4F46E5]" />
+                Keep solving, keep growing!
+              </span>
+            </div>
+          </div>
+
+          {/* Mascot in banner */}
+          <div className="relative flex items-center justify-center lg:w-[260px] h-[190px] shrink-0">
+            <span
+              className="hidden xl:block absolute -left-8 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
+              style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
+            >
+              Same Effort, Higher Future!
+            </span>
+            <img
+              src="/mascot.png"
+              alt="Solvers 3D Student Character"
+              className="h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-3"
+            />
+          </div>
+
+          {/* Right quick stats */}
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:w-[250px] shrink-0">
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/95 p-3.5 border border-[#E2E6F5] shadow-xs">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+                  <Flame className="size-5 fill-amber-500 text-amber-500" />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <span className="text-lg font-black text-[#151936]">12</span>
+                  <p className="text-[11px] font-semibold text-[#647096]">Day Streak</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-2xl bg-white/95 p-3.5 border border-[#E2E6F5] shadow-xs">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+                <Target className="size-5 text-purple-600" />
+              </div>
+              <div className="min-w-0 leading-tight">
+                <p className="text-xs font-bold text-[#151936]">"Solve. Submit. Grow."</p>
+                <p className="text-[10px] text-[#647096] mt-0.5">You're on the right track! 🚀</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="concept-metrics">
+        <Metric icon={Check} value={verified} label="Verified problems" detail="Qualifying solutions" tone="green" />
+        <Metric icon={Hourglass} value={activeAssignments} label="In progress" detail="Still to complete" tone="amber" />
+        <Metric icon={FileCode2} value={state.assignments.length} label="Total assignments" detail="Assigned to you" tone="blue" />
+        <Metric icon={Trophy} value={state.rank ? `#${state.rank.rank}` : "—"} label="Current rank" detail="Official leaderboard" tone="violet" />
+      </div>
+
+      <div className="concept-main-grid">
+        <div className="concept-primary-column">
+          <Panel title="Progress overview" action={<Link to="/app/report" className="concept-view-link">View report <ArrowRight aria-hidden="true" /></Link>}>
+            <div className="concept-legend">
+              <span className="verified">Verified</span>
+              <span className="progress">In progress</span>
+              <span className="not-started">Needs review</span>
+            </div>
+            <ProgressChart data={state.overview.activitySeries} />
+          </Panel>
+
+          <Panel title="My assignments" action={<Link to="/app/problems" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}>
+            <div className="concept-tabs">
+              <button className={assignmentFilter === "all" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("all")}>All <b>({state.assignments.length})</b></button>
+              <button className={assignmentFilter === "upcoming" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("upcoming")}>Upcoming</button>
+              <button className={assignmentFilter === "overdue" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("overdue")}>Overdue</button>
+              <button className={assignmentFilter === "completed" ? "active" : ""} type="button" onClick={() => setAssignmentFilter("completed")}>Completed</button>
+            </div>
+            <AssignmentTable assignments={filteredAssignments} />
+          </Panel>
+        </div>
+
+        <aside className="concept-secondary-column">
+          <Panel title="Upcoming deadlines" action={<Link to="/app/problems" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}>
+            <DeadlineList assignments={state.assignments} now={now} />
+          </Panel>
+          <Panel title="Recent submissions" action={<Link to="/app/activity" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}>
+            <RecentSubmissions submissions={state.submissions} />
+          </Panel>
+          <Panel title="Quick links">
+            <div className="concept-quick-links">
+              <Link to="/app/leaderboard"><Trophy aria-hidden="true" />Leaderboard</Link>
+              <Link to="/app/activity"><BarChart3 aria-hidden="true" />Progress report</Link>
+              <Link to="/app/problems"><FileCode2 aria-hidden="true" />Problem bank</Link>
+            </div>
+          </Panel>
+        </aside>
+      </div>
+
+      <div className="concept-support-grid">
+        <Panel title="Problem distribution">
+          <ProblemDistribution assignments={state.assignments} />
+        </Panel>
+        <Panel title="Leaderboard" action={<Link to="/app/leaderboard" className="concept-view-link">View all <ArrowRight aria-hidden="true" /></Link>}>
+          <LeaderboardPreview entries={state.leaderboard} studentId={user.studentId} />
+        </Panel>
+      </div>
+    </div>
+  );
 }
