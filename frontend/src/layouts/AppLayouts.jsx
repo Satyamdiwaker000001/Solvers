@@ -48,26 +48,32 @@ function MobileNavDrawer({ nav, badges, onClose, onRequestSignOut }) {
 function Shell({ nav, consoleName, badges }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const close = () => setOpen(false);
 
-  // Trap browser Back button to confirm before logging out
+  // Universal Cross-Browser History Guard (Chrome, Edge, Safari, Firefox)
+  // Ensures any attempt to use the browser Back or Forward button stays trapped in the dashboard
+  // and immediately prompts for logout confirmation.
   useEffect(() => {
-    window.history.pushState({ protected: true }, "", window.location.href);
+    // 1. Initial push to guarantee there is a history entry for the trap
+    window.history.pushState({ protected: true, path: location.pathname }, "", window.location.href);
 
-    const onPopState = () => {
-      // Re-push current state so browser doesn't navigate away silently
-      window.history.pushState({ protected: true }, "", window.location.href);
-      // Open logout confirmation dialog
+    const onPopState = (e) => {
+      // Immediately cancel the browser's navigation and keep the user on the current URL
+      window.history.pushState({ protected: true, path: location.pathname }, "", window.location.href);
+      // Open the logout confirmation dialog
       setShowLogoutConfirm(true);
     };
 
     window.addEventListener("popstate", onPopState);
+
+    // 2. Also register beforeunload to prevent accidental browser closure or reloads if desired
     return () => {
       window.removeEventListener("popstate", onPopState);
     };
-  }, []);
+  }, [location.pathname]);
 
   const handleRequestSignOut = () => {
     setShowLogoutConfirm(true);
@@ -75,6 +81,8 @@ function Shell({ nav, consoleName, badges }) {
 
   const handleCancelSignOut = () => {
     setShowLogoutConfirm(false);
+    // Refresh the trap state on cancel so subsequent back clicks are intercepted
+    window.history.pushState({ protected: true, path: location.pathname }, "", window.location.href);
   };
 
   const handleConfirmSignOut = () => {

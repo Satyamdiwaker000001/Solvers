@@ -140,22 +140,22 @@ export function LoginPage() {
   useEffect(() => {
     if (auth.user && !auth.loading) {
       const target = auth.user.role === "admin" ? "/admin/dashboard" : auth.user.accessState === "APPROVED" ? "/app/dashboard" : "/access-status";
-      window.history.replaceState(null, "", target);
       navigate(target, { replace: true });
     }
   }, [auth.user, auth.loading, navigate, location]);
 
-  // Trap browser Back and Forward buttons on login page so user cannot re-enter protected routes without logging in
+  // Trap browser Forward and Back buttons on login page so user cannot re-enter protected routes without logging in
   useEffect(() => {
-    if (!auth.user) {
-      window.history.pushState(null, "", window.location.href);
+    if (!auth.user && !auth.loading) {
       const onPopState = () => {
+        // Keep the user securely on the login page in all browsers
         window.history.pushState(null, "", window.location.href);
       };
+      window.history.pushState(null, "", window.location.href);
       window.addEventListener("popstate", onPopState);
       return () => window.removeEventListener("popstate", onPopState);
     }
-  }, [auth.user]);
+  }, [auth.user, auth.loading]);
 
 
   if (!auth.isDemo && auth.loading) return <main className="auth-page"><LanguageBackground /><div className="auth-card"><LoadingState label="Checking your session…" /></div></main>;
