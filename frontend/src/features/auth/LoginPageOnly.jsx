@@ -47,7 +47,9 @@ function LoginForm({ isDemo, isAdminRoute }) {
     setFailed(null);
     try {
       const user = await auth.signInAdmin(username.trim(), password.trim());
-      navigate(user?.role === "admin" ? "/admin/dashboard" : "/app/dashboard", { replace: true });
+      const target = user?.role === "admin" ? "/admin/dashboard" : "/app/dashboard";
+      window.history.replaceState(null, "", target);
+      navigate(target, { replace: true });
     } catch (error) {
       setFailed(error.message || "Invalid credentials. Please try again.");
     } finally {
@@ -61,7 +63,9 @@ function LoginForm({ isDemo, isAdminRoute }) {
     try {
       if (isDemo) {
         auth.signInAs(isAdminRoute ? "admin" : "student");
-        navigate(isAdminRoute ? "/admin/dashboard" : "/app/dashboard", { replace: true });
+        const target = isAdminRoute ? "/admin/dashboard" : "/app/dashboard";
+        window.history.replaceState(null, "", target);
+        navigate(target, { replace: true });
         return;
       }
       await auth.signIn();
@@ -135,9 +139,23 @@ export function LoginPage() {
 
   useEffect(() => {
     if (auth.user && !auth.loading) {
-      navigate(auth.user.role === "admin" ? "/admin/dashboard" : auth.user.accessState === "APPROVED" ? "/app/dashboard" : "/access-status", { replace: true });
+      const target = auth.user.role === "admin" ? "/admin/dashboard" : auth.user.accessState === "APPROVED" ? "/app/dashboard" : "/access-status";
+      window.history.replaceState(null, "", target);
+      navigate(target, { replace: true });
     }
   }, [auth.user, auth.loading, navigate, location]);
+
+  // Trap browser Back and Forward buttons on login page so user cannot re-enter protected routes without logging in
+  useEffect(() => {
+    if (!auth.user) {
+      window.history.pushState(null, "", window.location.href);
+      const onPopState = () => {
+        window.history.pushState(null, "", window.location.href);
+      };
+      window.addEventListener("popstate", onPopState);
+      return () => window.removeEventListener("popstate", onPopState);
+    }
+  }, [auth.user]);
 
 
   if (!auth.isDemo && auth.loading) return <main className="auth-page"><LanguageBackground /><div className="auth-card"><LoadingState label="Checking your session…" /></div></main>;

@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { X } from "lucide-react";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { X, LogOut } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
 import { Sidebar, Topbar, Toasts } from "../components/layout/Chrome.jsx";
 import { studentNav, adminNav } from "../config/navigation.js";
 import { useContainedFocus } from "../hooks/useContainedFocus.js";
+import { Dialog } from "../components/ui/Dialog.jsx";
+import { Button } from "../components/ui/Button.jsx";
+import { getAdminOverview } from "../services/api.js";
 
 /** Client-side route guard (convenience only). Real enforcement lives server-side (NFR-SEC-01). */
 export function ProtectedRoute({ allow, children }) {
   const { user, loading } = useAuth();
   const loc = useLocation();
   if (loading) return null;
-  if (!user) return <Navigate to="/sign-in" replace state={{ from: loc.pathname }} />;
+  if (!user) {
+    const loginTarget = allow === "admin" ? "/admin-login" : "/sign-in";
+    return <Navigate to={loginTarget} replace state={{ from: loc.pathname }} />;
+  }
   if (allow === "admin" && user.role !== "admin") return <Navigate to="/forbidden" replace />;
   if (allow === "student" && user.role !== "student") return <Navigate to="/forbidden" replace />;
   if (allow === "student" && user.accessState !== "APPROVED") return <Navigate to="/access-status" replace />;
@@ -23,7 +29,7 @@ export function ProtectedRoute({ allow, children }) {
  * focus returns to the menu button. Renders only while open so the
  * trap/restore lifecycle matches visibility.
  */
-function MobileNavDrawer({ nav, badges, onClose }) {
+function MobileNavDrawer({ nav, badges, onClose, onRequestSignOut }) {
   const panelRef = useRef(null);
   useContainedFocus(panelRef, { onEscape: onClose });
   return (
@@ -33,15 +39,52 @@ function MobileNavDrawer({ nav, badges, onClose }) {
         <button type="button" onClick={onClose} aria-label="Close navigation menu" className="absolute right-2 top-3 rounded-lg p-2 text-muted hover:bg-canvas">
           <X aria-hidden="true" className="size-5" />
         </button>
-        <Sidebar nav={nav} badges={badges} onNavigate={onClose} />
+        <Sidebar nav={nav} badges={badges} onNavigate={onClose} onRequestSignOut={onRequestSignOut} />
       </aside>
     </div>
   );
 }
 
 function Shell({ nav, consoleName, badges }) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const close = () => setOpen(false);
+
+  // Trap browser Back button to confirm before logging out
+  useEffect(() => {
+    window.history.pushState({ protected: true }, "", window.location.href);
+
+    const onPopState = () => {
+      // Re-push current state so browser doesn't navigate away silently
+      window.history.pushState({ protected: true }, "", window.location.href);
+      // Open logout confirmation dialog
+      setShowLogoutConfirm(true);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, []);
+
+  const handleRequestSignOut = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleCancelSignOut = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  const handleConfirmSignOut = () => {
+    setShowLogoutConfirm(false);
+    const target = user?.role === "admin" ? "/admin-login" : "/sign-in";
+    signOut();
+    window.history.replaceState(null, "", target);
+    navigate(target, { replace: true });
+  };
+
   return (
     <div className="relative min-h-svh bg-canvas text-ink overflow-x-hidden">
       {/* Quiet atmospheric background lighting */}
@@ -61,22 +104,44 @@ function Shell({ nav, consoleName, badges }) {
       </a>
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-border bg-surface/95 backdrop-blur-xl lg:block" aria-label="Primary">
-        <Sidebar nav={nav} badges={badges} />
+        <Sidebar nav={nav} badges={badges} onRequestSignOut={handleRequestSignOut} />
       </aside>
       {/* Mobile drawer */}
-      {open && <MobileNavDrawer nav={nav} badges={badges} onClose={close} />}
+      {open && <MobileNavDrawer nav={nav} badges={badges} onClose={close} onRequestSignOut={handleRequestSignOut} />}
       <div className="lg:pl-72 relative z-10 pt-16">
-        <Topbar title={consoleName} onMenu={() => setOpen(true)} menuExpanded={open} />
+        <Topbar title={consoleName} onMenu={() => setOpen(true)} menuExpanded={open} onRequestSignOut={handleRequestSignOut} />
         <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
           <Outlet />
         </main>
       </div>
+
+      {showLogoutConfirm && (
+        <Dialog
+          title="Sign out of Solvers?"
+          description="Are you sure you want to log out of your session?"
+          onClose={handleCancelSignOut}
+        >
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3 rounded-xl border border-danger/25 bg-danger/10 p-3 text-sm text-ink">
+              <LogOut className="size-5 shrink-0 text-danger" />
+              <span>You will be returned to the sign-in screen and will need to log in again to access the dashboard.</span>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
+              <Button tone="secondary" onClick={handleCancelSignOut}>
+                Cancel (Stay on Dashboard)
+              </Button>
+              <Button tone="destructive" onClick={handleConfirmSignOut}>
+                Yes, Sign out
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
+
       <Toasts />
     </div>
   );
 }
-
-import { getAdminOverview } from "../services/api.js";
 
 export function StudentLayout() {
   return <Shell nav={studentNav} consoleName="Student console" />;

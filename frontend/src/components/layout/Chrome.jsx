@@ -19,8 +19,9 @@ function Brand() {
   );
 }
 
-export function Sidebar({ nav, onNavigate, badges }) {
+export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
   const { user, signOut } = useAuth();
+  const handleSignOut = onRequestSignOut || signOut;
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="border-b border-border p-4 pr-12 lg:pr-4"><Brand /></div>
@@ -44,7 +45,7 @@ export function Sidebar({ nav, onNavigate, badges }) {
             </div>
             <button
               type="button"
-              onClick={signOut}
+              onClick={handleSignOut}
               title="Sign out"
               aria-label="Sign out"
               className="shrink-0 rounded-lg p-1.5 text-muted transition hover:bg-canvas hover:text-danger"
@@ -90,8 +91,9 @@ export function DemoBadge() {
   );
 }
 
-export function Topbar({ title, onMenu, menuExpanded, right }) {
+export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut }) {
   const { user, signOut } = useAuth();
+  const handleSignOut = onRequestSignOut || signOut;
   return (
     <header className="app-topbar fixed inset-x-0 top-0 z-30 border-b border-border bg-surface/90 backdrop-blur-md lg:left-72">
       <div className="app-topbar-inner mx-auto flex h-16 max-w-[1440px] items-center gap-2 sm:gap-3 px-3 sm:px-6 lg:px-8">
@@ -122,7 +124,7 @@ export function Topbar({ title, onMenu, menuExpanded, right }) {
               </span>
               <button
                 type="button"
-                onClick={signOut}
+                onClick={handleSignOut}
                 title="Sign out"
                 aria-label="Sign out"
                 className="rounded-lg p-1.5 text-muted transition hover:bg-canvas hover:text-danger"
