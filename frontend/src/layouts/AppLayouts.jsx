@@ -34,7 +34,7 @@ function MobileNavDrawer({ nav, badges, onClose, onRequestSignOut }) {
   const panelRef = useRef(null);
   useContainedFocus(panelRef, { onEscape: onClose });
   return (
-    <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
+    <div className="fixed inset-0 z-50 md:hidden" role="presentation">
       <div className="absolute inset-0 bg-ink/45 backdrop-blur-2xs" onClick={onClose} />
       <aside
         ref={panelRef}
@@ -61,7 +61,7 @@ function MobileNavDrawer({ nav, badges, onClose, onRequestSignOut }) {
 
 /**
  * Mobile Bottom Navigation Bar:
- * Provides native app-like bottom navigation on mobile screens (<1024px)
+ * Provides native app-like bottom navigation on mobile screens (<768px)
  * for immediate one-tap switching between primary sections.
  */
 function MobileBottomNav({ nav, badges }) {
@@ -71,7 +71,7 @@ function MobileBottomNav({ nav, badges }) {
   return (
     <nav
       aria-label="Mobile bottom navigation"
-      className="fixed inset-x-0 bottom-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-[#E2E6F5] px-2 py-1.5 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]"
+      className="fixed inset-x-0 bottom-0 z-40 md:hidden bg-white/95 backdrop-blur-md border-t border-[#E2E6F5] px-2 py-1.5 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]"
       style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
     >
       <div className="flex items-center justify-around gap-1 max-w-md mx-auto">
@@ -174,15 +174,15 @@ function Shell({ nav, consoleName, badges }) {
         Skip to main content
       </a>
 
-      {/* Desktop sidebar */}
+      {/* Tablet & Desktop sidebar */}
       <aside
-        className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-[#E2E6F5] bg-[#F8F8FF] lg:block"
+        className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-[#E2E6F5] bg-[#F8F8FF] md:block"
         aria-label="Primary"
       >
         <Sidebar nav={nav} badges={badges} onRequestSignOut={handleRequestSignOut} />
       </aside>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (only for mobile screens < 768px) */}
       {open && (
         <MobileNavDrawer
           nav={nav}
@@ -193,7 +193,7 @@ function Shell({ nav, consoleName, badges }) {
       )}
 
       {/* Main page content area */}
-      <div className="lg:pl-64 relative z-10 pt-16 pb-16 lg:pb-6">
+      <div className="md:pl-64 relative z-10 pt-16 pb-16 md:pb-6">
         <Topbar
           title={consoleName}
           onMenu={() => setOpen(true)}
@@ -209,7 +209,7 @@ function Shell({ nav, consoleName, badges }) {
         </main>
       </div>
 
-      {/* Mobile Bottom Bar (App-like Navigation) */}
+      {/* Mobile Bottom Bar (App-like Navigation only on mobile screens < 768px) */}
       <MobileBottomNav nav={nav} badges={badges} />
 
       {/* Sign out confirmation modal */}

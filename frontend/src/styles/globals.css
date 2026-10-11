@@ -576,25 +576,31 @@ input::placeholder, textarea::placeholder {
 .concept-eyebrow { margin: 0 0 8px !important; color: var(--color-primary-strong) !important; font-size: 10px !important; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .concept-primary-action { display: inline-flex; align-items: center; gap: 8px; flex: none; padding: 11px 14px; border-radius: 10px; background: var(--color-primary); color: var(--color-ink); font-size: 12px; font-weight: 700; box-shadow: 3px 3px 0 color-mix(in srgb, var(--color-primary) 24%, transparent); transition: transform 160ms ease; }
 .concept-primary-action:hover { transform: translateY(-2px); }
-.concept-dashboard-minimal .concept-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.concept-dashboard-minimal .concept-main-grid { grid-template-columns: minmax(0, 1.8fr) minmax(280px, .8fr); }
-.concept-dashboard-minimal .concept-panel { box-shadow: 0 3px 14px color-mix(in srgb, var(--color-primary) 7%, transparent); }
-.concept-dashboard-minimal .concept-table { min-width: 570px; }
+.concept-dashboard-minimal .concept-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.concept-dashboard-minimal .concept-main-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 1024px) {
+  .concept-dashboard-minimal .concept-main-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+}
+.concept-dashboard-minimal .concept-panel { box-shadow: 0 3px 14px color-mix(in srgb, var(--color-primary) 7%, transparent); min-width: 0; }
+.concept-dashboard-minimal .concept-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.concept-dashboard-minimal .concept-table { width: 100%; min-width: 480px; }
 .concept-dashboard-minimal .concept-table th:nth-child(3), .concept-dashboard-minimal .concept-table td:nth-child(3) { width: 112px; }
 .concept-quick-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .concept-quick-links a { display: flex; min-height: 52px; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border)); border-radius: 9px; color: var(--color-ink); font-size: 10px; font-weight: 600; text-align: center; }
 .concept-quick-links svg { width: 16px; color: var(--color-primary-strong); }
 .concept-quick-links a:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface)); }
-.concept-support-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.concept-support-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; min-width: 0; }
 .concept-distribution-compact { display: grid; gap: 12px; }.concept-distribution-compact > div { display: grid; grid-template-columns: minmax(0, 1fr) 28px; align-items: center; gap: 8px; font-size: 12px; }.concept-distribution-compact span { display: flex; align-items: center; gap: 7px; }.concept-distribution-compact b { text-align: right; }.concept-distribution-compact small { grid-column: 1 / -1; height: 5px; overflow: hidden; border-radius: 99px; background: var(--color-secondary); }.concept-distribution-compact small i { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); }.distribution-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-secondary); }.distribution-dot.dot-1 { background: var(--color-primary); }.distribution-dot.dot-2 { background: var(--color-primary-subtle); }.distribution-dot.dot-3 { background: var(--color-danger); }
 .concept-leaderboard-compact { display: grid; gap: 5px; }.concept-leaderboard-compact > div { display: grid; grid-template-columns: 30px 26px minmax(0, 1fr) 34px; align-items: center; gap: 8px; padding: 8px 6px; border-radius: 8px; font-size: 11px; }.concept-leaderboard-compact > div.current { background: var(--color-primary-subtle); }.concept-leaderboard-compact strong { color: var(--color-primary); }.concept-leaderboard-compact b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.concept-leaderboard-compact em { font-style: normal; font-weight: 700; text-align: right; }.concept-empty-note { margin: 0; color: var(--color-muted); font-size: 12px; }
 
 /* Admin console keeps the same calm rhythm and reserves emphasis for action queues. */
 .grid.gap-5 > .glass-panel, .grid.gap-5 > .glass-panel + .glass-panel { border-radius: 15px; }
 @media (max-width: 1024px) {
+  .concept-dashboard-minimal .concept-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .concept-dashboard-minimal .concept-main-grid { grid-template-columns: 1fr; }
   .concept-secondary-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .concept-secondary-column .concept-panel:last-child { grid-column: 1 / -1; }
+  .concept-support-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
