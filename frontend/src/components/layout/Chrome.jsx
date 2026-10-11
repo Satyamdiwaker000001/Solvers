@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, X, ShieldCheck, FlaskConical, LogOut, Camera } from "lucide-react";
+import { Menu, X, ShieldCheck, FlaskConical, LogOut, Camera, ChevronDown, User, Settings, Check } from "lucide-react";
 import { GithubMark } from "../ui/GithubMark.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useToast } from "../../hooks/useToast.js";
@@ -45,7 +45,7 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
             <button
               type="button"
               onClick={() => user.role === "admin" && setShowAvatarModal(true)}
-              title={user.role === "admin" ? "Change profile photo" : undefined}
+              title={user.role === "admin" ? "Change profile avatar" : undefined}
               className={`relative shrink-0 rounded-full transition ${user.role === "admin" ? "cursor-pointer hover:ring-2 hover:ring-primary/50 group" : ""}`}
             >
               <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-subtle object-cover text-xs font-bold text-primary" />
@@ -68,7 +68,7 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
               onClick={handleSignOut}
               title="Sign out"
               aria-label="Sign out"
-              className="shrink-0 rounded-lg p-1.5 text-muted transition hover:bg-canvas hover:text-danger"
+              className="shrink-0 rounded-lg p-1.5 text-muted transition hover:bg-canvas hover:text-danger cursor-pointer"
             >
               <LogOut aria-hidden="true" className="size-4" />
             </button>
@@ -116,6 +116,20 @@ export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut })
   const { user, signOut } = useAuth();
   const handleSignOut = onRequestSignOut || signOut;
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
 
   return (
     <header className="app-topbar fixed inset-x-0 top-0 z-30 border-b border-border bg-surface/90 backdrop-blur-md lg:left-72">
@@ -136,41 +150,84 @@ export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut })
           <span className="app-topbar-divider" aria-hidden="true" />
           <p className="truncate text-sm font-semibold text-ink">{title}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {right}
           {user && (
-            <div className="app-account hidden items-center gap-2 sm:flex">
+            <div className="relative" ref={dropdownRef}>
+              {/* Unified Profile Trigger Button */}
               <button
                 type="button"
-                onClick={() => user.role === "admin" && setShowAvatarModal(true)}
-                title={user.role === "admin" ? "Change profile photo" : undefined}
-                className={`relative shrink-0 rounded-full transition ${user.role === "admin" ? "cursor-pointer hover:ring-2 hover:ring-primary/50 group" : ""}`}
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2 rounded-full border border-border bg-surface hover:bg-canvas/80 p-1 pl-1.5 pr-3 shadow-xs transition hover:border-primary/40 cursor-pointer"
+                aria-expanded={menuOpen}
+                aria-haspopup="true"
               >
-                <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="size-8 rounded-full border border-border object-cover text-center text-xs font-bold leading-8 text-primary" />
-                {user.role === "admin" && (
-                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition group-hover:opacity-100">
-                    <Camera className="size-3.5" />
+                <div className="relative">
+                  <Avatar
+                    src={user.avatarUrl}
+                    name={user.displayName || user.name}
+                    className="size-7 rounded-full border border-border object-cover text-center text-xs font-bold leading-7 text-primary"
+                  />
+                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
+                </div>
+                <div className="hidden sm:flex flex-col items-start leading-tight min-w-0">
+                  <span className="text-xs font-bold text-ink truncate max-w-28">
+                    {user.displayName || user.name}
                   </span>
-                )}
+                  <span className="text-[10px] text-muted flex items-center gap-1 font-medium">
+                    {user.role === "admin" ? <ShieldCheck className="size-3 text-primary" /> : null}
+                    {user.role === "admin" ? "Admin" : `@${user.githubLogin}`}
+                  </span>
+                </div>
+                <ChevronDown className={`size-3.5 text-muted transition duration-200 ${menuOpen ? "rotate-180 text-primary" : ""}`} />
               </button>
-              <button
-                type="button"
-                onClick={() => user.role === "admin" && setShowAvatarModal(true)}
-                title={user.role === "admin" ? "Edit profile" : undefined}
-                className={`app-account-pill inline-flex items-center gap-1.5 rounded-full border border-border bg-canvas px-2.5 py-1 text-xs font-medium text-muted transition ${user.role === "admin" ? "hover:border-primary/40 hover:text-ink cursor-pointer" : ""}`}
-              >
-                {user.role === "admin" ? <ShieldCheck aria-hidden="true" className="size-3.5 text-primary" /> : <GithubMark className="size-3.5" />}
-                {user.role === "admin" ? "Admin" : `@${user.githubLogin}`}
-              </button>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                title="Sign out"
-                aria-label="Sign out"
-                className="rounded-lg p-1.5 text-muted transition hover:bg-canvas hover:text-danger"
-              >
-                <LogOut aria-hidden="true" className="size-4" />
-              </button>
+
+              {/* Perfectly Aligned Profile Dropdown Menu */}
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-border bg-surface p-2 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="flex items-center gap-3 p-2.5 border-b border-border/80 mb-1">
+                    <Avatar
+                      src={user.avatarUrl}
+                      name={user.displayName || user.name}
+                      className="size-10 rounded-full border border-primary/50 object-cover text-center text-sm font-bold leading-10 text-primary shrink-0"
+                    />
+                    <div className="min-w-0 flex-1 leading-tight">
+                      <p className="text-sm font-bold text-ink truncate">{user.displayName || user.name}</p>
+                      <p className="text-xs text-muted truncate mt-0.5">
+                        {user.role === "admin" ? "Course Administrator" : `@${user.githubLogin}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-0.5">
+                    {user.role === "admin" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setShowAvatarModal(true);
+                        }}
+                        className="flex items-center gap-2.5 w-full rounded-xl px-3 py-2 text-xs font-semibold text-ink hover:bg-primary/10 hover:text-primary transition cursor-pointer text-left"
+                      >
+                        <Camera className="size-4 text-primary shrink-0" />
+                        <span>Change Avatar & Profile</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleSignOut();
+                      }}
+                      className="flex items-center gap-2.5 w-full rounded-xl px-3 py-2 text-xs font-semibold text-danger hover:bg-danger/10 transition cursor-pointer text-left"
+                    >
+                      <LogOut className="size-4 text-danger shrink-0" />
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -182,15 +239,29 @@ export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut })
 
 export function Toasts() {
   const { toasts, dismiss } = useToast();
-  const tones = { success: "border-success/30", danger: "border-danger/30", info: "border-info/30" };
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-stretch gap-2 p-4 sm:items-end">
+    <div
+      aria-live="polite"
+      aria-atomic="false"
+      className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 flex w-[calc(100vw-1.5rem)] sm:w-auto flex-col gap-2 pointer-events-none"
+    >
       {toasts.map((t) => (
-        <div key={t.id} role={t.tone === "danger" ? "alert" : "status"}
-          className={cn("pointer-events-auto flex w-full max-w-sm items-start gap-2 rounded-xl border bg-surface p-3 shadow-lg", tones[t.tone] ?? tones.success)}>
-          <p className="min-w-0 flex-1 text-sm"><strong>{t.title}</strong>{t.body && <span className="block text-muted">{t.body}</span>}</p>
-          <button type="button" aria-label="Dismiss notification" onClick={() => dismiss(t.id)} className="rounded p-1 text-muted hover:bg-canvas">
-            <X aria-hidden="true" className="size-4" />
+        <div
+          key={t.id}
+          role="status"
+          className="pointer-events-auto flex items-start gap-3 rounded-2xl border border-border bg-surface p-4 shadow-xl ring-1 ring-black/5 animate-in slide-in-from-bottom-2 sm:max-w-md"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-ink">{t.title}</p>
+            {t.body && <p className="mt-0.5 text-xs text-muted">{t.body}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={() => dismiss(t.id)}
+            aria-label="Dismiss toast"
+            className="shrink-0 rounded-lg p-1 text-muted hover:bg-canvas hover:text-ink cursor-pointer"
+          >
+            <X className="size-4" />
           </button>
         </div>
       ))}
