@@ -33,22 +33,101 @@ function LoginForm({ isDemo, isAdminRoute }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const startOAuth = async () => {
-    setBusy(true); setFailed(null);
-    try { if (isDemo) { auth.signInAs(isAdminRoute ? "admin" : "student"); navigate(isAdminRoute ? "/admin/dashboard" : "/app/dashboard", { replace: true }); return; } await auth.signIn(); }
-    catch (error) { setFailed(error.message || "We could not start GitHub sign-in. Please try again."); setBusy(false); }
+
+  const handleSignIn = async (e) => {
+    e?.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setFailed("Please enter both username and password.");
+      return;
+    }
+    setBusy(true);
+    setFailed(null);
+    try {
+      const user = await auth.signInAdmin(username.trim(), password.trim());
+      navigate(user?.role === "admin" ? "/admin/dashboard" : "/app/dashboard", { replace: true });
+    } catch (error) {
+      setFailed(error.message || "Invalid credentials. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
-  return <>
-    {(auth.error || failed) && <div role="alert" className="auth-error"><AlertCircle aria-hidden="true" className="size-4 shrink-0" /><p>{failed || `Could not reach the server: ${auth.error}`}</p></div>}
-    <form className="auth-form" onSubmit={(event) => event.preventDefault()}>
-      <div className="auth-field"><label htmlFor="login-identity">Email or username</label><input id="login-identity" type="text" autoComplete="username" placeholder="Enter your email or username" /></div>
-      <div className="auth-field"><label htmlFor="login-password">Password</label><div className="auth-password-wrap"><input id="login-password" type={passwordVisible ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" aria-describedby="password-status" /><button type="button" className="auth-password-toggle" onClick={() => setPasswordVisible((visible) => !visible)} aria-label={passwordVisible ? "Hide password" : "Show password"}>{passwordVisible ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}</button></div><p id="password-status" className="auth-unavailable">Password sign-in is not enabled; use GitHub to authenticate.</p></div>
-      <button type="button" className="auth-signin-button" disabled aria-disabled="true">Sign in</button>
-    </form>
-    <div className="auth-divider" aria-hidden="true"><span>OR</span></div>
-    <Button onClick={startOAuth} loading={busy} className="auth-github-button" aria-label="Continue with GitHub"><GithubMark className="size-4" /> Continue with GitHub</Button>
-  </>;
+
+  const startOAuth = async () => {
+    setBusy(true);
+    setFailed(null);
+    try {
+      if (isDemo) {
+        auth.signInAs(isAdminRoute ? "admin" : "student");
+        navigate(isAdminRoute ? "/admin/dashboard" : "/app/dashboard", { replace: true });
+        return;
+      }
+      await auth.signIn();
+    } catch (error) {
+      setFailed(error.message || "We could not start GitHub sign-in. Please try again.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      {(auth.error || failed) && (
+        <div role="alert" className="auth-error">
+          <AlertCircle aria-hidden="true" className="size-4 shrink-0" />
+          <p>{failed || `Could not reach the server: ${auth.error}`}</p>
+        </div>
+      )}
+      <form className="auth-form" onSubmit={handleSignIn}>
+        <div className="auth-field">
+          <label htmlFor="login-identity">Username</label>
+          <input
+            id="login-identity"
+            type="text"
+            autoComplete="username"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={busy}
+          />
+        </div>
+        <div className="auth-field">
+          <label htmlFor="login-password">Password</label>
+          <div className="auth-password-wrap">
+            <input
+              id="login-password"
+              type={passwordVisible ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={busy}
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setPasswordVisible((visible) => !visible)}
+              aria-label={passwordVisible ? "Hide password" : "Show password"}
+            >
+              {passwordVisible ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
+            </button>
+          </div>
+        </div>
+        <button
+          type="submit"
+          className="auth-signin-button"
+          disabled={busy}
+        >
+          {busy ? "Signing in..." : "Sign in"}
+        </button>
+      </form>
+      <div className="auth-divider" aria-hidden="true"><span>OR</span></div>
+      <Button onClick={startOAuth} loading={busy} className="auth-github-button" aria-label="Continue with GitHub">
+        <GithubMark className="size-4" /> Continue with GitHub
+      </Button>
+    </>
+  );
 }
 
 export function LoginPage() {

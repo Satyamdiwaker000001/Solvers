@@ -115,6 +115,7 @@ export function createApp(cfg, { githubClient = null } = {}) {
   };
 
   // Public / session bootstrap
+  app.get("/", (_req, res) => res.json({ status: "online", service: "Solvers DSA Backend API", database: "connected", health: "/api/v1/health" }));
   app.get("/api/v1/health", (_req, res) => res.json({ data: { ok: true } }));
   app.get("/api/v1/ready", (_req, res) => {
     if (dbState() !== 1) return res.status(503).json({ error: { code: "NOT_READY", message: "Database not connected" } });

@@ -114,4 +114,6 @@ export const routes = {
   reviewQueue: "/api/v1/admin/submissions/review-queue",
   auditLog: "/api/v1/admin/audit-log",
   integrationStatus: "/api/v1/admin/github/integration-status",
+  adminOverview: "/api/v1/admin/overview",
+  adminTrackingPolicy: "/api/v1/admin/tracking-policy",
 };

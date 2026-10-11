@@ -445,9 +445,10 @@ input::placeholder, textarea::placeholder {
 .auth-field label { font-size: 12px; letter-spacing: .01em; }
 .auth-field input { height: 44px; padding-inline: 14px; border-radius: 10px; background: var(--auth-secondary); }
 .auth-unavailable { margin-top: 6px; font-size: 11px; }
-.auth-signin-button, .auth-github-button { height: 44px; min-height: 44px; border-radius: 10px; }
-.auth-signin-button { background: var(--auth-primary); color: #FFFFFF; opacity: 1; }
-.auth-signin-button:disabled { background: color-mix(in srgb, var(--auth-primary) 72%, var(--auth-surface)); color: #FFFFFF; opacity: 1; }
+.auth-signin-button, .auth-github-button { height: 44px; min-height: 44px; border-radius: 10px; cursor: pointer; }
+.auth-signin-button { background: var(--auth-primary); color: #FFFFFF; opacity: 1; font-weight: 600; cursor: pointer; transition: opacity 0.15s ease; }
+.auth-signin-button:hover { opacity: 0.92; }
+.auth-signin-button:disabled { opacity: 0.6; cursor: not-allowed; }
 .auth-github-button { background: var(--auth-surface); border-color: var(--auth-primary); color: var(--auth-ink); }
 .auth-github-button:hover { background: var(--auth-secondary); border-color: var(--auth-primary); }
 .auth-divider { margin: 26px 0; }

@@ -168,9 +168,6 @@ export function authRoutes() {
 
     const numericAdminId = cfg.adminGithubIds[0];
     let adminUser = await User.findOne({ githubUserId: numericAdminId });
-    if (adminUser?.githubLogin) {
-      validUsernames.push(adminUser.githubLogin.toLowerCase());
-    }
 
     if (!credential || !passMatch) {
       return next(unauthorized("Invalid administrator credentials"));

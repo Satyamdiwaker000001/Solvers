@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AccessRequest, Assignment, AuditLog, ProgressEvent, Submission, TrackingPolicy, User, WebhookEvent } from "../models.js";
 import { asyncHandler, badRequest, notFound, conflict } from "../middleware/errors.js";
-import { requireApprovedStudent } from "../middleware/auth.js";
+import { requireApprovedStudent, requireStudentOrAdmin } from "../middleware/auth.js";
 import { validateBody, validateQuery } from "../middleware/validate.js";
 import {
   paginationSchema,
@@ -388,7 +388,7 @@ export function studentReportRoutes() {
     res.json({ data: { student: serializeUser(req.user), verified, submissions, report } });
   }));
 
-  router.get("/leaderboard", requireApprovedStudent, asyncHandler(async (req, res) => {
+  router.get("/leaderboard", requireStudentOrAdmin, asyncHandler(async (req, res) => {
     res.json({ data: await computeLeaderboard(req.app.get("config")) });
   }));
 

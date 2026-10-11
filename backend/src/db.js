@@ -1,4 +1,12 @@
 import mongoose from "mongoose";
+import dns from "node:dns";
+
+// Windows local development DNS fallback for MongoDB Atlas SRV records
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {
+  // ignore if runtime restricts dns.setServers
+}
 
 /** Connect with sane timeouts; callers handle failure (startup aborts, readiness fails). */
 export async function connectDb(mongoUri) {

@@ -40,6 +40,17 @@ export function requireApprovedStudent(req, _res, next) {
   return next(forbidden("ACCESS_NOT_APPROVED", "Program access is not approved for this account"));
 }
 
+/** Approved students or any admin (for shared surfaces like leaderboard). */
+export function requireStudentOrAdmin(req, _res, next) {
+  if (!req.user) return next(unauthorized());
+  if (req.user.role === "admin") return next();
+  if (req.user.accountStatus === "approved") return next();
+  if (req.user.accountStatus === "pending") {
+    return next(forbidden("ACCESS_PENDING", "Program access is pending professor approval"));
+  }
+  return next(forbidden("ACCESS_NOT_APPROVED", "Program access is not approved for this account"));
+}
+
 /** Admin-only. Role comes from the DB record, which is set exclusively from
  * the ADMIN_GITHUB_IDS allowlist at OAuth time — never from client input. */
 export function requireAdmin(req, _res, next) {

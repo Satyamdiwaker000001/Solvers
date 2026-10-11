@@ -292,12 +292,12 @@ export async function getLeaderboard() {
 
 export async function getTrackingPolicy() {
   if (!isLive()) return { data: { dailyMinimum: 1, updatedAt: null } };
-  return { data: (await apiFetch("/admin/tracking-policy")).data };
+  return { data: (await apiFetch(routes.adminTrackingPolicy)).data };
 }
 
 export async function updateTrackingPolicy(dailyMinimum) {
   if (!isLive()) return { data: { dailyMinimum, updatedAt: new Date().toISOString() } };
-  return { data: (await apiFetch("/admin/tracking-policy", { method: "PATCH", body: { dailyMinimum } })).data };
+  return { data: (await apiFetch(routes.adminTrackingPolicy, { method: "PATCH", body: { dailyMinimum } })).data };
 }
 
 /* ================= admin reads ================= */
@@ -317,7 +317,7 @@ export async function getAdminOverview() {
       },
     };
   }
-  const overview = await apiFetch("/admin/overview").catch(() => null);
+  const overview = await apiFetch(routes.adminOverview).catch(() => null);
   const [integration, legacy] = await Promise.all([
     apiFetch(routes.integrationStatus).catch(() => ({ data: null })),
     overview ? Promise.resolve(null) : Promise.all([
