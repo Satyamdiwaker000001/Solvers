@@ -128,7 +128,7 @@ export function LoginPage() {
   if (auth.user) return null;
 
   return (
-    <main className="min-h-svh w-full bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-3 sm:p-5 md:p-6 lg:p-8 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5]">
+    <main className="h-screen max-h-screen w-full bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5] overflow-hidden">
       {/* Background ambient soft glows on outer canvas */}
       <div
         className="absolute top-0 right-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-br from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"
@@ -140,18 +140,16 @@ export function LoginPage() {
       />
 
       {/* Main Login Card Container:
-          - Mobile (<md): Full available width card with proper padding (nearly 100% of screen).
-          - Tablet (md): Split card 820px.
-          - Desktop (lg+): 1080px split card. */}
-      <div className="w-full max-w-full sm:max-w-xl md:max-w-[820px] lg:max-w-[1080px] xl:max-w-[1140px] bg-white border border-[#E2E6F5] rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_-10px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col md:flex-row my-auto">
+          - Height capped to 98% on mobile, max 92vh on desktop so it NEVER scrolls on any screen */}
+      <div className="w-full max-w-full sm:max-w-xl md:max-w-[820px] lg:max-w-[1040px] xl:max-w-[1100px] max-h-[98vh] md:max-h-[92vh] bg-white border border-[#E2E6F5] rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_-10px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col md:flex-row my-auto">
         
         {/* ========================================================================= */}
         {/* BRANDING & HERO PANEL                                                     */}
-        {/* Mobile: App-like Hero at top. Tablet & Desktop: Left split banner.        */}
+        {/* Mobile: Compact Hero at top. Tablet & Desktop: Left split banner.         */}
         {/* ========================================================================= */}
         <section
           aria-label="Solvers introduction and features"
-          className="w-full md:w-[54%] lg:w-[56%] relative p-5 sm:p-6 md:p-6 lg:p-8 xl:p-9 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0"
+          className="w-full md:w-[54%] lg:w-[56%] relative p-3 sm:p-5 md:p-6 lg:p-7 xl:p-8 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0"
         >
           {/* Soft contrast overlay so headline and text stay readable */}
           <div
@@ -160,9 +158,9 @@ export function LoginPage() {
           />
 
           {/* Top Row: Wordmark */}
-          <div className="relative z-10 flex items-center justify-between mb-4 sm:mb-5 md:mb-4">
+          <div className="relative z-10 flex items-center justify-between mb-2 sm:mb-4">
             <SolversWordmark />
-            <span className="md:hidden text-xs font-bold text-[#4F46E5] bg-[#EEECFF] px-2.5 py-0.5 rounded-full border border-[#4F46E5]/20 select-none">
+            <span className="md:hidden text-xs font-bold text-[#4F46E5] bg-[#EEECFF] px-2 py-0.5 rounded-full border border-[#4F46E5]/20 select-none">
               2027
             </span>
           </div>
@@ -291,35 +289,35 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Mobile Hero Layout (<md: 768px) */}
+            {/* Mobile Hero Layout (<md: 768px) - Compact so page NEVER scrolls */}
             <div className="md:hidden flex flex-col items-center text-center">
-              <div className="relative w-full flex items-center justify-between gap-4">
-                <div className="text-left flex-1">
-                  <h1 className="text-2xl sm:text-3xl font-black text-[#151936] tracking-tight leading-[1.1]">
+              <div className="relative w-full flex items-center justify-between gap-3">
+                <div className="text-left flex-1 min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-black text-[#151936] tracking-tight leading-[1.1]">
                     Practice.
                     <br />
                     <span className="text-[#4F46E5]">Track.</span>
                     <br />
                     Improve.
                   </h1>
-                  <p className="mt-1.5 text-xs text-[#647096] leading-relaxed max-w-[210px] sm:max-w-xs font-normal">
-                    A DSA practice platform for students, verified by GitHub. Stay consistent, compete, and grow.
+                  <p className="mt-1 text-[11px] text-[#647096] leading-snug font-normal line-clamp-2">
+                    A DSA practice platform for students, verified by GitHub.
                   </p>
                 </div>
 
                 {/* Mobile Mascot Cutout */}
-                <div className="relative shrink-0 flex items-center justify-center -mr-2">
+                <div className="relative shrink-0 flex items-center justify-center">
                   <div
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-tr from-[#E9E7FF] to-[#F1EFFF] absolute z-0 blur-[0.5px]"
+                    className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-[#E9E7FF] to-[#F1EFFF] absolute z-0 blur-[0.5px]"
                     aria-hidden="true"
                   />
                   <img
                     src="/mascot.png"
                     alt="Solvers Student Character"
-                    className="w-auto h-32 sm:h-40 object-contain select-none relative z-10"
+                    className="w-auto h-24 sm:h-32 object-contain select-none relative z-10"
                     loading="eager"
-                    width={180}
-                    height={200}
+                    width={140}
+                    height={160}
                   />
                 </div>
               </div>
@@ -327,7 +325,7 @@ export function LoginPage() {
           </div>
 
           {/* Bottom Trust Badges (Tablet & Desktop matching reference) */}
-          <div className="relative z-10 pt-4 hidden md:flex items-center justify-between gap-2 border-t border-[#E2E6F5]/80">
+          <div className="relative z-10 pt-3 hidden md:flex items-center justify-between gap-2 border-t border-[#E2E6F5]/80">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#647096]">
               <ShieldCheck className="size-3.5 text-[#4F46E5]" />
               <span>Secure Authentication</span>
@@ -349,7 +347,7 @@ export function LoginPage() {
         {/* ========================================================================= */}
         <section
           aria-labelledby="login-surface-heading"
-          className="w-full md:w-[46%] lg:w-[44%] bg-white border-t md:border-t-0 md:border-l border-[#E2E6F5] p-5 sm:p-7 md:p-6 lg:p-8 xl:p-9 flex flex-col justify-between items-center relative"
+          className="w-full md:w-[46%] lg:w-[44%] bg-white border-t md:border-t-0 md:border-l border-[#E2E6F5] p-3 sm:p-5 md:p-6 lg:p-7 xl:p-8 flex flex-col justify-between items-center relative"
         >
           {/* Top Tag on Tablet & Desktop */}
           <div className="w-full hidden md:flex justify-end select-none">
@@ -362,15 +360,15 @@ export function LoginPage() {
           </div>
 
           {/* Centered Login / Admin Form Block */}
-          <div className="w-full max-w-full sm:max-w-[380px] my-auto py-3 sm:py-4 flex flex-col items-center text-center">
+          <div className="w-full max-w-full sm:max-w-[360px] my-auto py-1 sm:py-2 flex flex-col items-center text-center">
             {/* Header: Welcome to Solvers */}
             <h2
               id="login-surface-heading"
-              className="text-2xl sm:text-2xl font-black text-[#151936] tracking-tight"
+              className="text-xl sm:text-2xl font-black text-[#151936] tracking-tight"
             >
               Welcome to <span className="text-[#4F46E5]">Solvers</span>
             </h2>
-            <p className="text-xs sm:text-sm text-[#647096] mt-1.5 font-normal max-w-xs">
+            <p className="text-[11px] sm:text-xs text-[#647096] mt-1 font-normal max-w-xs">
               {showAdminForm
                 ? "Sign in with your authorized professor account."
                 : "Sign in with your GitHub account to continue."}
@@ -521,14 +519,14 @@ export function LoginPage() {
             </div>
 
             {/* Participation Rules & Academic Integrity Disclaimer */}
-            <p className="text-[11px] text-[#8E99B8] text-center mt-4 sm:mt-5 leading-relaxed max-w-xs mx-auto">
+            <p className="text-[10px] sm:text-[11px] text-[#8E99B8] text-center mt-2.5 sm:mt-3.5 leading-relaxed max-w-xs mx-auto">
               By signing in, you agree to our participation rules and academic
               integrity policy.
             </p>
           </div>
 
           {/* Bottom Trust Indicators (Hidden on small mobile to save vertical space, visible on tablet & desktop) */}
-          <div className="w-full max-w-[340px] sm:max-w-[360px] hidden sm:grid grid-cols-3 gap-2 pt-4 border-t border-[#F0F2FA] text-center">
+          <div className="w-full max-w-[340px] sm:max-w-[360px] hidden md:grid grid-cols-3 gap-2 pt-2.5 border-t border-[#F0F2FA] text-center">
             {/* Indicator 1 */}
             <div className="flex flex-col items-center gap-1">
               <div className="size-7 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5]">

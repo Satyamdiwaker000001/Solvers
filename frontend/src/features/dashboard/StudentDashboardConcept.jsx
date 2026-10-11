@@ -179,22 +179,41 @@ export function StudentDashboardConcept() {
   ).length;
   const goalPercent = Math.min(100, Math.round((solvedToday / dailyGoal) * 100));
 
-  // Practice topics breakdown for "Today's Progress"
-  const topicBreakdown = [
-    { name: "Arrays", solved: 2, total: 2, done: true },
-    { name: "Strings", solved: 2, total: 2, done: true },
-    { name: "Trees", solved: 1, total: 2, done: false },
-    { name: "DP", solved: 1, total: 2, done: false },
-    { name: "Graphs", solved: 2, total: 2, done: true },
-  ];
+  // Practice topics breakdown for "Today's Progress" dynamically derived from assignments or submissions
+  const topicBreakdown = useMemo(() => {
+    if (!state.assignments || state.assignments.length === 0) return [];
+    // Aggregate by problem topic or title
+    const map = new Map();
+    for (const asg of state.assignments) {
+      const topic = asg.problem?.topic || asg.title || "General";
+      const existing = map.get(topic) || { name: topic, solved: 0, total: 0 };
+      existing.total += 1;
+      if (asg.myStatus === "verified" || asg.myStatus === "VERIFIED") {
+        existing.solved += 1;
+      }
+      map.set(topic, existing);
+    }
+    return Array.from(map.values()).map((t) => ({
+      ...t,
+      done: t.solved >= t.total && t.total > 0,
+    }));
+  }, [state.assignments]);
 
-  // Topic Progress items for "Assignment Progress"
-  const topicProgress = [
-    { title: "Arrays Basics", completed: 6, total: 10, color: "bg-[#4F46E5]" },
-    { title: "String Manipulation", completed: 4, total: 8, color: "bg-[#F59E0B]" },
-    { title: "Binary Trees", completed: 3, total: 6, color: "bg-[#16A765]" },
-    { title: "Dynamic Programming", completed: 1, total: 8, color: "bg-[#E11D48]" },
-  ];
+  // Topic Progress items for "Assignment Progress" purely derived from real assignments
+  const topicProgress = useMemo(() => {
+    if (!state.assignments || state.assignments.length === 0) return [];
+    const colors = ["bg-[#4F46E5]", "bg-[#F59E0B]", "bg-[#16A765]", "bg-[#E11D48]"];
+    return state.assignments.slice(0, 4).map((asg, idx) => {
+      const isVerified = asg.myStatus === "verified" || asg.myStatus === "VERIFIED";
+      const completed = isVerified ? 1 : asg.myStatus === "in_progress" ? 0.5 : 0;
+      return {
+        title: asg.title || asg.problem?.title || `Assignment ${idx + 1}`,
+        completed: isVerified ? 1 : 0,
+        total: 1,
+        color: colors[idx % colors.length],
+      };
+    });
+  }, [state.assignments]);
 
   const currentRankNumber = state.rank?.rank || (state.leaderboard.length > 0 ? "1" : "—");
 
@@ -234,12 +253,18 @@ export function StudentDashboardConcept() {
             </div>
           </div>
 
-          {/* Right Mascot with laptop matching reference */}
-          <div className="relative flex items-center justify-center md:justify-end shrink-0 h-[150px] sm:h-[180px] my-1 md:my-0">
+          {/* Right Mascot with laptop matching reference & circular half-in half-out effect */}
+          <div className="relative flex items-end justify-end shrink-0 h-[155px] sm:h-[185px] my-1 md:my-0 overflow-hidden sm:overflow-visible">
+            {/* Circular backdrop: avatar is positioned half inside, half rising out */}
+            <div
+              className="absolute bottom-0 right-4 sm:right-6 size-28 sm:size-36 lg:size-40 rounded-full bg-gradient-to-tr from-[#E9E7FF] via-[#EEECFF] to-[#F5F3FF] border border-[#E0E7FF] shadow-inner z-0"
+              aria-hidden="true"
+            />
+
             <img
               src="/mascot.png"
               alt="Solvers Student Character"
-              className="h-[155px] sm:h-[190px] object-contain filter drop-shadow-xl select-none pointer-events-none z-10"
+              className="h-[150px] sm:h-[190px] object-contain filter drop-shadow-xl select-none pointer-events-none relative z-10 translate-y-1 sm:translate-y-0"
             />
             {/* Playful quote */}
             <span
@@ -367,24 +392,31 @@ export function StudentDashboardConcept() {
             </div>
 
             {/* Checklist items */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full text-xs">
-              {topicBreakdown.map((item) => (
-                <div key={item.name} className="flex items-center gap-2">
-                  <div
-                    className={`flex size-4 shrink-0 items-center justify-center rounded-full ${
-                      item.done
-                        ? "bg-[#16A765] text-white"
-                        : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    <Check className="size-2.5 stroke-[3]" />
+            {topicBreakdown.length === 0 ? (
+              <div className="flex-1 text-center py-2 text-xs text-[#647096]">
+                <p className="font-semibold text-[#151936]">No topic targets yet</p>
+                <p className="text-[10px] mt-0.5">Solve assigned problems to track topic progress.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full text-xs">
+                {topicBreakdown.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <div
+                      className={`flex size-4 shrink-0 items-center justify-center rounded-full ${
+                        item.done
+                          ? "bg-[#16A765] text-white"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      <Check className="size-2.5 stroke-[3]" />
+                    </div>
+                    <span className="text-[#151936] font-medium truncate">
+                      {item.name} ({item.solved}/{item.total})
+                    </span>
                   </div>
-                  <span className="text-[#151936] font-medium truncate">
-                    {item.name} ({item.solved}/{item.total})
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -512,28 +544,38 @@ export function StudentDashboardConcept() {
           </div>
 
           <div className="flex flex-col gap-3 flex-1 justify-around">
-            {topicProgress.map((item) => {
-              const pct = Math.round((item.completed / item.total) * 100);
-              return (
-                <div
-                  key={item.title}
-                  className="rounded-xl border border-[#E2E6F5] p-3 hover:border-[#4F46E5]/40 transition"
-                >
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="font-bold text-[#151936] truncate">{item.title}</span>
-                    <span className="text-[11px] font-semibold text-[#647096]">
-                      {item.completed}/{item.total}
-                    </span>
+            {topicProgress.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-[#647096]">
+                <BookOpenCheck className="size-8 text-[#8F9BB3] mb-2" />
+                <p className="text-xs font-semibold text-[#151936]">No assignments active yet.</p>
+                <p className="text-[11px] text-[#647096] mt-0.5">
+                  Problems assigned by the professor will appear here.
+                </p>
+              </div>
+            ) : (
+              topicProgress.map((item) => {
+                const pct = Math.round((item.completed / item.total) * 100);
+                return (
+                  <div
+                    key={item.title}
+                    className="rounded-xl border border-[#E2E6F5] p-3 hover:border-[#4F46E5]/40 transition"
+                  >
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="font-bold text-[#151936] truncate">{item.title}</span>
+                      <span className="text-[11px] font-semibold text-[#647096]">
+                        {item.completed}/{item.total}
+                      </span>
+                    </div>
+                    <div className="w-full bg-[#E2E6F5] h-2 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${item.color}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-[#E2E6F5] h-2 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${item.color}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

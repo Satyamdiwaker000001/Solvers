@@ -183,8 +183,8 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Center Mascot Artwork (Responsive on mobile) */}
-          <div className="relative flex items-center justify-center lg:w-[320px] h-[120px] sm:h-[180px] lg:h-[190px] shrink-0 my-1 lg:my-0">
+          {/* Mascot Artwork with Circular Backdrop (Half-in half-out cut effect) */}
+          <div className="relative flex items-end justify-end md:justify-center lg:justify-center lg:w-[320px] h-[140px] sm:h-[180px] lg:h-[200px] shrink-0 my-1 lg:my-0 overflow-hidden sm:overflow-visible">
             {/* Playful curved quote beside character matching reference */}
             <span
               className="hidden xl:block absolute -left-6 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
@@ -193,10 +193,16 @@ export function AdminDashboard() {
               Same Effort, Higher Future!
             </span>
 
+            {/* Circular backdrop: avatar is positioned half inside, half rising out */}
+            <div
+              className="absolute bottom-0 right-4 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 size-28 sm:size-36 lg:size-44 rounded-full bg-gradient-to-tr from-[#E9E7FF] via-[#EEECFF] to-[#F5F3FF] border border-[#E0E7FF] shadow-inner z-0"
+              aria-hidden="true"
+            />
+
             <img
               src="/mascot.png"
               alt="Solvers 3D Student Character"
-              className="h-[120px] sm:h-[180px] lg:h-[210px] object-contain filter drop-shadow-md select-none pointer-events-none z-10"
+              className="h-[135px] sm:h-[185px] lg:h-[210px] object-contain filter drop-shadow-md select-none pointer-events-none relative z-10 translate-y-1 sm:translate-y-0"
             />
 
             {/* Desk books detail matching reference image */}
@@ -213,12 +219,12 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Right Floating Quick Status Widgets */}
-          <div className="flex flex-row lg:flex-col gap-2.5 sm:gap-3 lg:w-[250px] shrink-0">
+          {/* Quick Status Widgets: Column direction on mobile and tablet as requested */}
+          <div className="flex flex-col gap-2.5 sm:gap-3 w-full lg:w-[250px] shrink-0">
             {/* Widget 1: Pending Access Requests */}
             <Link
               to="/admin/requests"
-              className="flex-1 flex items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl bg-white/95 p-2.5 sm:p-3.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/40 transition group"
+              className="w-full flex items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl bg-white/95 p-2.5 sm:p-3.5 border border-[#E2E6F5] shadow-xs hover:border-[#4F46E5]/40 transition group"
             >
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
@@ -229,11 +235,11 @@ export function AdminDashboard() {
                   <p className="text-[10px] sm:text-[11px] font-semibold text-[#647096] truncate">Access Requests</p>
                 </div>
               </div>
-              <ChevronRight className="size-3.5 sm:size-4 text-[#8F9BB3] group-hover:text-[#4F46E5] group-hover:translate-x-0.5 transition" />
+              <ChevronRight className="size-3.5 sm:size-4 text-[#8F9BB3] group-hover:text-[#4F46E5] group-hover:translate-x-0.5 transition shrink-0" />
             </Link>
 
-            {/* Widget 2: Motivational Motto Tag */}
-            <div className="flex-1 flex items-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl bg-white/95 p-2.5 sm:p-3.5 border border-[#E2E6F5] shadow-xs">
+            {/* Widget 2: Motivational Motto Tag ("Solve. Submit. Grow.") */}
+            <div className="w-full flex items-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl bg-white/95 p-2.5 sm:p-3.5 border border-[#E2E6F5] shadow-xs">
               <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
                 <Target className="size-4 sm:size-5 text-purple-600" />
               </div>
