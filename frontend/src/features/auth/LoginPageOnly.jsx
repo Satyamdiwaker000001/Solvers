@@ -20,17 +20,17 @@ import { useAuth } from "../../hooks/useAuth.js";
 function SolversWordmark({ size = "default" }) {
   const isCompact = size === "compact";
   return (
-    <div className="flex items-center gap-2.5 select-none" aria-label="Solvers">
+    <div className="flex items-center gap-2 select-none" aria-label="Solvers">
       <div
-        className={`flex items-center justify-center font-mono font-bold text-white rounded-xl shadow-sm ${
-          isCompact ? "w-8 h-8 text-sm" : "w-10 h-10 text-base"
+        className={`flex items-center justify-center font-mono font-bold text-white rounded-xl shadow-xs shrink-0 ${
+          isCompact ? "w-7 h-7 text-xs" : "w-8 h-8 sm:w-9 sm:h-9 text-sm"
         } bg-[#4F46E5]`}
       >
         <span className="tracking-tighter">&lt;&#39;&gt;</span>
       </div>
       <span
         className={`font-black tracking-tight text-[#151936] ${
-          isCompact ? "text-xl" : "text-2xl"
+          isCompact ? "text-lg" : "text-xl sm:text-2xl"
         }`}
       >
         Solvers
@@ -117,8 +117,8 @@ export function LoginPage() {
 
   if (auth.loading) {
     return (
-      <main className="min-h-screen bg-[#F3F4FF] flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#E2E6F5]">
+      <main className="min-h-svh bg-[#F3F4FF] flex items-center justify-center p-4">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xs border border-[#E2E6F5]">
           <LoadingState label="Checking your session…" />
         </div>
       </main>
@@ -128,228 +128,231 @@ export function LoginPage() {
   if (auth.user) return null;
 
   return (
-    <main className="min-h-screen w-full bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-3 sm:p-6 lg:p-8 relative overflow-x-hidden selection:bg-[#4F46E5]/20 selection:text-[#4F46E5]">
+    <main className="min-h-svh w-full bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5]">
       {/* Background ambient soft glows on outer canvas */}
       <div
-        className="absolute top-0 right-0 w-[550px] h-[550px] bg-gradient-to-br from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -mr-40 -mt-40"
+        className="absolute top-0 right-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-br from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-0 left-0 w-[550px] h-[550px] bg-gradient-to-tr from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -ml-40 -mb-40"
+        className="absolute bottom-0 left-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-tr from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"
         aria-hidden="true"
       />
 
-      {/* Main Login Card Container (Centered Split Screen on Desktop, App Shell on Mobile) */}
-      <div className="w-full max-w-[1240px] min-h-[660px] bg-white border border-[#E2E6F5] rounded-[28px] sm:rounded-[34px] shadow-[0_24px_70px_-15px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col lg:flex-row">
+      {/* Main Login Card Container:
+          - Desktop (lg+): Compact split card that fits nicely inside standard 1440x900 viewport without scroll.
+          - Mobile/Tablet (<lg): Fluid mobile app card matching reference phone mockup. */}
+      <div className="w-full max-w-[440px] sm:max-w-xl lg:max-w-[1080px] xl:max-w-[1140px] bg-white border border-[#E2E6F5] rounded-3xl sm:rounded-[32px] shadow-[0_20px_60px_-15px_rgba(79,70,229,0.07)] overflow-hidden relative z-10 flex flex-col lg:flex-row my-auto">
         
         {/* ========================================================================= */}
-        {/* LEFT BRANDING & MASCOT PANEL (BACKGROUND.PNG APPLIED SPECIFICALLY HERE)    */}
+        {/* BRANDING & HERO PANEL                                                     */}
+        {/* Mobile: App-like Hero at top. Desktop: Left split banner.                 */}
         {/* ========================================================================= */}
         <section
           aria-label="Solvers introduction and features"
-          className="w-full lg:w-[57%] relative p-6 sm:p-10 lg:p-12 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat"
+          className="w-full lg:w-[56%] relative p-4.5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0"
         >
-          {/* Soft contrast overlay so headline and feature cards stay crystal clear */}
+          {/* Soft contrast overlay so headline and text stay readable */}
           <div
-            className="absolute inset-0 bg-gradient-to-r from-[#F8F8FF]/90 via-[#F8F8FF]/75 to-[#F8F8FF]/35 pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-b lg:bg-gradient-to-r from-[#F8F8FF]/95 via-[#F8F8FF]/80 to-[#F8F8FF]/40 pointer-events-none"
             aria-hidden="true"
           />
 
           {/* Top Row: Wordmark */}
-          <div className="relative z-10 flex items-center justify-between mb-6 sm:mb-8">
+          <div className="relative z-10 flex items-center justify-between mb-3 sm:mb-5 lg:mb-4">
             <SolversWordmark />
+            <span className="lg:hidden text-[11px] font-bold text-[#4F46E5] bg-[#EEECFF] px-2.5 py-0.5 rounded-full border border-[#4F46E5]/20 select-none">
+              2027
+            </span>
           </div>
 
-          {/* Hero Content & Mascot Area */}
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-center my-auto">
-            {/* Left Column: Headlines & Features */}
-            <div className="md:col-span-7 flex flex-col justify-center">
-              <h1 className="text-4xl sm:text-5xl lg:text-[52px] font-black text-[#151936] tracking-tight leading-[1.06]">
-                Practice.
-                <br />
-                <span className="text-[#4F46E5]">Track.</span>
-                <br />
-                Improve.
-              </h1>
+          {/* Hero Content & Mascot Area:
+              - Mobile (<lg): Stacked hero layout matching reference phone screen.
+              - Desktop (lg+): 2-column layout (Headline+Features left, Mascot right). */}
+          <div className="relative z-10 my-auto">
+            {/* Desktop 2-column grid */}
+            <div className="hidden lg:grid grid-cols-12 gap-5 xl:gap-6 items-center">
+              {/* Left: Headlines & Features */}
+              <div className="col-span-7 flex flex-col justify-center">
+                <h1 className="text-3xl xl:text-4xl font-black text-[#151936] tracking-tight leading-[1.1]">
+                  Practice.
+                  <br />
+                  <span className="text-[#4F46E5]">Track.</span>
+                  <br />
+                  Improve.
+                </h1>
 
-              <p className="mt-4 text-sm sm:text-[15px] text-[#647096] leading-relaxed max-w-md font-normal">
-                A DSA practice platform for students, verified by GitHub. Stay
-                consistent, compete, and grow together.
-              </p>
+                <p className="mt-2.5 text-xs xl:text-[13px] text-[#647096] leading-relaxed max-w-sm font-normal">
+                  A DSA practice platform for students, verified by GitHub. Stay
+                  consistent, compete, and grow together.
+                </p>
 
-              {/* 4 Feature Items */}
-              <div className="mt-8 space-y-3.5 max-w-md">
-                {/* Feature 1 */}
-                <div className="flex items-center gap-3.5 p-2 rounded-xl transition-colors hover:bg-white/70">
-                  <div className="w-10 h-10 rounded-xl bg-[#EAF8F1] flex items-center justify-center text-[#16A765] shrink-0 shadow-xs border border-[#16A765]/20">
-                    <CheckCircle2 className="size-5" />
+                {/* 4 Feature Items (compact on desktop) */}
+                <div className="mt-4 xl:mt-5 space-y-2 max-w-sm">
+                  {/* Feature 1 */}
+                  <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
+                    <div className="w-8 h-8 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765] shrink-0 border border-[#16A765]/20">
+                      <CheckCircle2 className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-xs font-bold text-[#151936] leading-tight">
+                        Daily progress tracking
+                      </h2>
+                      <p className="text-[11px] text-[#647096] mt-0.5 truncate">
+                        Stay consistent every day
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[#151936] leading-tight">
-                      Daily progress tracking
-                    </h3>
-                    <p className="text-xs text-[#647096] mt-0.5">
-                      Stay consistent every day
-                    </p>
-                  </div>
-                </div>
 
-                {/* Feature 2 */}
-                <div className="flex items-center gap-3.5 p-2 rounded-xl transition-colors hover:bg-white/70">
-                  <div className="w-10 h-10 rounded-xl bg-[#EEF0F8] flex items-center justify-center text-[#151936] shrink-0 shadow-xs border border-[#151936]/15">
-                    <GithubMark className="size-5" />
+                  {/* Feature 2 */}
+                  <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
+                    <div className="w-8 h-8 rounded-lg bg-[#EEF0F8] flex items-center justify-center text-[#151936] shrink-0 border border-[#151936]/15">
+                      <GithubMark className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-xs font-bold text-[#151936] leading-tight">
+                        GitHub verified submissions
+                      </h2>
+                      <p className="text-[11px] text-[#647096] mt-0.5 truncate">
+                        Show real progress, no shortcuts
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[#151936] leading-tight">
-                      GitHub verified submissions
-                    </h3>
-                    <p className="text-xs text-[#647096] mt-0.5">
-                      Show real progress, no shortcuts
-                    </p>
-                  </div>
-                </div>
 
-                {/* Feature 3 */}
-                <div className="flex items-center gap-3.5 p-2 rounded-xl transition-colors hover:bg-white/70">
-                  <div className="w-10 h-10 rounded-xl bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B] shrink-0 shadow-xs border border-[#F59E0B]/25">
-                    <BarChart3 className="size-5" />
+                  {/* Feature 3 */}
+                  <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
+                    <div className="w-8 h-8 rounded-lg bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B] shrink-0 border border-[#F59E0B]/25">
+                      <BarChart3 className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-xs font-bold text-[#151936] leading-tight">
+                        Leaderboard &amp; analytics
+                      </h2>
+                      <p className="text-[11px] text-[#647096] mt-0.5 truncate">
+                        Compete and track your growth
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[#151936] leading-tight">
-                      Leaderboard &amp; analytics
-                    </h3>
-                    <p className="text-xs text-[#647096] mt-0.5">
-                      Compete and track your growth
-                    </p>
-                  </div>
-                </div>
 
-                {/* Feature 4 */}
-                <div className="flex items-center gap-3.5 p-2 rounded-xl transition-colors hover:bg-white/70">
-                  <div className="w-10 h-10 rounded-xl bg-[#EEECFF] flex items-center justify-center text-[#4F46E5] shrink-0 shadow-xs border border-[#4F46E5]/20">
-                    <Users className="size-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[#151936] leading-tight">
-                      Guided by Professor Admins
-                    </h3>
-                    <p className="text-xs text-[#647096] mt-0.5">
-                      Learn with proper guidance
-                    </p>
+                  {/* Feature 4 */}
+                  <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
+                    <div className="w-8 h-8 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5] shrink-0 border border-[#4F46E5]/20">
+                      <Users className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-xs font-bold text-[#151936] leading-tight">
+                        Guided by Professor Admins
+                      </h2>
+                      <p className="text-[11px] text-[#647096] mt-0.5 truncate">
+                        Learn with proper guidance
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right Column: 3D Mascot Cutout with Whimsical Accents */}
-            <div className="md:col-span-5 relative flex items-center justify-center pt-2 pb-4 md:py-0">
-              {/* Soft circular lavender aura behind character */}
-              <div
-                className="w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 rounded-full bg-gradient-to-tr from-[#E9E7FF]/90 to-[#F1EFFF]/80 absolute z-0 -translate-y-2 blur-[1px]"
-                aria-hidden="true"
-              />
-
-              {/* Playful doodle rays above head */}
-              <div
-                className="absolute top-2 left-1/2 -translate-x-12 z-0 opacity-80"
-                aria-hidden="true"
-              >
-                <svg width="40" height="24" viewBox="0 0 40 24" fill="none">
-                  <path
-                    d="M6 18L14 8"
-                    stroke="#4F46E5"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M20 16V4"
-                    stroke="#4F46E5"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M34 18L26 8"
-                    stroke="#4F46E5"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
-
-              {/* Yellow squiggle noodle doodle */}
-              <div
-                className="absolute top-12 right-2 sm:right-6 z-0 opacity-90 hidden sm:block"
-                aria-hidden="true"
-              >
-                <svg width="32" height="38" viewBox="0 0 32 38" fill="none">
-                  <path
-                    d="M22 4C14 6 6 12 8 20C10 26 26 28 24 34"
-                    stroke="#F59E0B"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
-
-              {/* 3D Student Character Cutout */}
-              <div className="relative z-10 flex items-center justify-center">
-                <img
-                  src="/mascot.png"
-                  alt="Solvers 3D Student Character with Laptop"
-                  className="w-auto h-52 sm:h-64 md:h-72 lg:h-80 object-contain select-none transition-transform duration-300 hover:scale-[1.02]"
-                  loading="eager"
-                  width={360}
-                  height={400}
-                />
-                {/* Subtle Solvers code mark on laptop lid */}
+              {/* Right: 3D Mascot Cutout on Desktop */}
+              <div className="col-span-5 relative flex flex-col items-center justify-center">
+                {/* Soft circular lavender aura */}
                 <div
-                  className="absolute right-[28%] bottom-[25%] text-[#8C98BA]/75 font-mono font-bold text-xs select-none pointer-events-none tracking-tighter hidden sm:block"
+                  className="w-48 h-48 xl:w-56 xl:h-56 rounded-full bg-gradient-to-tr from-[#E9E7FF]/90 to-[#F1EFFF]/80 absolute z-0 blur-[1px]"
                   aria-hidden="true"
-                >
-                  &lt;&gt;
+                />
+
+                {/* Playful doodle rays above head */}
+                <div className="absolute -top-3 left-1/2 -translate-x-6 z-0 opacity-80" aria-hidden="true">
+                  <svg width="32" height="20" viewBox="0 0 40 24" fill="none">
+                    <path d="M6 18L14 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M20 16V4" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M34 18L26 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+
+                {/* Mascot image */}
+                <div className="relative z-10 flex items-center justify-center">
+                  <img
+                    src="/mascot.png"
+                    alt="Solvers 3D Student Character with Laptop"
+                    className="w-auto h-52 xl:h-60 object-contain select-none transition-transform duration-300 hover:scale-[1.02]"
+                    loading="eager"
+                    width={320}
+                    height={360}
+                  />
+                </div>
+
+                {/* Floating badge */}
+                <div className="absolute -bottom-1 -left-1 xl:left-2 z-20 bg-white/95 px-2.5 py-1 rounded-full border border-[#E2E6F5] shadow-xs rotate-[-5deg] select-none flex items-center gap-1.5">
+                  <Sparkles className="size-3 text-[#4F46E5]" />
+                  <span className="text-[11px] font-bold text-[#4F46E5] tracking-tight">
+                    Better Coders Everyday!
+                  </span>
                 </div>
               </div>
+            </div>
 
-              {/* Floating handwriting badge: "Better Coders Everyday!" */}
-              <div className="absolute -bottom-2 -left-2 sm:bottom-0 sm:left-4 z-20 bg-white/95 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-[#E2E6F5] shadow-sm rotate-[-6deg] select-none flex items-center gap-1.5">
-                <Sparkles className="size-3.5 text-[#4F46E5]" />
-                <span className="text-xs font-bold text-[#4F46E5] tracking-tight">
-                  Better Coders Everyday!
-                </span>
+            {/* Mobile / Tablet Hero Layout (Exactly matching reference mobile screen) */}
+            <div className="lg:hidden flex flex-col items-center text-center">
+              <div className="relative w-full flex items-center justify-between gap-4">
+                <div className="text-left flex-1">
+                  <h1 className="text-2xl sm:text-3xl font-black text-[#151936] tracking-tight leading-[1.1]">
+                    Practice.
+                    <br />
+                    <span className="text-[#4F46E5]">Track.</span>
+                    <br />
+                    Improve.
+                  </h1>
+                  <p className="mt-1.5 text-xs text-[#647096] leading-relaxed max-w-[210px] sm:max-w-xs font-normal">
+                    A DSA practice platform for students, verified by GitHub. Stay consistent, compete, and grow.
+                  </p>
+                </div>
+
+                {/* Mobile Mascot Cutout */}
+                <div className="relative shrink-0 flex items-center justify-center -mr-2">
+                  <div
+                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-tr from-[#E9E7FF] to-[#F1EFFF] absolute z-0 blur-[0.5px]"
+                    aria-hidden="true"
+                  />
+                  <img
+                    src="/mascot.png"
+                    alt="Solvers Student Character"
+                    className="w-auto h-32 sm:h-40 object-contain select-none relative z-10"
+                    loading="eager"
+                    width={180}
+                    height={200}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom Desk Book Stack Accent (aligned with the potted plant on background.png) */}
-          <div className="relative z-10 pt-4 hidden lg:flex items-center gap-4">
+          {/* Bottom Desk Book Stack (Desktop only) */}
+          <div className="relative z-10 pt-3 hidden lg:flex items-center gap-3">
             <div className="flex flex-col select-none" aria-hidden="true">
-              <div className="w-20 h-4 bg-[#4F46E5] text-[7.5px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs">
+              <div className="w-16 h-3 bg-[#4F46E5] text-[6.5px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs">
                 DSA
               </div>
-              <div className="w-22 h-4 bg-[#151936] text-[7.5px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
+              <div className="w-18 h-3 bg-[#151936] text-[6.5px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
                 Algorithms
               </div>
-              <div className="w-24 h-4.5 bg-[#DC4545] text-[7.5px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
-                Problem Solving
-              </div>
             </div>
-            <span className="text-xs font-semibold text-[#8C98BA] italic select-none">
+            <span className="text-[11px] font-semibold text-[#8C98BA] italic select-none">
               Build your competitive foundation
             </span>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* RIGHT AUTHENTICATION PANEL (PERFECTLY CENTERED OPTIONS & FORMS)           */}
+        {/* AUTHENTICATION PANEL                                                      */}
+        {/* Clean, perfectly proportioned, accessible on all screen sizes             */}
         {/* ========================================================================= */}
         <section
           aria-labelledby="login-surface-heading"
-          className="w-full lg:w-[43%] bg-white border-t lg:border-t-0 lg:border-l border-[#E2E6F5] p-6 sm:p-10 lg:p-12 flex flex-col justify-between items-center relative"
+          className="w-full lg:w-[44%] bg-white border-t lg:border-t-0 lg:border-l border-[#E2E6F5] p-5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between items-center relative"
         >
-          {/* Top Row: Faint Tilted Handwriting Text */}
-          <div className="w-full flex justify-end select-none">
+          {/* Top Tag on Desktop */}
+          <div className="w-full hidden lg:flex justify-end select-none">
             <span
-              className="text-[13px] font-semibold text-[#9BA8CD] italic select-none pointer-events-none"
+              className="text-xs font-semibold text-[#9BA8CD] italic select-none pointer-events-none"
               style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
             >
               Same Effort, Higher Future
@@ -357,15 +360,15 @@ export function LoginPage() {
           </div>
 
           {/* Centered Login / Admin Form Block */}
-          <div className="w-full max-w-[380px] my-auto py-6 flex flex-col items-center text-center">
+          <div className="w-full max-w-[340px] sm:max-w-[360px] my-auto py-2 sm:py-4 flex flex-col items-center text-center">
             {/* Header: Welcome to Solvers */}
             <h2
               id="login-surface-heading"
-              className="text-2xl sm:text-3xl font-black text-[#151936] tracking-tight"
+              className="text-xl sm:text-2xl font-black text-[#151936] tracking-tight"
             >
               Welcome to <span className="text-[#4F46E5]">Solvers</span>
             </h2>
-            <p className="text-sm text-[#647096] mt-2 font-normal max-w-xs">
+            <p className="text-xs sm:text-sm text-[#647096] mt-1.5 font-normal max-w-xs">
               {showAdminForm
                 ? "Sign in with your authorized professor account."
                 : "Sign in with your GitHub account to continue."}
@@ -375,7 +378,7 @@ export function LoginPage() {
             {(auth.error || failed) && (
               <div
                 role="alert"
-                className="w-full mt-5 p-3.5 rounded-xl bg-[#DC4545]/10 border border-[#DC4545]/20 text-[#DC4545] text-xs sm:text-sm flex items-start gap-2.5 text-left animate-in fade-in duration-200"
+                className="w-full mt-3.5 p-3 rounded-xl bg-[#DC4545]/10 border border-[#DC4545]/20 text-[#DC4545] text-xs flex items-start gap-2 text-left animate-in fade-in duration-200"
               >
                 <AlertCircle className="size-4 shrink-0 mt-0.5" />
                 <p className="font-medium leading-snug">
@@ -384,8 +387,8 @@ export function LoginPage() {
               </div>
             )}
 
-            {/* Primary Action Buttons OR Admin Form */}
-            <div className="w-full mt-7 space-y-4">
+            {/* Action Buttons OR Admin Form */}
+            <div className="w-full mt-5 space-y-3">
               {!showAdminForm ? (
                 <>
                   {/* Primary GitHub Button */}
@@ -394,11 +397,11 @@ export function LoginPage() {
                     onClick={startOAuth}
                     disabled={busy}
                     aria-label="Continue with GitHub"
-                    className="w-full h-[52px] bg-[#151936] hover:bg-[#1E2448] text-white rounded-2xl flex items-center justify-between px-5 sm:px-6 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#151936]"
+                    className="w-full h-12 bg-[#151936] hover:bg-[#1E2448] text-white rounded-xl sm:rounded-2xl flex items-center justify-between px-4 sm:px-5 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#151936]"
                   >
-                    <div className="flex items-center gap-3">
-                      <GithubMark className="size-5 text-white" />
-                      <span className="font-semibold text-sm sm:text-[15px]">
+                    <div className="flex items-center gap-2.5">
+                      <GithubMark className="size-4.5 text-white" />
+                      <span className="font-semibold text-xs sm:text-sm">
                         {busy ? "Connecting..." : "Continue with GitHub"}
                       </span>
                     </div>
@@ -406,9 +409,9 @@ export function LoginPage() {
                   </button>
 
                   {/* Divider: or */}
-                  <div className="flex items-center gap-3 my-5" aria-hidden="true">
+                  <div className="flex items-center gap-3 my-3" aria-hidden="true">
                     <div className="flex-1 h-px bg-[#E2E6F5]" />
-                    <span className="text-xs font-semibold text-[#8E99B8] uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-[#8E99B8] uppercase tracking-wider">
                       or
                     </span>
                     <div className="flex-1 h-px bg-[#E2E6F5]" />
@@ -423,26 +426,26 @@ export function LoginPage() {
                     }}
                     disabled={busy}
                     aria-label="Admin Login (Authorized Professors Only)"
-                    className="w-full h-[52px] bg-white hover:bg-[#F8F8FF] text-[#151936] border border-[#E2E6F5] hover:border-[#D0D5E8] rounded-2xl flex items-center justify-between px-5 sm:px-6 transition-all duration-200 disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4F46E5]"
+                    className="w-full h-11 sm:h-12 bg-white hover:bg-[#F8F8FF] text-[#151936] border border-[#E2E6F5] hover:border-[#D0D5E8] rounded-xl sm:rounded-2xl flex items-center justify-between px-4 sm:px-5 transition-all duration-200 disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4F46E5]"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-lg bg-[#F0F2FA] flex items-center justify-center text-[#151936]">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="size-6 rounded-lg bg-[#F0F2FA] flex items-center justify-center text-[#151936] shrink-0">
                         <Lock className="size-3.5" />
                       </div>
-                      <span className="font-semibold text-xs sm:text-sm text-[#151936]">
+                      <span className="font-semibold text-[11px] sm:text-xs text-[#151936] truncate">
                         Admin Login (Authorized Professors Only)
                       </span>
                     </div>
-                    <ArrowRight className="size-4 text-[#8E99B8] group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="size-3.5 text-[#8E99B8] group-hover:translate-x-1 transition-transform shrink-0" />
                   </button>
                 </>
               ) : (
-                /* Admin Credential Form (Center-aligned layout) */
-                <form onSubmit={handleAdminSignIn} className="w-full space-y-4 text-left">
+                /* Admin Credential Form */
+                <form onSubmit={handleAdminSignIn} className="w-full space-y-3 text-left">
                   <div>
                     <label
                       htmlFor="admin-username"
-                      className="block text-xs font-semibold text-[#151936] mb-1.5"
+                      className="block text-[11px] font-semibold text-[#151936] mb-1"
                     >
                       Professor Username
                     </label>
@@ -454,14 +457,14 @@ export function LoginPage() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       disabled={busy}
-                      className="w-full h-[46px] px-3.5 rounded-xl border border-[#E2E6F5] bg-[#F8F8FF] text-sm text-[#151936] focus:bg-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/15 transition-all"
+                      className="w-full h-10 px-3 rounded-xl border border-[#E2E6F5] bg-[#F8F8FF] text-xs text-[#151936] focus:bg-white focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]/15 transition-all"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="admin-password"
-                      className="block text-xs font-semibold text-[#151936] mb-1.5"
+                      className="block text-[11px] font-semibold text-[#151936] mb-1"
                     >
                       Password
                     </label>
@@ -474,18 +477,18 @@ export function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={busy}
-                        className="w-full h-[46px] pl-3.5 pr-10 rounded-xl border border-[#E2E6F5] bg-[#F8F8FF] text-sm text-[#151936] focus:bg-white focus:outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/15 transition-all"
+                        className="w-full h-10 pl-3 pr-9 rounded-xl border border-[#E2E6F5] bg-[#F8F8FF] text-xs text-[#151936] focus:bg-white focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5]/15 transition-all"
                       />
                       <button
                         type="button"
                         onClick={() => setPasswordVisible(!passwordVisible)}
                         aria-label={passwordVisible ? "Hide password" : "Show password"}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8E99B8] hover:text-[#151936] cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8E99B8] hover:text-[#151936] cursor-pointer"
                       >
                         {passwordVisible ? (
-                          <EyeOff className="size-4" />
+                          <EyeOff className="size-3.5" />
                         ) : (
-                          <Eye className="size-4" />
+                          <Eye className="size-3.5" />
                         )}
                       </button>
                     </div>
@@ -494,9 +497,9 @@ export function LoginPage() {
                   <button
                     type="submit"
                     disabled={busy}
-                    className="w-full h-[48px] bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold rounded-xl text-sm transition-all shadow-sm disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full h-11 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold rounded-xl text-xs transition-all shadow-xs disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <Lock className="size-4" />
+                    <Lock className="size-3.5" />
                     {busy ? "Verifying..." : "Sign in as Admin"}
                   </button>
 
@@ -507,31 +510,29 @@ export function LoginPage() {
                       setShowAdminForm(false);
                     }}
                     disabled={busy}
-                    className="w-full py-2 text-xs font-medium text-[#647096] hover:text-[#151936] text-center transition-colors cursor-pointer"
+                    className="w-full py-1.5 text-xs font-medium text-[#647096] hover:text-[#151936] text-center transition-colors cursor-pointer"
                   >
                     &larr; Back to Student GitHub Login
                   </button>
                 </form>
               )}
-
-
             </div>
 
             {/* Participation Rules & Academic Integrity Disclaimer */}
-            <p className="text-xs text-[#8E99B8] text-center mt-6 leading-relaxed max-w-xs mx-auto">
+            <p className="text-[11px] text-[#8E99B8] text-center mt-4 sm:mt-5 leading-relaxed max-w-xs mx-auto">
               By signing in, you agree to our participation rules and academic
               integrity policy.
             </p>
           </div>
 
-          {/* Bottom Trust Indicators */}
-          <div className="w-full max-w-[380px] grid grid-cols-3 gap-2 pt-6 border-t border-[#F0F2FA] text-center">
+          {/* Bottom Trust Indicators (Hidden on small mobile to save vertical space, visible on tablet & desktop) */}
+          <div className="w-full max-w-[340px] sm:max-w-[360px] hidden sm:grid grid-cols-3 gap-2 pt-4 border-t border-[#F0F2FA] text-center">
             {/* Indicator 1 */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="w-8 h-8 rounded-xl bg-[#EEECFF] flex items-center justify-center text-[#4F46E5]">
-                <ShieldCheck className="size-4" />
+            <div className="flex flex-col items-center gap-1">
+              <div className="size-7 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5]">
+                <ShieldCheck className="size-3.5" />
               </div>
-              <span className="text-[11px] font-semibold text-[#151936] leading-tight">
+              <span className="text-[10px] font-semibold text-[#151936] leading-tight">
                 Secure
                 <br />
                 Authentication
@@ -539,11 +540,11 @@ export function LoginPage() {
             </div>
 
             {/* Indicator 2 */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="w-8 h-8 rounded-xl bg-[#EAF8F1] flex items-center justify-center text-[#16A765]">
-                <Users className="size-4" />
+            <div className="flex flex-col items-center gap-1">
+              <div className="size-7 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765]">
+                <Users className="size-3.5" />
               </div>
-              <span className="text-[11px] font-semibold text-[#151936] leading-tight">
+              <span className="text-[10px] font-semibold text-[#151936] leading-tight">
                 Academic
                 <br />
                 Integrity
@@ -551,11 +552,11 @@ export function LoginPage() {
             </div>
 
             {/* Indicator 3 */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="w-8 h-8 rounded-xl bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B]">
-                <Zap className="size-4" />
+            <div className="flex flex-col items-center gap-1">
+              <div className="size-7 rounded-lg bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B]">
+                <Zap className="size-3.5" />
               </div>
-              <span className="text-[11px] font-semibold text-[#151936] leading-tight">
+              <span className="text-[10px] font-semibold text-[#151936] leading-tight">
                 Focused on
                 <br />
                 Real Learning

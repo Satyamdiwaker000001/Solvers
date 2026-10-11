@@ -174,7 +174,7 @@ export function AdminDashboard() {
           </div>
 
           {/* Center Mascot Artwork (Same exact 3D student character from image.png) */}
-          <div className="relative flex items-center justify-center lg:w-[320px] h-[190px] shrink-0">
+          <div className="relative flex items-center justify-center lg:w-[320px] h-[150px] sm:h-[190px] shrink-0">
             {/* Playful curved quote beside character matching reference */}
             <span
               className="hidden xl:block absolute -left-6 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
@@ -186,7 +186,7 @@ export function AdminDashboard() {
             <img
               src="/mascot.png"
               alt="Solvers 3D Student Character"
-              className="h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-3 z-10"
+              className="h-[160px] sm:h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-2 sm:-mb-3 z-10"
             />
 
             {/* Desk books detail matching reference image */}

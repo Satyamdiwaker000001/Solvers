@@ -142,7 +142,7 @@ export function StudentDashboardConcept() {
           </div>
 
           {/* Mascot in banner */}
-          <div className="relative flex items-center justify-center lg:w-[320px] h-[190px] shrink-0">
+          <div className="relative flex items-center justify-center lg:w-[320px] h-[150px] sm:h-[190px] shrink-0">
             <span
               className="hidden xl:block absolute -left-6 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
               style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
@@ -152,7 +152,7 @@ export function StudentDashboardConcept() {
             <img
               src="/mascot.png"
               alt="Solvers 3D Student Character"
-              className="h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-3 z-10"
+              className="h-[160px] sm:h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-2 sm:-mb-3 z-10"
             />
             {/* Desk books detail matching reference image */}
             <div className="hidden lg:flex flex-col items-center justify-end h-24 -ml-4 z-0 opacity-90 select-none pointer-events-none" aria-hidden="true">
@@ -168,7 +168,7 @@ export function StudentDashboardConcept() {
             </div>
           </div>
 
-          {/* Right quick stats */}
+          {/* Right quick stats / Streak bar */}
           <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:w-[250px] shrink-0">
             <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/95 p-3.5 border border-[#E2E6F5] shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
@@ -176,8 +176,20 @@ export function StudentDashboardConcept() {
                   <Flame className="size-5 fill-amber-500 text-amber-500" />
                 </div>
                 <div className="min-w-0 leading-tight">
-                  <span className="text-lg font-black text-[#151936]">12</span>
-                  <p className="text-[11px] font-semibold text-[#647096]">Day Streak</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base sm:text-lg font-black text-[#151936]">12</span>
+                    <span className="text-xs sm:text-[13px] font-bold text-[#151936]">Day Streak</span>
+                  </div>
+                  {/* Streak Progress Dots matching mobile reference */}
+                  <div className="flex items-center gap-1.5 mt-1.5" aria-label="7-day activity">
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    <span className="size-2 rounded-full bg-amber-400" />
+                    <span className="size-2 rounded-full bg-amber-400" />
+                    <span className="size-2 rounded-full bg-amber-200" />
+                    <span className="size-2 rounded-full bg-gray-200" />
+                  </div>
                 </div>
               </div>
             </div>
