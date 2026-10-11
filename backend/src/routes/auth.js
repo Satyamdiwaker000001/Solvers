@@ -13,6 +13,28 @@ import { adminLoginSchema } from "./schemas.js";
 
 const OAUTH_STATE_TTL_MS = 10 * 60_000;
 
+function generateSignedState(secret) {
+  const nonce = crypto.randomBytes(16).toString("hex");
+  const ts = Date.now().toString(36);
+  const data = `${nonce}.${ts}`;
+  const sig = crypto.createHmac("sha256", secret).update(data).digest("base64url");
+  return `${data}.${sig}`;
+}
+
+function verifySignedState(state, secret) {
+  if (!state || typeof state !== "string") return false;
+  const parts = state.split(".");
+  if (parts.length !== 3) return false;
+  const [nonce, ts, sig] = parts;
+  const data = `${nonce}.${ts}`;
+  const expectedSig = crypto.createHmac("sha256", secret).update(data).digest("base64url");
+  if (sig.length !== expectedSig.length) return false;
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return false;
+  const createdTime = parseInt(ts, 36);
+  if (isNaN(createdTime) || Date.now() - createdTime > OAUTH_STATE_TTL_MS) return false;
+  return true;
+}
+
 export function authRateLimiter() {
   return (req, res, next) => {
     const cfg = req.app.get("config");
@@ -109,7 +131,7 @@ export function authRoutes() {
 
   router.get("/github/start", asyncHandler(async (req, res) => {
     const cfg = req.app.get("config");
-    const state = crypto.randomBytes(24).toString("hex");
+    const state = generateSignedState(cfg.sessionSecret);
     req.session.oauthState = { state, createdAt: Date.now() };
     const url = buildAuthorizeUrl({
       oauthBase: cfg.github.oauthBase,
@@ -130,13 +152,13 @@ export function authRoutes() {
     if (error) {
       return finish(`?error=${encodeURIComponent("OAuth provider refused authorization")}`);
     }
-    const saved = req.session.oauthState;
-    delete req.session.oauthState;
-    if (!saved || !state || saved.state !== state) {
+    const saved = req.session?.oauthState;
+    delete req.session?.oauthState;
+    const isValidSigned = verifySignedState(state, cfg.sessionSecret);
+    const isValidSession = saved && saved.state === state && (Date.now() - saved.createdAt <= OAUTH_STATE_TTL_MS);
+
+    if (!isValidSigned && !isValidSession) {
       return next(badRequest("Invalid OAuth state — please restart sign-in"));
-    }
-    if (Date.now() - saved.createdAt > OAUTH_STATE_TTL_MS) {
-      return next(badRequest("OAuth state expired — please restart sign-in"));
     }
     if (!code || typeof code !== "string") {
       return next(badRequest("Missing OAuth authorization code"));
@@ -151,7 +173,9 @@ export function authRoutes() {
       });
       req.session.userId = String(user._id);
       rotateCsrfToken(req);
-      return finish(`?status=${user.accountStatus}&role=${user.role}`);
+      await new Promise((resolve) => req.session.save(() => resolve()));
+      // Return sid in query params as cross-domain fallback so Chrome/Safari never lose authentication
+      return finish(`?status=${user.accountStatus}&role=${user.role}&sid=${req.sessionID}`);
     } catch (err) {
       return next(badRequest(`GitHub sign-in failed: ${err.message}`));
     }
