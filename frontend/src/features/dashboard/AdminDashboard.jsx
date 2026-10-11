@@ -142,8 +142,9 @@ export function AdminDashboard() {
       {/* ============================================================== */}
       {/* 1. TOP WELCOME BANNER & STATS ROW (EXACT REFERENCE REPRODUCTION) */}
       {/* ============================================================== */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FFFFFF] via-[#F8F9FF] to-[#EBE9FE] border border-[#E2E6F5] p-6 lg:p-8 shadow-xs">
-        {/* Soft background light blooms */}
+      <div className="relative overflow-hidden rounded-3xl bg-white bg-[url('/background.png')] bg-cover bg-center border border-[#E2E6F5] p-6 lg:p-8 shadow-xs">
+        {/* Soft background light blooms and text contrast overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent pointer-events-none" aria-hidden="true" />
         <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-[#E9E7FF]/60 blur-3xl" />
         <div className="pointer-events-none absolute top-1/2 right-1/4 size-96 rounded-full bg-[#E0E7FF]/40 blur-3xl" />
 
@@ -173,10 +174,10 @@ export function AdminDashboard() {
           </div>
 
           {/* Center Mascot Artwork (Same exact 3D student character from image.png) */}
-          <div className="relative flex items-center justify-center lg:w-[260px] h-[190px] shrink-0">
+          <div className="relative flex items-center justify-center lg:w-[320px] h-[190px] shrink-0">
             {/* Playful curved quote beside character matching reference */}
             <span
-              className="hidden xl:block absolute -left-8 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
+              className="hidden xl:block absolute -left-6 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
               style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
             >
               Same Effort, Higher Future!
@@ -185,8 +186,21 @@ export function AdminDashboard() {
             <img
               src="/mascot.png"
               alt="Solvers 3D Student Character"
-              className="h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-3"
+              className="h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-3 z-10"
             />
+
+            {/* Desk books detail matching reference image */}
+            <div className="hidden lg:flex flex-col items-center justify-end h-24 -ml-4 z-0 opacity-90 select-none pointer-events-none" aria-hidden="true">
+              <div className="w-16 h-3.5 bg-[#4F46E5] text-[7px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs">
+                DSA
+              </div>
+              <div className="w-18 h-3.5 bg-[#151936] text-[7px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
+                Algorithms
+              </div>
+              <div className="w-20 h-4 bg-[#DC4545] text-[7px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
+                Problem Solving
+              </div>
+            </div>
           </div>
 
           {/* Right Floating Quick Status Widgets matching Reference Right Banner Cards */}
@@ -309,39 +323,45 @@ export function AdminDashboard() {
             </Link>
           </div>
 
-          {/* Donut progress visual matching reference */}
-          <div className="flex items-center gap-5 my-auto py-2">
-            <div className="relative flex size-28 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#4F46E5] via-[#818CF8] to-[#C7D2FE] p-2.5 shadow-inner">
-              <div className="flex size-full items-center justify-center rounded-full bg-white flex-col leading-none">
-                <span className="text-xl font-black text-[#151936]">80%</span>
-                <span className="text-[9px] text-[#647096] mt-0.5">completion</span>
-              </div>
-            </div>
+          {/* Donut progress visual matching backend stats */}
+          {(() => {
+            const totalWork = (verifiedSubmissions || 0) + (pendingReviews || 0) + (assignedProblems || 0);
+            const pct = totalWork > 0 ? Math.round(((verifiedSubmissions || 0) / totalWork) * 100) : 0;
+            return (
+              <div className="flex items-center gap-5 my-auto py-2">
+                <div className="relative flex size-28 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#4F46E5] via-[#818CF8] to-[#C7D2FE] p-2.5 shadow-inner">
+                  <div className="flex size-full items-center justify-center rounded-full bg-white flex-col leading-none">
+                    <span className="text-xl font-black text-[#151936]">{pct}%</span>
+                    <span className="text-[9px] text-[#647096] mt-0.5">verified</span>
+                  </div>
+                </div>
 
-            <div className="flex flex-col gap-2 min-w-0 flex-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5 text-[#151936] font-medium">
-                  <span className="size-2 rounded-full bg-[#16A765]" />
-                  Verified
-                </span>
-                <span className="font-bold text-[#151936]">{verifiedSubmissions}</span>
+                <div className="flex flex-col gap-2 min-w-0 flex-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-[#151936] font-medium">
+                      <span className="size-2 rounded-full bg-[#16A765]" />
+                      Verified
+                    </span>
+                    <span className="font-bold text-[#151936]">{verifiedSubmissions}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-[#151936] font-medium">
+                      <span className="size-2 rounded-full bg-[#F59E0B]" />
+                      Needs Review
+                    </span>
+                    <span className="font-bold text-[#151936]">{pendingReviews}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-[#151936] font-medium">
+                      <span className="size-2 rounded-full bg-[#4F46E5]" />
+                      In Progress
+                    </span>
+                    <span className="font-bold text-[#151936]">{assignedProblems}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5 text-[#151936] font-medium">
-                  <span className="size-2 rounded-full bg-[#F59E0B]" />
-                  Needs Review
-                </span>
-                <span className="font-bold text-[#151936]">{pendingReviews}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5 text-[#151936] font-medium">
-                  <span className="size-2 rounded-full bg-[#4F46E5]" />
-                  In Progress
-                </span>
-                <span className="font-bold text-[#151936]">{assignedProblems}</span>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Tracking Policy Target inline tool */}
           <div className="mt-4 pt-4 border-t border-[#E2E6F5] flex items-center justify-between gap-3">
@@ -643,27 +663,35 @@ export function AdminDashboard() {
               </span>
             </div>
 
-            {/* Micro bar chart representation */}
-            <div className="h-28 flex items-end justify-between gap-1.5 pt-4">
-              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => {
-                // heights calculated dynamically based on index and verified submissions
-                const heights = [45, 65, 80, 50, 90, 100, 70];
-                const h = heights[idx];
-                const isHighlight = idx === 5; // highlight Saturday/peak matching reference
+            {/* Micro bar chart representation based on real activity series */}
+            {(() => {
+              const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+              const series = overview?.activitySeries || [];
+              const maxVal = Math.max(1, ...series.map((s) => s.verified || 0));
+              
+              return (
+                <div className="h-28 flex items-end justify-between gap-1.5 pt-4">
+                  {daysOfWeek.map((day, idx) => {
+                    const matched = series[idx];
+                    const count = matched?.verified ?? 0;
+                    const h = count > 0 ? Math.max(15, (count / maxVal) * 100) : 6;
+                    const isHighlight = count > 0;
 
-                return (
-                  <div key={day} className="flex flex-col items-center gap-1 flex-1 h-full justify-end">
-                    <div
-                      className={`w-full rounded-t-md transition-all ${
-                        isHighlight ? "bg-[#34D399]" : "bg-[#818CF8]"
-                      }`}
-                      style={{ height: `${h}%` }}
-                    />
-                    <span className="text-[9px] text-[#8F9BB3] font-medium">{day}</span>
-                  </div>
-                );
-              })}
-            </div>
+                    return (
+                      <div key={day} className="flex flex-col items-center gap-1 flex-1 h-full justify-end" title={`${day}: ${count} verified`}>
+                        <div
+                          className={`w-full rounded-t-md transition-all ${
+                            isHighlight ? "bg-[#34D399]" : "bg-[#E2E6F5]"
+                          }`}
+                          style={{ height: `${h}%` }}
+                        />
+                        <span className="text-[9px] text-[#8F9BB3] font-medium">{day}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Quick Actions Card matching reference */}

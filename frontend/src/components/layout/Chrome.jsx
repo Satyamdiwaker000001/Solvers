@@ -55,10 +55,10 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
             />
             {/* Playful floating quote tag matching reference */}
             <span
-              className="absolute -top-1 -right-1 rotate-12 text-[10px] font-bold text-primary bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-xs border border-primary/20 pointer-events-none"
+              className="absolute -top-1 -right-1 text-[10px] font-bold text-primary bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-xs border border-primary/20 pointer-events-none"
               style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
             >
-              Keep Solving!
+              Keep Solving Keep Growing!
             </span>
           </div>
           <div className="mt-2 rounded-xl bg-white/95 px-2.5 py-2 text-left border border-[#E2E6F5] shadow-2xs">
@@ -115,14 +115,7 @@ function SidebarLink({ item, onNavigate, badge }) {
 }
 
 export function DemoBadge() {
-  const { isDemo } = useAuth();
-  if (!isDemo) return null;
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-[#E2E6F5] bg-white px-2.5 py-1.5 text-xs text-[#647096]">
-      <FlaskConical aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
-      <span className="truncate leading-tight"><strong className="text-[#151936]">Demo mode</strong> · in-memory</span>
-    </div>
-  );
+  return null;
 }
 
 export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut }) {

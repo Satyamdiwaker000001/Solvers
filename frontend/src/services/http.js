@@ -14,12 +14,12 @@
 const viteBase = import.meta.env?.VITE_API_BASE_URL ?? "";
 // Node fallback (tests / scripts): import.meta.env only exists under Vite.
 const nodeBase = typeof process !== "undefined" ? (process.env.VITE_API_BASE_URL ?? "") : "";
-// Automatic production fallback to the deployed Render backend
-const prodFallback = import.meta.env?.PROD ? "https://solvers-backend.onrender.com" : "";
-const BASE = (viteBase || nodeBase || prodFallback).replace(/\/$/, "");
+// Default to the live Render backend so frontend never silently runs in mock mode
+const defaultBackend = "https://solvers-backend.onrender.com";
+const BASE = (viteBase || nodeBase || defaultBackend).replace(/\/$/, "");
 
 export function isLive() {
-  return BASE.length > 0;
+  return true;
 }
 
 export function apiBaseUrl() {

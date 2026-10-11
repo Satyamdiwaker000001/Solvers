@@ -28,7 +28,6 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { Button } from "../../components/ui/Button.jsx";
 import { Card } from "../../components/ui/Card.jsx";
 import { LoadingState } from "../../components/ui/States.jsx";
-import { DemoBadge } from "../../components/layout/Chrome.jsx";
 import { setSessionId } from "../../services/http.js";
 import { getMyRequest, isLiveMode, submitAccessRequest } from "../../services/api.js";
 import { useToast } from "../../hooks/useToast.js";
@@ -171,7 +170,6 @@ function AuthShell({ children, eyebrow, split = false, isFaculty = false }) {
                 </div>
               </div>
               {children}
-              <div className="mt-4"><DemoBadge /></div>
             </div>
           </div>
         ) : (
@@ -186,7 +184,6 @@ function AuthShell({ children, eyebrow, split = false, isFaculty = false }) {
               </div>
             </div>
             {children}
-            <div className="mt-4"><DemoBadge /></div>
           </div>
         )}
       </div>
@@ -201,7 +198,6 @@ export function SignInPage() {
   const [failed, setFailed] = useState(null);
   const _legacyAdminAuthEnabled = false;
 
-  if (!auth.isDemo) {
     if (auth.loading) return <AuthShell eyebrow="GitHub-verified student practice"><LoadingState label="Checking your session…" /></AuthShell>;
     if (auth.user) {
       nav(auth.user.role === "admin" ? "/admin/dashboard" : auth.user.accessState === "APPROVED" ? "/app/dashboard" : "/access-status", { replace: true });
@@ -267,254 +263,36 @@ export function SignInPage() {
     );
   }
 
-  const { signInAs } = auth;
-  const login = (persona, to) => { signInAs(persona); nav(to, { replace: true }); };
-
-  return (
-    <AuthShell eyebrow="Student Practice Portal" split>
-      <Card className="glass-panel border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-          <GraduationCap aria-hidden="true" className="size-3.5" /> Student Access
-        </div>
-        <h2 className="page-title mt-3">Sign in with GitHub</h2>
-        <p className="mt-1 text-sm text-muted">
-          Connect your GitHub account to access assignments and track your verified solutions.
-        </p>
-
-        <div className="mt-5 grid gap-2.5">
-          <Button onClick={() => login("student", "/app/dashboard")} className="w-full min-h-11 shadow-[0_0_20px_rgba(67,217,174,0.25)] flex-wrap text-xs sm:text-sm py-2 px-3 sm:px-4">
-            <GithubMark className="size-4 shrink-0" /> <span className="font-bold">Continue with GitHub</span> <span className="font-normal opacity-80 text-[11px] sm:text-xs">(demo · approved)</span>
-          </Button>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-            <Button tone="secondary" onClick={() => login("pending", "/access-status")}>Demo: pending</Button>
-            <Button tone="secondary" onClick={() => login("rejected", "/access-status")}>Demo: rejected</Button>
-          </div>
-        </div>
-
-        <div className="mt-6 border-t border-white/10 pt-5">
-          <p className="text-xs text-muted mb-2 font-medium">Faculty & Course Leadership</p>
-          <Link
-            to="/admin-login"
-            className="flex items-center justify-between rounded-xl border border-warning/30 bg-warning-bg/40 px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-warning hover:bg-warning-bg/70 hover:border-warning/50 transition-all min-h-11"
-          >
-            <span className="flex items-center gap-2 min-w-0">
-              <ShieldCheck aria-hidden="true" className="size-4 text-warning shrink-0" />
-              <span className="truncate">Course Administrator Sign In</span>
-            </span>
-            <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
-          </Link>
-        </div>
-      </Card>
-    </AuthShell>
-  );
-}
-
 export function AdminLoginPage() {
   const auth = useAuth();
   const nav = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(null);
 
-  // Live administration uses the same GitHub OAuth flow as students. The
-  // backend decides admin access from its two-ID allowlist.
-  if (!auth.isDemo) {
-    if (auth.loading) return <AuthShell eyebrow="Faculty Administration" isFaculty><LoadingState label="Checking your session…" /></AuthShell>;
-    if (auth.user) {
-      nav(auth.user.role === "admin" ? "/admin/dashboard" : "/access-status", { replace: true });
-      return null;
-    }
-    const startFacultyOAuth = async () => {
-      setBusy(true);
-      setFailed(null);
-      try { await auth.signIn(); } catch (e) { setFailed(e.message); setBusy(false); }
-    };
-    return (
-      <AuthShell eyebrow="Faculty Administration" split isFaculty>
-        <Card className="border-primary/40">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary-subtle px-2.5 py-1 text-xs font-bold text-primary">
-            <ShieldAlert aria-hidden="true" className="size-3.5" /> Admin access
-          </span>
-          <h2 className="page-title mt-3">Admin sign in</h2>
-          <p className="mt-1 text-sm text-muted">Only the two authorized professor GitHub accounts can access administration.</p>
-          {failed && <p role="alert" className="mt-3 rounded-xl border border-danger/30 bg-danger-bg p-3 text-sm font-medium text-danger">{failed}</p>}
-          <Button onClick={startFacultyOAuth} loading={busy} className="mt-5 w-full">
-            <GithubMark className="size-4" /> Continue with Faculty GitHub
-          </Button>
-          <p className="mt-3 text-center text-xs text-muted">Access is determined by the server allowlist, not by a frontend role choice.</p>
-          <Link to="/sign-in" className="mt-5 inline-flex w-full justify-center text-sm font-semibold text-primary hover:underline">Back to student sign in</Link>
-        </Card>
-      </AuthShell>
-    );
+  if (auth.loading) return <AuthShell eyebrow="Faculty Administration" isFaculty><LoadingState label="Checking your session…" /></AuthShell>;
+  if (auth.user) {
+    nav(auth.user.role === "admin" ? "/admin/dashboard" : "/access-status", { replace: true });
+    return null;
   }
-
-  if (_legacyAdminAuthEnabled && !auth.isDemo) {
-    if (auth.loading) return <AuthShell eyebrow="Faculty Administration" isFaculty><LoadingState label="Checking your session…" /></AuthShell>;
-    if (auth.user?.role === "admin") {
-      nav("/admin/dashboard", { replace: true });
-      return null;
-    }
-
-    const handlePasswordSubmit = async (e) => {
-      e.preventDefault();
-      if (!username.trim() || !password) {
-        setFailed("Please enter both username/email and password.");
-        return;
-      }
-      setBusy(true);
-      setFailed(null);
-      try {
-        if (typeof auth.signInAdmin === "function") {
-          await auth.signInAdmin(username.trim(), password);
-        } else {
-          throw new Error("Admin login is not initialized.");
-        }
-        nav("/admin/dashboard", { replace: true });
-      } catch (err) {
-        setFailed(err.message || "Invalid administrator credentials.");
-        setBusy(false);
-      }
-    };
-
-    const handleFacultyGithub = async () => {
-      setBusy(true);
-      setFailed(null);
-      try {
-        await auth.signIn();
-      } catch (e) {
-        setFailed(e.message);
-        setBusy(false);
-      }
-    };
-
-    return (
-      <AuthShell eyebrow="Faculty Administration" split isFaculty>
-        <Card className="glass-panel border-warning/30 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-bg px-2.5 py-1 text-xs font-bold text-warning">
-              <ShieldAlert aria-hidden="true" className="size-3.5" /> Faculty Administration
-            </span>
-            <span className="text-[11px] font-mono text-muted">Admin Auth</span>
-          </div>
-
-          <h2 className="page-title mt-3">Admin Sign In</h2>
-          <p className="mt-1 text-sm text-muted">
-            Authorized course professors and staff authenticate with verified faculty credentials.
-          </p>
-
-          {failed && (
-            <p role="alert" className="mt-3 rounded-xl border border-danger/30 bg-danger-bg/80 p-3 text-sm font-medium text-danger">
-              {failed}
-            </p>
-          )}
-
-          <form onSubmit={handlePasswordSubmit} className="mt-4 space-y-3.5">
-            <div>
-              <label htmlFor="admin-ident" className="block text-xs font-semibold uppercase tracking-wider text-muted">
-                Email or Username
-              </label>
-              <div className="relative mt-1">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted pointer-events-none">
-                  <User aria-hidden="true" className="size-4" />
-                </span>
-                <input
-                  id="admin-ident"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin@solvers.edu or admin"
-                  className="w-full rounded-xl border border-white/10 bg-canvas/60 py-2.5 pl-9 pr-3 text-sm text-ink placeholder:text-muted/50 focus:border-warning focus:outline-none focus:ring-1 focus:ring-warning"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="admin-pwd" className="block text-xs font-semibold uppercase tracking-wider text-muted">
-                Password
-              </label>
-              <div className="relative mt-1">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted pointer-events-none">
-                  <Lock aria-hidden="true" className="size-4" />
-                </span>
-                <input
-                  id="admin-pwd"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full rounded-xl border border-white/10 bg-canvas/60 py-2.5 pl-9 pr-10 text-sm text-ink placeholder:text-muted/50 focus:border-warning focus:outline-none focus:ring-1 focus:ring-warning"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted hover:text-ink focus:outline-none"
-                >
-                  {showPassword ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
-                </button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              tone="amber"
-              loading={busy}
-              className="w-full min-h-11 shadow-[0_0_20px_rgba(241,185,87,0.25)] text-xs sm:text-sm"
-            >
-              <KeyRound className="size-4 shrink-0" /> <span className="truncate">Authenticate as Administrator</span>
-            </Button>
-          </form>
-
-          <div className="mt-5 border-t border-white/10 pt-4 space-y-3">
-            <button
-              type="button"
-              onClick={handleFacultyGithub}
-              disabled={busy}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-surface/60 px-3 py-2.5 text-xs font-semibold text-ink hover:bg-surface hover:border-primary/30 transition-all min-h-10 min-w-0"
-            >
-              <GithubMark className="size-3.5 shrink-0" /> <span className="truncate">Sign in via Faculty GitHub</span>
-            </button>
-            <div className="text-center">
-              <Link to="/sign-in" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-                <ArrowLeft aria-hidden="true" className="size-3.5" /> Back to student sign in
-              </Link>
-            </div>
-          </div>
-        </Card>
-      </AuthShell>
-    );
-  }
-
-  const { signInAs } = auth;
+  const startFacultyOAuth = async () => {
+    setBusy(true);
+    setFailed(null);
+    try { await auth.signIn(); } catch (e) { setFailed(e.message); setBusy(false); }
+  };
   return (
     <AuthShell eyebrow="Faculty Administration" split isFaculty>
-      <Card className="glass-panel border-warning/30 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-bg px-2.5 py-1 text-xs font-bold text-warning">
-            <ShieldAlert aria-hidden="true" className="size-3.5" /> Course Administrator
-          </span>
-          <span className="text-[11px] font-mono text-muted">Demo Mode</span>
-        </div>
-        <h2 className="page-title mt-3">Admin Sign In</h2>
-        <p className="mt-1 text-sm text-muted">Authorized faculty accounts sign in to manage assignments, students, and review queues.</p>
-        <div className="mt-5 grid gap-3">
-          <Button
-            tone="amber"
-            onClick={() => { signInAs("admin"); nav("/admin/dashboard", { replace: true }); }}
-            className="w-full min-h-11 shadow-[0_0_20px_rgba(241,185,87,0.25)]"
-          >
-            Sign in as Course Admin <span className="font-normal opacity-80">(demo)</span>
-          </Button>
-          <Link to="/sign-in" className="text-center text-sm font-semibold text-primary hover:underline pt-2">
-            ← Back to student sign in
-          </Link>
-        </div>
+      <Card className="border-primary/40">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary-subtle px-2.5 py-1 text-xs font-bold text-primary">
+          <ShieldAlert aria-hidden="true" className="size-3.5" /> Admin access
+        </span>
+        <h2 className="page-title mt-3">Admin sign in</h2>
+        <p className="mt-1 text-sm text-muted">Only authorized faculty accounts can access administration.</p>
+        {failed && <p role="alert" className="mt-3 rounded-xl border border-danger/30 bg-danger-bg p-3 text-sm font-medium text-danger">{failed}</p>}
+        <Button onClick={startFacultyOAuth} loading={busy} className="mt-5 w-full">
+          <GithubMark className="size-4" /> Continue with Faculty GitHub
+        </Button>
+        <p className="mt-3 text-center text-xs text-muted">Access is determined by the server allowlist, not by a frontend role choice.</p>
+        <Link to="/sign-in" className="mt-5 inline-flex w-full justify-center text-sm font-semibold text-primary hover:underline">Back to student sign in</Link>
       </Card>
     </AuthShell>
   );
@@ -601,105 +379,7 @@ export function AuthFinishPage() {
   );
 }
 
-function DemoAccessStatus() {
-  const { user, signInAs, expireDemoLock } = useAuth();
-  const toast = useToast();
-  const nav = useNavigate();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
 
-  if (!user) return null;
-  const state = user.accessState;
-
-  const request = async () => {
-    setBusy(true); setError(null);
-    try {
-      if (user.reapplyAfter && new Date(user.reapplyAfter) > new Date()) {
-        setError(`You can reapply in ${timeUntil(user.reapplyAfter)} (demo lock). The real 24-hour rule is enforced by server time, not this screen.`);
-        return;
-      }
-      await submitAccessRequest(user.githubLogin);
-      toast.push({ title: "Access request submitted", body: "Professors have been notified. Check back for approval." });
-      signInAs("pending");
-    } catch (e) {
-      if (e.code === "REAPPLICATION_LOCKED") setError(`You can reapply ${timeUntil(e.retryAfter)} from now. The 24-hour rule is enforced by server time.`);
-      else if (e.code === "IDEMPOTENCY_CONFLICT") setError("You already have an active pending request.");
-      else setError(e.message);
-    } finally { setBusy(false); }
-  };
-
-  return (
-    <AuthShell eyebrow="Access status">
-      <Card className="glass-panel border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        {state === "PENDING" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between border-b border-border/80 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="relative flex size-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-primary-strong text-white shadow-md shadow-primary/25">
-                  <GraduationCap className="size-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-extrabold tracking-tight text-ink">Solvers 2027</span>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">Demo</span>
-                  </div>
-                  <p className="text-xs text-muted">Continuous Assessment Platform</p>
-                </div>
-              </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" /> Delivered to Admin
-              </span>
-            </div>
-
-            <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-canvas to-primary/5 p-5 sm:p-6 text-center">
-              <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-500 border border-amber-500/30 shadow-inner">
-                <Clock3 className="size-7 animate-pulse" />
-              </div>
-              <h1 className="mt-3.5 text-xl sm:text-2xl font-black tracking-tight text-ink">
-                Request Sent — Awaiting Approval
-              </h1>
-              <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm leading-relaxed text-muted">
-                Signed in as <strong>@{user.githubLogin}</strong>. A professor will review and approve your request. Switch to admin persona or test demo controls below.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
-              <Button tone="secondary" onClick={() => nav("/sign-in")} className="w-full sm:w-auto text-xs">
-                Switch demo persona
-              </Button>
-            </div>
-          </div>
-        )}
-        {state === "REJECTED" && (
-          <>
-            <h1 className="page-title text-danger">Request not approved</h1>
-            <p className="mt-1 text-sm text-muted">
-              Your access request was rejected. You may submit a new request once the 24-hour restriction expires — the countdown below uses server-recorded time, not your device clock.
-            </p>
-            <div className="mt-3 rounded-xl border border-white/10 bg-canvas/80 p-3 text-sm">
-              <p>Eligible to reapply: <strong className="tnum text-warning">in {timeUntil(user.reapplyAfter)}</strong></p>
-            </div>
-            {error && <p role="alert" className="mt-2 text-sm font-medium text-danger">{error}</p>}
-            <div className="mt-3 flex flex-col sm:flex-row flex-wrap gap-2">
-              <Button loading={busy} onClick={request} className="w-full sm:w-auto">Submit a new access request</Button>
-              <Button tone="secondary" onClick={expireDemoLock} className="w-full sm:w-auto">Demo: simulate lock expiry</Button>
-            </div>
-          </>
-        )}
-        {state === "APPROVED" && (
-          <>
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success-bg px-2.5 py-1 text-xs font-bold text-success">
-              <CheckCircle2 aria-hidden="true" className="size-3.5" /> Approved
-            </p>
-            <h1 className="page-title mt-2">Access Approved</h1>
-            <p className="mt-1 text-sm text-muted">Your student enrollment is approved. You can now access all course assignments.</p>
-            <Button className="mt-4" onClick={() => nav("/app/dashboard")}>Open student dashboard</Button>
-          </>
-        )}
-      </Card>
-    </AuthShell>
-  );
-}
 
 function LiveAccessStatus() {
   const { user, refresh } = useAuth();
@@ -987,16 +667,13 @@ function LiveAccessStatus() {
 
 export function AccessStatusPage() {
   const { user, loading } = useAuth();
-  if (isLiveMode()) {
-    if (loading) {
-      return (
-        <AuthShell eyebrow="Access status">
-          <Card className="glass-panel"><LoadingState label="Checking your access status…" /></Card>
-        </AuthShell>
-      );
-    }
-    if (!user) return null;
-    return <LiveAccessStatus />;
+  if (loading) {
+    return (
+      <AuthShell eyebrow="Access status">
+        <Card className="glass-panel"><LoadingState label="Checking your access status…" /></Card>
+      </AuthShell>
+    );
   }
-  return <DemoAccessStatus />;
+  if (!user) return null;
+  return <LiveAccessStatus />;
 }

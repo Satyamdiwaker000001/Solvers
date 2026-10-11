@@ -95,14 +95,14 @@ function Shell({ nav, consoleName, badges }) {
 
   return (
     <div className="relative min-h-svh bg-[#F3F4FF] text-ink overflow-x-hidden font-sans">
-      {/* Soft lavender and subtle blue atmospheric background highlights matching reference */}
+      {/* Soft lavender atmospheric highlights */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden select-none" aria-hidden="true">
         <div
-          className="absolute -top-32 left-1/4 size-[600px] rounded-full blur-[140px] opacity-[0.25]"
+          className="absolute -top-32 left-1/4 size-[600px] rounded-full blur-[140px] opacity-[0.22]"
           style={{ background: "radial-gradient(circle, #E9E7FF 0%, transparent 70%)" }}
         />
         <div
-          className="absolute top-1/2 -right-32 size-[500px] rounded-full blur-[160px] opacity-[0.20]"
+          className="absolute top-1/2 -right-32 size-[500px] rounded-full blur-[160px] opacity-[0.18]"
           style={{ background: "radial-gradient(circle, #EDE9FE 0%, transparent 70%)" }}
         />
       </div>

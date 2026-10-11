@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Pencil, FileUp } from "lucide-react";
-import { getProblems, saveProblem, getAdminAssignments, createAssignment, getStudents, isLiveMode } from "../../services/api.js";
+import { getProblems, saveProblem, getAdminAssignments, createAssignment, getStudents } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { Badge } from "../../components/ui/Badge.jsx";
 import { Button } from "../../components/ui/Button.jsx";
@@ -257,7 +257,7 @@ export function ProblemFormPage() {
     try {
       const payload = { ...form, examples: form.examples.split("\n").map((s) => s.trim()).filter(Boolean), constraints: form.constraints.split("\n").map((s) => s.trim()).filter(Boolean) };
       const saved = await saveProblem(payload, isNew ? undefined : id);
-      toast.push({ title: isNew ? "Problem created" : "Problem updated", body: `${saved.data.title} is saved${isLiveMode() ? " on the server" : " locally for this session"}.` });
+      toast.push({ title: isNew ? "Problem created" : "Problem updated", body: `${saved.data.title} is saved on the server.` });
       nav("/admin/problems");
     } catch (err) {
       setFailed(err.message);

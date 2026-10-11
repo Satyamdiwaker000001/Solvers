@@ -120,8 +120,9 @@ export function StudentDashboardConcept() {
   const filteredAssignments = state.assignments.filter((item) => { const overdue = item.dueAt && Date.parse(item.dueAt) < now && item.status !== "VERIFIED"; if (assignmentFilter === "completed") return item.status === "VERIFIED"; if (assignmentFilter === "overdue") return overdue; if (assignmentFilter === "upcoming") return item.status !== "VERIFIED" && !overdue; return true; });
   return (
     <div className="concept-dashboard concept-dashboard-minimal">
-      {/* Welcome banner matching reference image */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FFFFFF] via-[#F8F9FF] to-[#EBE9FE] border border-[#E2E6F5] p-6 lg:p-8 shadow-xs">
+      {/* Welcome banner matching reference image with background.png applied to mascot section */}
+      <div className="relative overflow-hidden rounded-3xl bg-white bg-[url('/background.png')] bg-cover bg-center border border-[#E2E6F5] p-6 lg:p-8 shadow-xs">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent pointer-events-none" aria-hidden="true" />
         <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6 z-10">
           <div className="flex-1 max-w-xl">
             <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-black tracking-tight text-[#151936] flex items-center gap-2">
@@ -141,9 +142,9 @@ export function StudentDashboardConcept() {
           </div>
 
           {/* Mascot in banner */}
-          <div className="relative flex items-center justify-center lg:w-[260px] h-[190px] shrink-0">
+          <div className="relative flex items-center justify-center lg:w-[320px] h-[190px] shrink-0">
             <span
-              className="hidden xl:block absolute -left-8 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
+              className="hidden xl:block absolute -left-6 top-3 text-xs font-bold text-[#4F46E5] -rotate-12 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs border border-[#4F46E5]/20 select-none pointer-events-none"
               style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
             >
               Same Effort, Higher Future!
@@ -151,8 +152,20 @@ export function StudentDashboardConcept() {
             <img
               src="/mascot.png"
               alt="Solvers 3D Student Character"
-              className="h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-3"
+              className="h-[210px] object-contain filter drop-shadow-xl select-none pointer-events-none -mb-3 z-10"
             />
+            {/* Desk books detail matching reference image */}
+            <div className="hidden lg:flex flex-col items-center justify-end h-24 -ml-4 z-0 opacity-90 select-none pointer-events-none" aria-hidden="true">
+              <div className="w-16 h-3.5 bg-[#4F46E5] text-[7px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs">
+                DSA
+              </div>
+              <div className="w-18 h-3.5 bg-[#151936] text-[7px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
+                Algorithms
+              </div>
+              <div className="w-20 h-4 bg-[#DC4545] text-[7px] text-white font-mono font-bold flex items-center justify-center rounded-xs shadow-xs mt-0.5">
+                Problem Solving
+              </div>
+            </div>
           </div>
 
           {/* Right quick stats */}

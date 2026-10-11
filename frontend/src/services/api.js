@@ -1,31 +1,17 @@
 /**
- * Service layer — stable signatures for every call site.
+ * Service layer — production API client communicating directly with backend.
  *
- * TWO MODES (see `services/http.js`):
- * - Live mode (`VITE_API_BASE_URL` set): every function below talks to the
- *   real Express API and normalizes responses to the shapes the UI consumes.
- *   Mutations persist in MongoDB; errors carry the server's stable `code`.
- * - Demo mode (no base URL, e.g. `node --test`): the original mock
- *   implementation serves in-memory data with simulated latency. Anything
- *   returned here is demo data, labelled as such in the UI.
- *
- * Backend contract: backend route map + `06-api-spec.md` / `05-data-model.md`.
+ * Backend contract: Express API at `VITE_API_BASE_URL` (see `services/http.js`).
+ * All requests authenticate via HttpOnly session cookies + CSRF tokens.
  */
 
 import { apiFetch, clearCsrfToken, isLive, routes, setSessionId } from "./http.js";
-import {
-  accessRequests, activitySeries, assignments, auditLog, leaderboard,
-  leaderboardFormula, problems, studentById, submissions, students, CENTRAL_REPO,
-} from "../mocks/data.js";
 
-export const isLiveMode = () => isLive();
+export const isLiveMode = () => true;
 
-const LATENCY = 450;
-const wait = (ms = LATENCY) => new Promise((r) => setTimeout(r, ms));
-const clone = (v) => JSON.parse(JSON.stringify(v));
 const OBJECT_ID = /^[0-9a-fA-F]{24}$/;
 
-/* ================= live-mode normalizers ================= */
+/* ================= data normalizers ================= */
 
 function normSessionUser(u) {
   if (!u) return null;
@@ -223,19 +209,9 @@ export function clearStudentCache() {
   bundleCache = null;
 }
 
-/* ================= student (live + demo) ================= */
+/* ================= student reads ================= */
 
 export async function getStudentOverview(studentId) {
-  if (!isLive()) {
-    await wait();
-    const subs = submissions.filter((s) => s.studentId === studentId);
-    const verified = new Set(subs.filter((s) => s.eventType === "NEW_PROBLEM_VERIFIED").map((s) => s.assignmentId)).size;
-    const myAssignments = assignments.filter((a) => a.targets.includes(studentId));
-    const pending = myAssignments.filter((a) => !subs.some((s) => s.assignmentId === a.id && s.eventType === "NEW_PROBLEM_VERIFIED")).length;
-    const needsReview = subs.filter((s) => s.outcome === "NEEDS_REVIEW").length;
-    const student = studentById(studentId);
-    return { data: { student, verified, pending, needsReview, totalCommitsEvidence: subs.length, activitySeries: clone(activitySeries) } };
-  }
   const bundle = await fetchStudentBundle();
   const { submissions: subs, assignments: asg, progress } = bundle;
   const verified = new Set(
@@ -255,68 +231,36 @@ export async function getStudentOverview(studentId) {
 }
 
 export async function getStudentAssignments(studentId) {
-  if (!isLive()) {
-    await wait();
-    const list = assignments
-      .filter((a) => a.targets.includes(studentId))
-      .map((a) => {
-        const subs = submissions.filter((s) => s.studentId === studentId && s.assignmentId === a.id);
-        const verified = subs.some((s) => s.eventType === "NEW_PROBLEM_VERIFIED");
-        const review = subs.some((s) => s.outcome === "NEEDS_REVIEW");
-        const status = verified ? "VERIFIED" : review ? "NEEDS_REVIEW" : subs.length ? "IN_PROGRESS" : "NOT_STARTED";
-        return { ...clone(a), submissions: clone(subs), status };
-      });
-    return { data: list };
-  }
   const bundle = await fetchStudentBundle();
   return { data: bundle.assignments };
 }
 
 export async function getStudentSubmissions(studentId) {
-  if (!isLive()) {
-    await wait();
-    return { data: clone(submissions.filter((s) => s.studentId === studentId).sort((a, b) => (a.observedAt < b.observedAt ? 1 : -1))) };
-  }
   const bundle = await fetchStudentBundle();
   return { data: [...bundle.submissions].sort((a, b) => (a.observedAt < b.observedAt ? 1 : -1)) };
 }
 
 export async function getLeaderboard() {
-  if (!isLive()) {
-    await wait();
-    return { data: { formula: leaderboardFormula, window: "Last 7 days · server timezone UTC (proposed)", entries: clone(leaderboard) } };
-  }
   const body = await apiFetch(routes.leaderboard);
   return { data: body.data };
 }
 
 export async function getTrackingPolicy() {
-  if (!isLive()) return { data: { dailyMinimum: 1, updatedAt: null } };
-  return { data: (await apiFetch(routes.adminTrackingPolicy)).data };
+  const body = await apiFetch(routes.adminTrackingPolicy);
+  return { data: body.data };
 }
 
 export async function updateTrackingPolicy(dailyMinimum) {
-  if (!isLive()) return { data: { dailyMinimum, updatedAt: new Date().toISOString() } };
-  return { data: (await apiFetch(routes.adminTrackingPolicy, { method: "PATCH", body: { dailyMinimum } })).data };
+  const body = await apiFetch(routes.adminTrackingPolicy, {
+    method: "PATCH",
+    body: { dailyMinimum },
+  });
+  return { data: body.data };
 }
 
 /* ================= admin reads ================= */
 
 export async function getAdminOverview() {
-  if (!isLive()) {
-    await wait(600);
-    const pendingRequests = accessRequests.filter((r) => r.status === "PENDING").length;
-    const needsReview = submissions.filter((s) => s.outcome === "NEEDS_REVIEW").length;
-    const verifiedWeek = submissions.filter((s) => s.eventType === "NEW_PROBLEM_VERIFIED").length;
-    return {
-      data: {
-        pendingRequests, needsReview, verifiedWeek, totalStudents: students.length,
-        activeAssignments: assignments.filter((a) => a.status === "ACTIVE").length,
-        activitySeries: clone(activitySeries),
-        integration: { status: "DEGRADED", message: "Webhook deliveries delayed ~4 min; reconciliation job healthy.", lastSync: "2026-10-09T08:32:00Z" },
-      },
-    };
-  }
   const overview = await apiFetch(routes.adminOverview).catch(() => null);
   const [integration, legacy] = await Promise.all([
     apiFetch(routes.integrationStatus).catch(() => ({ data: null })),
@@ -352,25 +296,16 @@ export async function getAdminOverview() {
 }
 
 export async function getAccessRequests() {
-  if (!isLive()) {
-    await wait();
-    return { data: clone(accessRequests) };
-  }
   const body = await apiFetch(`${routes.adminRequests}?limit=100`);
   return { data: (body.data || []).map(normRequest) };
 }
 
 export async function getMyRequest() {
-  if (!isLive()) return { data: null };
   const body = await apiFetch(routes.ownRequest);
   return { data: normRequest(body.data) };
 }
 
 export async function getProblems() {
-  if (!isLive()) {
-    await wait();
-    return { data: clone(problems) };
-  }
   try {
     const body = await apiFetch(`${routes.adminProblems}?limit=100`);
     return { data: (body.data || []).map(normProblem) };
@@ -382,10 +317,15 @@ export async function getProblems() {
       for (const a of bundle.assignments) {
         if (a.problem && !seen.has(a.problem.id)) {
           seen.set(a.problem.id, {
-            id: a.problem.id, title: a.problem.title, statement: a.problem.statement,
-            topic: a.problem.topic, difficulty: a.problem.difficulty || "Easy",
-            examples: a.problem.examples, constraints: a.problem.constraints,
-            sourceUrl: a.problem.sourceUrl, status: "PUBLISHED",
+            id: a.problem.id,
+            title: a.problem.title,
+            statement: a.problem.statement,
+            topic: a.problem.topic,
+            difficulty: a.problem.difficulty || "Easy",
+            examples: a.problem.examples,
+            constraints: a.problem.constraints,
+            sourceUrl: a.problem.sourceUrl,
+            status: "PUBLISHED",
           });
         }
       }
@@ -396,23 +336,11 @@ export async function getProblems() {
 }
 
 export async function getStudents() {
-  if (!isLive()) {
-    await wait();
-    const data = students.map((s) => {
-      const subs = submissions.filter((x) => x.studentId === s.id);
-      return { ...s, verified: new Set(subs.filter((x) => x.eventType === "NEW_PROBLEM_VERIFIED").map((x) => x.assignmentId)).size, evidence: subs.length, flags: subs.filter((x) => x.outcome === "NEEDS_REVIEW" || x.outcome === "CHECK_FAILED").length };
-    });
-    return { data };
-  }
   const body = await apiFetch(`${routes.adminStudents}?limit=100`);
   return { data: (body.data || []).map(normStudent) };
 }
 
 export async function getStudentReport(studentId) {
-  if (!isLive()) {
-    await wait();
-    return { data: { student: studentById(studentId), submissions: clone(submissions.filter((s) => s.studentId === studentId)) } };
-  }
   let dbId = studentId;
   if (!OBJECT_ID.test(String(studentId))) {
     const list = await getStudents();
@@ -436,10 +364,6 @@ export async function getStudentReport(studentId) {
 }
 
 export async function getReviewQueue() {
-  if (!isLive()) {
-    await wait();
-    return { data: clone(submissions.filter((s) => ["NEEDS_REVIEW", "CHECK_FAILED", "INGESTION_PENDING"].includes(s.outcome))) };
-  }
   const body = await apiFetch(`${routes.reviewQueue}?limit=100`);
   return {
     data: (body.data || []).map((s) => {
@@ -457,10 +381,6 @@ export async function getReviewQueue() {
 }
 
 export async function getAuditLog() {
-  if (!isLive()) {
-    await wait(300);
-    return { data: clone(auditLog).reverse() };
-  }
   const body = await apiFetch(`${routes.auditLog}?limit=100`);
   return {
     data: (body.data || []).map((a) => ({
@@ -476,16 +396,6 @@ export async function getAuditLog() {
 }
 
 export async function getIntegrationStatus() {
-  if (!isLive()) {
-    await wait(300);
-    return {
-      data: {
-        repo: CENTRAL_REPO, status: "DEGRADED",
-        message: "Push webhooks delayed ~4 min (GitHub incident watch). Last reconciliation 08:32 UTC recovered 3 events.",
-        queue: { depth: 4, oldestAgeSec: 236, deadLetter: 0 }, lastSync: "2026-10-09T08:32:00Z",
-      },
-    };
-  }
   const body = await apiFetch(routes.integrationStatus);
   const d = body.data || {};
   return {
@@ -500,10 +410,6 @@ export async function getIntegrationStatus() {
 }
 
 export async function getAdminAssignments() {
-  if (!isLive()) {
-    await wait();
-    return { data: clone(assignments) };
-  }
   const body = await apiFetch(`${routes.adminAssignments}?limit=100`);
   return {
     data: (body.data || []).map((a) => ({
@@ -525,16 +431,6 @@ export async function getAdminAssignments() {
 /* ================= mutations ================= */
 
 export async function decideAccessRequest(id, decision) {
-  if (!isLive()) {
-    await wait(500);
-    const r = accessRequests.find((x) => x.id === id);
-    if (!r) throw new Error("Request not found (mock).");
-    r.status = decision === "approve" ? "APPROVED" : "REJECTED";
-    r.decidedAt = new Date().toISOString();
-    r.decidedBy = "prof. Rao (demo)";
-    r.reapplyAfter = decision === "approve" ? null : new Date(Date.now() + 24 * 3600 * 1000).toISOString();
-    return { data: clone(r) };
-  }
   const action = decision === "approve" ? "approve" : "reject";
   const body = await apiFetch(`${routes.adminRequests}/${id}/${action}`, { method: "POST", body: {} });
   clearStudentCache();
@@ -542,26 +438,6 @@ export async function decideAccessRequest(id, decision) {
 }
 
 export async function submitAccessRequest(note = "") {
-  if (!isLive()) {
-    const githubLogin = note;
-    await wait(500);
-    const locked = accessRequests.find((r) => r.githubLogin === githubLogin && r.status === "REJECTED" && r.reapplyAfter && new Date(r.reapplyAfter) > new Date());
-    if (locked) {
-      const err = new Error("Reapplication locked");
-      err.code = "REAPPLICATION_LOCKED";
-      err.retryAfter = locked.reapplyAfter;
-      throw err;
-    }
-    const dup = accessRequests.find((r) => r.githubLogin === githubLogin && r.status === "PENDING");
-    if (dup) {
-      const err = new Error("Duplicate pending request");
-      err.code = "IDEMPOTENCY_CONFLICT";
-      throw err;
-    }
-    const created = { id: `REQ-${Math.floor(9000 + Math.random() * 999)}`, githubLogin, githubUserId: "10xxxxxx", status: "PENDING", submittedAt: new Date().toISOString(), decidedAt: null, decidedBy: null, reapplyAfter: null, note: "" };
-    accessRequests.unshift(created);
-    return { data: clone(created) };
-  }
   const body = await apiFetch(routes.accessRequests, { method: "POST", body: { note: String(note || "").slice(0, 500) } });
   clearStudentCache();
   return { data: normRequest(body.data) };
@@ -580,17 +456,6 @@ function problemPayload(p) {
 }
 
 export async function saveProblem(payload, id) {
-  if (!isLive()) {
-    await wait(500);
-    if (id) {
-      const p = problems.find((x) => x.id === id);
-      Object.assign(p, payload);
-      return { data: clone(p) };
-    }
-    const created = { id: `PS-${String(problems.length + 1).padStart(4, "0")}`, status: "DRAFT", createdBy: "prof. Rao (demo)", createdAt: new Date().toISOString(), ...payload };
-    problems.unshift(created);
-    return { data: clone(created) };
-  }
   const desired = String(payload.status || "DRAFT").toLowerCase();
   if (!id) {
     const created = await apiFetch(routes.adminProblems, {
@@ -628,16 +493,6 @@ export async function saveProblem(payload, id) {
 }
 
 export async function saveProblemsBulk(problemsList) {
-  if (!isLive()) {
-    await wait(600);
-    const added = [];
-    for (const item of problemsList) {
-      const p = { id: `PS-${String(problems.length + 1).padStart(4, "0")}`, status: "PUBLISHED", createdBy: "prof. Rao (demo)", createdAt: new Date().toISOString(), ...item };
-      problems.unshift(p);
-      added.push(p);
-    }
-    return { data: { created: added, totalCreated: added.length, errors: [] } };
-  }
   const body = await apiFetch(routes.adminProblemsBulk, {
     method: "POST",
     body: { problems: problemsList },
@@ -646,9 +501,6 @@ export async function saveProblemsBulk(problemsList) {
 }
 
 export async function updateAdminProfile(updates) {
-  if (!isLive()) {
-    return { data: { user: { role: "admin", displayName: updates.displayName || "Professor Admin", avatarUrl: updates.avatarUrl } } };
-  }
   const body = await apiFetch(routes.me, {
     method: "PATCH",
     body: updates,
@@ -657,9 +509,6 @@ export async function updateAdminProfile(updates) {
 }
 
 export async function createAssignment({ problemId, type, title = "", dueAt = null, instructions = "", studentIds = [] }) {
-  if (!isLive()) {
-    throw new Error("Assignment persistence needs the backend (VITE_API_BASE_URL is empty).");
-  }
   const body = await apiFetch(routes.adminAssignments, {
     method: "POST",
     body: {
@@ -675,15 +524,6 @@ export async function createAssignment({ problemId, type, title = "", dueAt = nu
 }
 
 export async function recordReview(submissionId, decision, comment) {
-  if (!isLive()) {
-    await wait(500);
-    const s = submissions.find((x) => x.id === submissionId);
-    if (!s) throw new Error("Submission not found (mock).");
-    s.outcome = decision === "accept" ? "VERIFIED" : "INCOMPLETE";
-    s.eventType = decision === "accept" ? "NEW_PROBLEM_VERIFIED" : "NO_QUALIFYING_CHANGE";
-    auditLog.push({ id: `AUD-${auditLog.length + 1}`, actor: "prof. Rao (demo)", action: "REVIEW_DECISION", targetType: "submission", targetId: submissionId, createdAt: new Date().toISOString(), detail: `${decision}: ${comment || "no comment"}` });
-    return { data: clone(s) };
-  }
   const body = await apiFetch(`${routes.reviewQueue.replace("/review-queue", "")}/${submissionId}/reviews`, {
     method: "POST",
     body: { decision, comment: comment || "" },
@@ -692,11 +532,6 @@ export async function recordReview(submissionId, decision, comment) {
 }
 
 export async function assignStudentToSubmission(submissionId, studentId) {
-  if (!isLive()) {
-    const s = submissions.find((x) => x.id === submissionId);
-    if (s) s.studentId = studentId;
-    return { data: { id: submissionId, studentId } };
-  }
   const body = await apiFetch(`${routes.adminSubmissions}/${submissionId}/assign-student`, {
     method: "PATCH",
     body: { studentId },
@@ -705,11 +540,6 @@ export async function assignStudentToSubmission(submissionId, studentId) {
 }
 
 export async function assignAssignmentToSubmission(submissionId, assignmentId) {
-  if (!isLive()) {
-    const s = submissions.find((x) => x.id === submissionId);
-    if (s) s.assignmentId = assignmentId;
-    return { data: { id: submissionId, assignmentId } };
-  }
   const body = await apiFetch(`${routes.adminSubmissions}/${submissionId}/assign-assignment`, {
     method: "PATCH",
     body: { assignmentId },
@@ -718,11 +548,6 @@ export async function assignAssignmentToSubmission(submissionId, assignmentId) {
 }
 
 export async function archiveAssignment(assignmentId) {
-  if (!isLive()) {
-    const a = assignments.find((x) => x.id === assignmentId);
-    if (a) a.status = "archived";
-    return { data: a };
-  }
   const body = await apiFetch(`${routes.adminAssignments}/${assignmentId}/archive`, {
     method: "POST",
     body: {},
@@ -731,11 +556,6 @@ export async function archiveAssignment(assignmentId) {
 }
 
 export async function updateStudentFolder(studentId, folder) {
-  if (!isLive()) {
-    const s = students.find((x) => x.id === studentId);
-    if (s) s.folder = folder;
-    return { data: s };
-  }
   const body = await apiFetch(`${routes.adminStudents}/${studentId}/folder`, {
     method: "PATCH",
     body: { folder },
@@ -756,9 +576,6 @@ export async function startOAuth() {
 }
 
 export async function adminLogin(username, password) {
-  if (!isLive()) {
-    return { data: { user: { role: "admin", accessState: "APPROVED", displayName: "Professor Admin (Demo)", githubLogin: "professor-admin" } } };
-  }
   const body = await apiFetch(routes.adminLogin, {
     method: "POST",
     body: { username, password },
@@ -779,5 +596,3 @@ export async function logout() {
   }
   return { data: { ok: true } };
 }
-
-
