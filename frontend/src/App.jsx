@@ -13,7 +13,7 @@ import { AccessQueuePage } from "./features/approval/AccessQueuePage.jsx";
 import { StudentsPage, StudentDetailPage } from "./features/students/StudentsPages.jsx";
 import { ReviewQueuePage, ReviewDetailPage } from "./features/review/ReviewPages.jsx";
 import { IntegrationPage, AuditPage } from "./features/admin/AdminOpsPages.jsx";
-import { ForbiddenPage, NotFoundPage } from "./pages/SystemPages.jsx";
+import { ForbiddenPage, NotFoundPage, ServerErrorPage, RateLimitPage } from "./pages/SystemPages.jsx";
 
 export default function App() {
   return (
@@ -24,6 +24,8 @@ export default function App() {
       <Route path="/auth/finish" element={<AuthFinishPage />} />
       <Route path="/access-status" element={<AccessStatusPage />} />
       <Route path="/forbidden" element={<ForbiddenPage />} />
+      <Route path="/error" element={<ServerErrorPage />} />
+      <Route path="/rate-limited" element={<RateLimitPage />} />
 
       <Route element={<ProtectedRoute allow="student"><StudentLayout /></ProtectedRoute>}>
         <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
