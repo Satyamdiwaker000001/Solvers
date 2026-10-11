@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "./contexts.js";
-import { getMe, isLiveMode, logout as apiLogout, startOAuth, adminLogin } from "../services/api.js";
+import { getMe, isLiveMode, logout as apiLogout, startOAuth, adminLogin, updateAdminProfile } from "../services/api.js";
 
 /**
  * Session state.
@@ -113,11 +113,23 @@ export function AuthProvider({ children }) {
     setUser((u) => (u ? { ...u, reapplyAfter: new Date(Date.now() - 1_000).toISOString() } : u));
   }, []);
 
+  const updateUser = useCallback((updatedFields) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedFields } : prev));
+  }, []);
+
+  const updateProfile = useCallback(async (updates) => {
+    const res = await updateAdminProfile(updates);
+    if (res?.data?.user) {
+      setUser(res.data.user);
+    }
+    return res;
+  }, []);
+
   const value = useMemo(
     () => (live
-      ? { user, loading, error, isDemo: false, signIn, signInAdmin, signOut, refresh }
-      : { user, loading: false, error: null, isDemo: true, signInAs, signInAdmin, signOut, expireDemoLock, refresh: async () => user }),
-    [live, user, loading, error, signIn, signInAdmin, signOut, refresh, signInAs, expireDemoLock],
+      ? { user, loading, error, isDemo: false, signIn, signInAdmin, signOut, refresh, updateUser, updateProfile }
+      : { user, loading: false, error: null, isDemo: true, signInAs, signInAdmin, signOut, expireDemoLock, refresh: async () => user, updateUser, updateProfile }),
+    [live, user, loading, error, signIn, signInAdmin, signOut, refresh, signInAs, expireDemoLock, updateUser, updateProfile],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

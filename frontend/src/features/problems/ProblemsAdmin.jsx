@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, FileUp } from "lucide-react";
 import { getProblems, saveProblem, getAdminAssignments, createAssignment, getStudents, isLiveMode } from "../../services/api.js";
 import { PageHeader, Card } from "../../components/ui/Card.jsx";
 import { Badge } from "../../components/ui/Badge.jsx";
@@ -10,12 +10,14 @@ import { Field, TextInput, TextArea, Select } from "../../components/ui/Field.js
 import { Dialog } from "../../components/ui/Dialog.jsx";
 import { useToast } from "../../hooks/useToast.js";
 import { formatDate } from "../../lib/format.js";
+import { BulkUploadModal } from "./BulkUploadModal.jsx";
 
 const TOPICS = ["Arrays", "Binary Search", "Stacks", "Sliding Window", "Linked List", "Graphs", "Dynamic Programming", "Trees"];
 
 export function ProblemsAdminPage() {
   const [state, setState] = useState({ loading: true, error: null, items: [], linked: [] });
   const [assignOpen, setAssignOpen] = useState(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const toast = useToast();
 
   const [attempt, setAttempt] = useState(0);
@@ -41,7 +43,7 @@ export function ProblemsAdminPage() {
       <PageHeader
         title="Problems"
         description="Create, publish, and assign problem statements to the class or selected students."
-        actions={<Link to="/admin/problems/new" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-strong"><Plus aria-hidden="true" className="size-4" /> New problem</Link>}
+        actions={<div className="flex flex-wrap items-center gap-2"><Button tone="secondary" onClick={() => setBulkOpen(true)} className="!min-h-11"><FileUp aria-hidden="true" className="size-4" /> Bulk upload (Excel/Docs/PDF)</Button><Link to="/admin/problems/new" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-strong"><Plus aria-hidden="true" className="size-4" /> New problem</Link></div>}
       />
       {state.items.length === 0 ? (
         <EmptyState title="No problems yet" body="Create the first problem statement to start the class catalog."
@@ -74,7 +76,7 @@ export function ProblemsAdminPage() {
           })}
         </ul>
       )}
-      {assignOpen && (
+      {bulkOpen && (<BulkUploadModal onClose={() => setBulkOpen(false)} onDone={(msg) => { setBulkOpen(false); toast.push({ title: "Bulk upload completed", body: msg }); reload(); }} />)}{assignOpen && (
         <AssignDialog problem={assignOpen} onClose={() => setAssignOpen(null)}
           onDone={(msg) => { setAssignOpen(null); toast.push({ title: "Assignment recorded", body: msg }); reload(); }} />
       )}

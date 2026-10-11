@@ -17,7 +17,7 @@ const userSchema = new Schema(
     githubUserId: { type: String, required: true, unique: true, index: true },
     githubLogin: { type: String, required: true },
     displayName: { type: String, default: "" },
-    avatarUrl: { type: String, default: "", maxlength: 2000 },
+    avatarUrl: { type: String, default: "", maxlength: 500_000 },
     role: { type: String, enum: ["student", "admin"], default: "student", required: true },
     accountStatus: {
       type: String,

@@ -131,6 +131,7 @@ export const routes = {
   ownRequest: "/api/v1/access-requests/me",
   adminRequests: "/api/v1/admin/access-requests",
   adminProblems: "/api/v1/admin/problems",
+  adminProblemsBulk: "/api/v1/admin/problems/bulk",
   adminAssignments: "/api/v1/admin/assignments",
   adminStudents: "/api/v1/admin/students",
   adminSubmissions: "/api/v1/admin/submissions",

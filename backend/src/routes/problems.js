@@ -43,6 +43,85 @@ export function adminProblemRoutes() {
     res.status(201).json({ data: serializeProblem(doc.toObject()) });
   }));
 
+  router.post("/bulk", asyncHandler(async (req, res) => {
+    const items = Array.isArray(req.body?.problems) ? req.body.problems : [];
+    if (!items.length) {
+      throw badRequest("No problems provided in payload. Must include problems array.");
+    }
+
+    const created = [];
+    const errors = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      try {
+        const title = String(item.title || "").trim();
+        const statement = String(item.statement || item.description || "").trim();
+        if (!title || title.length < 3) {
+          errors.push({ index: i, error: "Title is required (minimum 3 characters)" });
+          continue;
+        }
+        if (!statement || statement.length < 10) {
+          errors.push({ index: i, title, error: "Statement/description is required (minimum 10 characters)" });
+          continue;
+        }
+
+        const validDifficulties = ["Easy", "Medium", "Hard"];
+        let diff = String(item.difficulty || "Easy").trim();
+        diff = validDifficulties.find((d) => d.toLowerCase() === diff.toLowerCase()) || "Easy";
+
+        const validStatuses = ["draft", "published", "archived"];
+        let status = String(item.status || "published").trim().toLowerCase();
+        if (!validStatuses.includes(status)) status = "published";
+
+        const examples = Array.isArray(item.examples)
+          ? item.examples.map(String)
+          : typeof item.examples === "string" && item.examples.trim()
+          ? item.examples.split("\n").map((s) => s.trim()).filter(Boolean)
+          : [];
+
+        const constraints = Array.isArray(item.constraints)
+          ? item.constraints.map(String)
+          : typeof item.constraints === "string" && item.constraints.trim()
+          ? item.constraints.split("\n").map((s) => s.trim()).filter(Boolean)
+          : [];
+
+        const doc = await Problem.create({
+          title,
+          statement,
+          topic: String(item.topic || "General").trim(),
+          difficulty: diff,
+          examples,
+          constraints,
+          sourceUrl: String(item.sourceUrl || "").trim(),
+          status,
+          problemCode: await nextProblemCode(),
+          createdBy: req.user._id,
+        });
+
+        created.push(serializeProblem(doc.toObject()));
+      } catch (err) {
+        errors.push({ index: i, title: item.title, error: err.message });
+      }
+    }
+
+    await recordAudit({
+      actorId: req.user._id,
+      action: "PROBLEM_CREATE",
+      targetType: "problem",
+      targetId: req.user._id,
+      detail: `Bulk upload created ${created.length} problem(s)`,
+    });
+
+    res.status(201).json({
+      data: {
+        created,
+        totalCreated: created.length,
+        errors,
+      },
+    });
+  }));
+
   router.patch("/:id", validateBody(problemPatchSchema), asyncHandler(async (req, res) => {
     // Editing a published problem with submissions is intentionally a plain
     // content update; history rewrites are out of scope (open decision FR-PS-06).

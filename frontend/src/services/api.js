@@ -627,6 +627,35 @@ export async function saveProblem(payload, id) {
   return { data: normProblem(updated.data) };
 }
 
+export async function saveProblemsBulk(problemsList) {
+  if (!isLive()) {
+    await wait(600);
+    const added = [];
+    for (const item of problemsList) {
+      const p = { id: `PS-${String(problems.length + 1).padStart(4, "0")}`, status: "PUBLISHED", createdBy: "prof. Rao (demo)", createdAt: new Date().toISOString(), ...item };
+      problems.unshift(p);
+      added.push(p);
+    }
+    return { data: { created: added, totalCreated: added.length, errors: [] } };
+  }
+  const body = await apiFetch(routes.adminProblemsBulk, {
+    method: "POST",
+    body: { problems: problemsList },
+  });
+  return { data: body.data };
+}
+
+export async function updateAdminProfile(updates) {
+  if (!isLive()) {
+    return { data: { user: { role: "admin", displayName: updates.displayName || "Professor Admin", avatarUrl: updates.avatarUrl } } };
+  }
+  const body = await apiFetch(routes.me, {
+    method: "PATCH",
+    body: updates,
+  });
+  return { data: { user: normSessionUser(body.data?.user) } };
+}
+
 export async function createAssignment({ problemId, type, title = "", dueAt = null, instructions = "", studentIds = [] }) {
   if (!isLive()) {
     throw new Error("Assignment persistence needs the backend (VITE_API_BASE_URL is empty).");

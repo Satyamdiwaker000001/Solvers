@@ -215,6 +215,17 @@ export function authRoutes() {
     res.json({ data: { user: serializeUser(req.user) } });
   }));
 
+  router.patch("/me", asyncHandler(async (req, res, next) => {
+    if (!req.user) return next(unauthorized());
+    const { avatarUrl, displayName } = req.body || {};
+    const updates = {};
+    if (typeof avatarUrl === "string") updates.avatarUrl = avatarUrl.trim();
+    if (typeof displayName === "string" && displayName.trim()) updates.displayName = displayName.trim();
+    
+    const updated = await User.findByIdAndUpdate(req.user._id, updates, { new: true });
+    res.json({ data: { user: serializeUser(updated) } });
+  }));
+
   router.get("/csrf", ensureCsrfToken, (req, res) => {
     res.json({ data: { csrfToken: req.session.csrfToken } });
   });

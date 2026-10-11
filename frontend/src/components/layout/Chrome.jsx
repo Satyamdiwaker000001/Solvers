@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, X, ShieldCheck, FlaskConical, LogOut } from "lucide-react";
+import { Menu, X, ShieldCheck, FlaskConical, LogOut, Camera } from "lucide-react";
 import { GithubMark } from "../ui/GithubMark.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useToast } from "../../hooks/useToast.js";
 import { cn } from "../ui/cn.js";
 import { SolversLogo } from "../ui/SolversLogo.jsx";
 import { Avatar } from "../ui/Avatar.jsx";
+import { AvatarEditModal } from "./AvatarEditModal.jsx";
 
 function Brand() {
   return (
@@ -22,6 +24,8 @@ function Brand() {
 export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
   const { user, signOut } = useAuth();
   const handleSignOut = onRequestSignOut || signOut;
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="border-b border-border p-4 pr-12 lg:pr-4"><Brand /></div>
@@ -38,9 +42,25 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
         <DemoBadge />
         {user && (
           <div className="mt-2 flex items-center gap-2.5 rounded-xl border border-border/80 bg-surface p-2.5 shadow-xs">
-            <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-subtle object-cover text-xs font-bold text-primary" />
-            <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[13px] font-semibold text-ink">{user.displayName || user.name}</p>
+            <button
+              type="button"
+              onClick={() => user.role === "admin" && setShowAvatarModal(true)}
+              title={user.role === "admin" ? "Change profile photo" : undefined}
+              className={`relative shrink-0 rounded-full transition ${user.role === "admin" ? "cursor-pointer hover:ring-2 hover:ring-primary/50 group" : ""}`}
+            >
+              <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="grid size-8 shrink-0 place-items-center rounded-full bg-primary-subtle object-cover text-xs font-bold text-primary" />
+              {user.role === "admin" && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition group-hover:opacity-100">
+                  <Camera className="size-3.5" />
+                </span>
+              )}
+            </button>
+            <div
+              className={`min-w-0 flex-1 leading-tight ${user.role === "admin" ? "cursor-pointer" : ""}`}
+              onClick={() => user.role === "admin" && setShowAvatarModal(true)}
+              title={user.role === "admin" ? "Edit profile" : undefined}
+            >
+              <p className="truncate text-[13px] font-semibold text-ink hover:text-primary transition">{user.displayName || user.name}</p>
               <p className="truncate text-xs text-muted">{user.role === "admin" ? "Course Admin" : `@${user.githubLogin}`}</p>
             </div>
             <button
@@ -55,6 +75,7 @@ export function Sidebar({ nav, onNavigate, badges, onRequestSignOut }) {
           </div>
         )}
       </div>
+      {showAvatarModal && <AvatarEditModal onClose={() => setShowAvatarModal(false)} />}
     </div>
   );
 }
@@ -94,6 +115,8 @@ export function DemoBadge() {
 export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut }) {
   const { user, signOut } = useAuth();
   const handleSignOut = onRequestSignOut || signOut;
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+
   return (
     <header className="app-topbar fixed inset-x-0 top-0 z-30 border-b border-border bg-surface/90 backdrop-blur-md lg:left-72">
       <div className="app-topbar-inner mx-auto flex h-16 max-w-[1440px] items-center gap-2 sm:gap-3 px-3 sm:px-6 lg:px-8">
@@ -117,11 +140,28 @@ export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut })
           {right}
           {user && (
             <div className="app-account hidden items-center gap-2 sm:flex">
-              <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="size-8 rounded-full border border-border object-cover text-center text-xs font-bold leading-8 text-primary" />
-              <span className="app-account-pill inline-flex items-center gap-1.5 rounded-full border border-border bg-canvas px-2.5 py-1 text-xs font-medium text-muted">
+              <button
+                type="button"
+                onClick={() => user.role === "admin" && setShowAvatarModal(true)}
+                title={user.role === "admin" ? "Change profile photo" : undefined}
+                className={`relative shrink-0 rounded-full transition ${user.role === "admin" ? "cursor-pointer hover:ring-2 hover:ring-primary/50 group" : ""}`}
+              >
+                <Avatar src={user.avatarUrl} name={user.displayName || user.name} className="size-8 rounded-full border border-border object-cover text-center text-xs font-bold leading-8 text-primary" />
+                {user.role === "admin" && (
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition group-hover:opacity-100">
+                    <Camera className="size-3.5" />
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => user.role === "admin" && setShowAvatarModal(true)}
+                title={user.role === "admin" ? "Edit profile" : undefined}
+                className={`app-account-pill inline-flex items-center gap-1.5 rounded-full border border-border bg-canvas px-2.5 py-1 text-xs font-medium text-muted transition ${user.role === "admin" ? "hover:border-primary/40 hover:text-ink cursor-pointer" : ""}`}
+              >
                 {user.role === "admin" ? <ShieldCheck aria-hidden="true" className="size-3.5 text-primary" /> : <GithubMark className="size-3.5" />}
                 {user.role === "admin" ? "Admin" : `@${user.githubLogin}`}
-              </span>
+              </button>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -135,6 +175,7 @@ export function Topbar({ title, onMenu, menuExpanded, right, onRequestSignOut })
           )}
         </div>
       </div>
+      {showAvatarModal && <AvatarEditModal onClose={() => setShowAvatarModal(false)} />}
     </header>
   );
 }
