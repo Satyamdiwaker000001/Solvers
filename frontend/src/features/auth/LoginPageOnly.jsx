@@ -139,16 +139,6 @@ export function LoginPage() {
     }
   }, [auth.user, auth.loading, navigate, location]);
 
-  useEffect(() => {
-    // Force history push state to prevent back navigation entirely
-    window.history.pushState(null, null, window.location.href);
-    window.onpopstate = function () {
-      window.history.go(1);
-    };
-    return () => {
-      window.onpopstate = null;
-    };
-  }, []);
 
   if (!auth.isDemo && auth.loading) return <main className="auth-page"><LanguageBackground /><div className="auth-card"><LoadingState label="Checking your session…" /></div></main>;
   if (auth.user) return null;
