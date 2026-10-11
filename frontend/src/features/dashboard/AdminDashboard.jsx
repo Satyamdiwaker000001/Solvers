@@ -22,6 +22,8 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronRight,
+  Search,
+  X,
 } from "lucide-react";
 import {
   getAdminOverview,
@@ -58,6 +60,7 @@ export function AdminDashboard() {
   const [policy, setPolicy] = useState({ dailyMinimum: 1, saving: false, message: "" });
   const [leaderboardTab, setLeaderboardTab] = useState("global");
   const [reviewFilter, setReviewFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const adminName = user?.displayName || user?.name || "Professor";
 
@@ -135,7 +138,16 @@ export function AdminDashboard() {
       if (reviewFilter === "failed") return item.outcome === "CHECK_FAILED";
       return true;
     })
-    .slice(0, 5);
+  // In-page search calculations
+  const cleanQ = searchQuery.trim().toLowerCase();
+  const searchResults = cleanQ
+    ? {
+        students: students.filter((s) => (s.displayName || s.name || s.githubLogin || "").toLowerCase().includes(cleanQ)).slice(0, 4),
+        problems: problems.filter((p) => (p.title || p.topic || p.problemCode || "").toLowerCase().includes(cleanQ)).slice(0, 4),
+        reviews: reviewQueue.filter((r) => (r.studentName || r.assignmentTitle || r.problemTitle || "").toLowerCase().includes(cleanQ)).slice(0, 4),
+      }
+    : null;
+  const hasSearchResults = searchResults && (searchResults.students.length > 0 || searchResults.problems.length > 0 || searchResults.reviews.length > 0);
 
   return (
     <div className="flex flex-col gap-6 font-sans antialiased text-[#151936]">
@@ -305,6 +317,134 @@ export function AdminDashboard() {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* IN-PAGE ADMIN SEARCH TOOLBAR (NOT ON TOPBAR, IN ADMIN BODY)    */}
+      {/* ============================================================== */}
+      <div className="relative rounded-2xl bg-white p-3.5 sm:p-4 border border-[#E2E6F5] shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8F9BB3] pointer-events-none">
+              <Search className="size-4" />
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search students, problems, or review queue..."
+              className="w-full rounded-xl border border-[#E2E6F5] bg-[#F8F8FF] py-2.5 pl-10 pr-9 text-xs sm:text-sm text-[#151936] placeholder-[#8F9BB3] focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/10 shadow-2xs transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8F9BB3] hover:text-[#151936] p-1 cursor-pointer"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[#647096] px-1 shrink-0">
+            <span className="hidden sm:inline font-medium text-[11px]">Direct links:</span>
+            <Link
+              to="/admin/students"
+              className="rounded-lg bg-gray-100 hover:bg-primary/10 hover:text-primary px-2.5 py-1 text-xs font-semibold text-[#151936] transition"
+            >
+              Students ({students.length})
+            </Link>
+            <Link
+              to="/admin/problems"
+              className="rounded-lg bg-gray-100 hover:bg-primary/10 hover:text-primary px-2.5 py-1 text-xs font-semibold text-[#151936] transition"
+            >
+              Problems ({problems.length})
+            </Link>
+            <Link
+              to="/admin/review"
+              className="rounded-lg bg-amber-50 hover:bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700 transition"
+            >
+              Reviews ({reviewQueue.length})
+            </Link>
+          </div>
+        </div>
+
+        {/* Live Search Instant Results Box */}
+        {cleanQ && (
+          <div className="mt-3 pt-3 border-t border-[#E2E6F5]">
+            {!hasSearchResults ? (
+              <p className="py-2 text-center text-xs text-[#647096]">
+                No students, problems, or submissions matched <strong className="text-[#151936]">"{searchQuery}"</strong>.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Matched Students */}
+                {searchResults.students.length > 0 && (
+                  <div className="rounded-xl bg-[#F8F8FF] p-2.5 border border-[#E2E6F5]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#647096] mb-1.5 block">
+                      Students ({searchResults.students.length})
+                    </span>
+                    <div className="flex flex-col gap-1">
+                      {searchResults.students.map((s) => (
+                        <Link
+                          key={s.id}
+                          to={`/admin/students/${s.id}`}
+                          className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-white text-xs text-[#151936] font-semibold transition"
+                        >
+                          <Avatar src={s.avatarUrl} name={s.displayName || s.githubLogin} className="size-5 rounded-full" />
+                          <span className="truncate">{s.displayName || s.githubLogin}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Matched Problems */}
+                {searchResults.problems.length > 0 && (
+                  <div className="rounded-xl bg-[#F8F8FF] p-2.5 border border-[#E2E6F5]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#647096] mb-1.5 block">
+                      Problems ({searchResults.problems.length})
+                    </span>
+                    <div className="flex flex-col gap-1">
+                      {searchResults.problems.map((p) => (
+                        <Link
+                          key={p.id}
+                          to="/admin/problems"
+                          className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-white text-xs text-[#151936] font-semibold transition truncate"
+                        >
+                          <Code2 className="size-3.5 text-primary shrink-0" />
+                          <span className="truncate">{p.title}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Matched Review Queue */}
+                {searchResults.reviews.length > 0 && (
+                  <div className="rounded-xl bg-[#F8F8FF] p-2.5 border border-[#E2E6F5]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#647096] mb-1.5 block">
+                      Review Submissions ({searchResults.reviews.length})
+                    </span>
+                    <div className="flex flex-col gap-1">
+                      {searchResults.reviews.map((r) => (
+                        <Link
+                          key={r.id}
+                          to="/admin/review"
+                          className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-white text-xs text-[#151936] font-semibold transition truncate"
+                        >
+                          <GitPullRequest className="size-3.5 text-amber-600 shrink-0" />
+                          <span className="truncate">{r.studentName} — {r.assignmentTitle || r.problemTitle}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ============================================================== */}
