@@ -113,8 +113,20 @@ export function LoginPage() {
         {/* ========================================================================= */}
         <section
           aria-label="Solvers introduction and features"
-          className="w-full md:w-[55%] lg:w-[56%] relative p-4 sm:p-6 lg:p-7 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0 border-b md:border-b-0 md:border-r border-[#E2E6F5]"
+          className="w-full md:w-[55%] lg:w-[56%] relative p-4 sm:p-6 lg:p-7 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] shrink-0 border-b md:border-b-0 md:border-r border-[#E2E6F5]"
         >
+          {/* Background image layer showing exactly the left half (200% width aligned to left) */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: "url('/background.png')",
+              backgroundSize: "200% 100%",
+              backgroundPosition: "left center",
+              backgroundRepeat: "no-repeat",
+            }}
+            aria-hidden="true"
+          />
+
           {/* Subtle contrast overlay */}
           <div
             className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#F8F8FF]/95 via-[#F8F8FF]/85 to-[#F8F8FF]/50 pointer-events-none"
@@ -198,7 +210,7 @@ export function LoginPage() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-xs font-bold text-[#151936] leading-tight">
-                        Guided by Professor Admins
+                        Guided by Professors
                       </h2>
                       <p className="text-[11px] text-[#647096] mt-0.5 truncate">
                         Learn with proper guidance
@@ -210,74 +222,110 @@ export function LoginPage() {
 
               {/* Right Column: 3D Mascot Character */}
               <div className="hidden md:flex md:col-span-5 relative flex-col items-center justify-center">
-                {/* Soft circular aura */}
-                <div
-                  className="w-44 h-44 xl:w-52 xl:h-52 rounded-full bg-gradient-to-tr from-[#E9E7FF]/90 to-[#F1EFFF]/80 absolute z-0 blur-[1px]"
-                  aria-hidden="true"
-                />
-
-                {/* Doodle rays above mascot head */}
-                <div className="absolute -top-3 left-1/2 -translate-x-6 z-0 opacity-80" aria-hidden="true">
-                  <svg width="34" height="20" viewBox="0 0 40 24" fill="none">
-                    <path d="M6 18L14 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M20 16V4" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M34 18L26 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
-                </div>
-
-                {/* Mascot Image */}
-                <div className="relative z-10 flex items-center justify-center">
-                  <img
-                    src="/mascot.png"
-                    alt="Solvers Student Character"
-                    className="w-auto h-48 xl:h-56 object-contain select-none transition-transform duration-300 hover:scale-[1.02]"
-                    loading="eager"
-                    width={280}
-                    height={320}
+                {/* Shifted down slightly to -translate-y-4 */}
+                <div className="relative flex flex-col items-center -translate-y-4">
+                  {/* Soft circular aura */}
+                  <div
+                    className="w-52 h-52 xl:w-60 xl:h-60 rounded-full bg-gradient-to-tr from-[#E9E7FF]/90 to-[#F1EFFF]/80 absolute z-0 blur-[1px] top-6 translate-y-2"
+                    aria-hidden="true"
                   />
+
+                  {/* Doodle rays above mascot head */}
+                  <div className="absolute -top-5 left-1/2 -translate-x-6 z-0 opacity-80" aria-hidden="true">
+                    <svg width="36" height="22" viewBox="0 0 40 24" fill="none">
+                      <path d="M6 18L14 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M20 16V4" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M34 18L26 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
+                    </svg>
+                  </div>
+
+                  {/* Mascot Image */}
+                  <div className="relative z-10 flex items-center justify-center">
+                    <img
+                      src="/mascot.png"
+                      alt="Solvers Student Character"
+                      className="w-auto h-56 xl:h-64 object-contain select-none transition-transform duration-300 hover:scale-[1.02]"
+                      loading="eager"
+                      width={320}
+                      height={360}
+                    />
+                  </div>
+
+                  {/* Quote Tag underneath avatar: Slim height (py-1), wider (px-5 sm:px-6), single line */}
+                  <div className="relative -mt-6 z-20 px-5 sm:px-6 py-1 rounded-full bg-white/95 backdrop-blur-md border border-[#E2E6F5] shadow-[0_4px_16px_rgba(79,70,229,0.12)] flex items-center justify-center gap-2 select-none whitespace-nowrap transition-transform hover:scale-105">
+                    <span
+                      className="text-xs sm:text-[13px] font-semibold text-[#647096] italic tracking-wide"
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      Same Effort,
+                    </span>
+                    <span
+                      className="text-sm sm:text-base font-bold bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] bg-clip-text text-transparent leading-none"
+                      style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
+                    >
+                      Higher Future ✨
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom Trust Line */}
-          <div className="relative z-10 pt-2.5 hidden sm:flex items-center justify-between border-t border-[#E2E6F5]/80 text-[10px] font-semibold text-[#647096]">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="size-3.5 text-[#4F46E5]" />
-              <span>Secure Authentication</span>
+          {/* Bottom Trust Line - Generously sized with ample breathing room */}
+          <div className="relative z-10 pt-4 pb-1 hidden sm:grid sm:grid-cols-3 gap-3 border-t border-[#E2E6F5] text-[#475569]">
+            <div className="flex items-center gap-2 p-1 rounded-xl bg-white/50 backdrop-blur-xs border border-[#E2E6F5]/60 shadow-xs">
+              <div className="size-7 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5] shrink-0">
+                <ShieldCheck className="size-4" />
+              </div>
+              <div className="leading-tight">
+                <span className="block text-xs font-bold text-[#151936]">Secure</span>
+                <span className="text-[11px] text-[#647096] font-medium">Authentication</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Users className="size-3.5 text-[#16A765]" />
-              <span>Academic Integrity</span>
+
+            <div className="flex items-center gap-2 p-1 rounded-xl bg-white/50 backdrop-blur-xs border border-[#E2E6F5]/60 shadow-xs">
+              <div className="size-7 rounded-lg bg-[#E7F8F0] flex items-center justify-center text-[#16A765] shrink-0">
+                <Users className="size-4" />
+              </div>
+              <div className="leading-tight">
+                <span className="block text-xs font-bold text-[#151936]">Academic</span>
+                <span className="text-[11px] text-[#647096] font-medium">Integrity</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Zap className="size-3.5 text-[#F59E0B]" />
-              <span>Real Learning</span>
+
+            <div className="flex items-center gap-2 p-1 rounded-xl bg-white/50 backdrop-blur-xs border border-[#E2E6F5]/60 shadow-xs">
+              <div className="size-7 rounded-lg bg-[#FEF3C7] flex items-center justify-center text-[#D97706] shrink-0">
+                <Zap className="size-4" />
+              </div>
+              <div className="leading-tight">
+                <span className="block text-xs font-bold text-[#151936]">Focused on</span>
+                <span className="text-[11px] text-[#647096] font-medium">Real Learning</span>
+              </div>
             </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* RIGHT AUTH PANEL: Clean, Professional Login Interface (No tags)           */}
+        {/* RIGHT AUTH PANEL: Clean, Professional Login Interface                      */}
         {/* ========================================================================= */}
         <section
           aria-labelledby="login-surface-heading"
           className="w-full md:w-[45%] lg:w-[44%] bg-white p-5 sm:p-7 md:p-8 flex flex-col justify-between items-center relative"
         >
-          {/* Top Right: Stylish Stacked Quote */}
+          {/* Top Right: Stylish Inspirational Quote */}
           <div className="w-full flex items-center justify-end select-none pr-1">
-            <div className="flex flex-col items-end text-right leading-[1.05] pointer-events-none select-none">
+            <div className="flex flex-col items-end text-right leading-none pointer-events-none">
               <span
-                className="text-xs sm:text-[13px] font-semibold text-[#8E99B8] tracking-wide"
-                style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic" }}
+                className="text-[11px] sm:text-xs font-semibold text-[#8E99B8] italic tracking-wide"
+                style={{ fontFamily: "'Playfair Display', serif" }}
               >
-                Same Effort,
+                Code with purpose,
               </span>
               <span
-                className="text-base sm:text-lg font-bold bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] bg-clip-text text-transparent tracking-tight mt-0.5"
+                className="text-sm sm:text-[15px] font-bold bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] bg-clip-text text-transparent mt-0.5 tracking-tight"
                 style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
               >
-                Higher Future ✨
+                Build your future 🚀
               </span>
             </div>
           </div>
