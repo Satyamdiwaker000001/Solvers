@@ -9,12 +9,10 @@ import {
   EyeOff,
   Lock,
   ShieldCheck,
-  Sparkles,
   Users,
   Zap,
 } from "lucide-react";
 import { GithubMark } from "../../components/ui/GithubMark.jsx";
-import { LoadingState } from "../../components/ui/States.jsx";
 import { SolversLogo } from "../../components/ui/SolversLogo.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 
@@ -38,7 +36,7 @@ export function LoginPage() {
     }
   }, [isAdminRoute]);
 
-  // Session redirect if already logged in
+  // Session redirect if already logged in (background check with zero blocking loader)
   useEffect(() => {
     if (auth.user && !auth.loading) {
       const target =
@@ -51,7 +49,7 @@ export function LoginPage() {
     }
   }, [auth.user, auth.loading, navigate, location]);
 
-  // Trap browser Forward and Back buttons on login page so user cannot re-enter protected routes without logging in
+  // Trap browser Forward and Back buttons on login page
   useEffect(() => {
     if (!auth.user && !auth.loading) {
       const onPopState = () => {
@@ -94,65 +92,47 @@ export function LoginPage() {
     }
   };
 
-  if (auth.loading) {
-    return (
-      <main className="min-h-svh bg-[#F3F4FF] flex items-center justify-center p-4">
-        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xs border border-[#E2E6F5]">
-          <LoadingState label="Checking your session…" />
-        </div>
-      </main>
-    );
-  }
-
-  if (auth.user) return null;
-
   return (
-    <main className="fixed inset-0 h-[100dvh] w-screen bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5] overflow-hidden">
+    <main className="fixed inset-0 h-[100dvh] w-screen bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-3 sm:p-5 lg:p-6 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5] overflow-hidden">
       {/* Background ambient soft glows on outer canvas */}
       <div
-        className="absolute top-0 right-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-br from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"
+        className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-0 left-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-tr from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"
+        className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"
         aria-hidden="true"
       />
 
       {/* Main Login Card Container:
-          - Height fits entirely within mobile screen without any page-level scrolling */}
-      <div className="w-full max-w-full sm:max-w-xl md:max-w-[820px] lg:max-w-[1040px] xl:max-w-[1100px] h-full max-h-[96dvh] md:max-h-[92vh] bg-white border border-[#E2E6F5] rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_-10px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col md:flex-row my-auto">
+          Fits perfectly inside viewport with ZERO page scroll */}
+      <div className="w-full max-w-full sm:max-w-xl md:max-w-[860px] lg:max-w-[980px] xl:max-w-[1040px] max-h-[92dvh] bg-white border border-[#E2E6F5] rounded-3xl shadow-[0_12px_40px_-10px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col md:flex-row my-auto">
         
         {/* ========================================================================= */}
-        {/* BRANDING & HERO PANEL                                                     */}
-        {/* Mobile: Compact Hero at top. Tablet & Desktop: Left split banner.         */}
+        {/* LEFT SHOWCASE PANEL: Solvers Logo, Value Props, and Mascot                */}
         {/* ========================================================================= */}
         <section
           aria-label="Solvers introduction and features"
-          className="w-full md:w-[54%] lg:w-[56%] relative p-2.5 sm:p-5 md:p-6 lg:p-7 xl:p-8 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0"
+          className="w-full md:w-[55%] lg:w-[56%] relative p-4 sm:p-6 lg:p-7 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat shrink-0 border-b md:border-b-0 md:border-r border-[#E2E6F5]"
         >
-          {/* Soft contrast overlay so headline and text stay readable */}
+          {/* Subtle contrast overlay */}
           <div
-            className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#F8F8FF]/95 via-[#F8F8FF]/80 to-[#F8F8FF]/40 pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#F8F8FF]/95 via-[#F8F8FF]/85 to-[#F8F8FF]/50 pointer-events-none"
             aria-hidden="true"
           />
 
-          {/* Top Row: Wordmark */}
-          <div className="relative z-10 flex items-center justify-between mb-1.5 sm:mb-4">
+          {/* Top Row: Clean Solvers Wordmark (NO tags or extra badges) */}
+          <div className="relative z-10 flex items-center mb-3">
             <SolversLogo size="default" />
-            <span className="md:hidden text-[11px] font-bold text-[#4F46E5] bg-[#EEECFF] px-2 py-0.5 rounded-full border border-[#4F46E5]/20 select-none">
-              2027
-            </span>
           </div>
 
-          {/* Hero Content & Mascot Area:
-              - Mobile (<md): Stacked hero layout.
-              - Tablet & Desktop (md+): 2-column layout (Headline+Features left, Mascot right). */}
-          <div className="relative z-10 my-auto">
-            {/* Tablet & Desktop 2-column grid */}
-            <div className="hidden md:grid grid-cols-12 gap-3.5 lg:gap-5 xl:gap-6 items-center">
-              {/* Left: Headlines & Features */}
-              <div className="col-span-7 flex flex-col justify-center">
-                <h1 className="text-3xl xl:text-4xl font-black text-[#151936] tracking-tight leading-[1.1]">
+          {/* Hero Content & 3D Mascot Showcase */}
+          <div className="relative z-10 my-auto py-1">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 lg:gap-5 items-center">
+              
+              {/* Left Column: Headlines & Features */}
+              <div className="md:col-span-7 flex flex-col justify-center">
+                <h1 className="text-2xl lg:text-3xl xl:text-[34px] font-black text-[#151936] tracking-tight leading-[1.12]">
                   Practice.
                   <br />
                   <span className="text-[#4F46E5]">Track.</span>
@@ -160,16 +140,15 @@ export function LoginPage() {
                   Improve.
                 </h1>
 
-                <p className="mt-2.5 text-xs xl:text-[13px] text-[#647096] leading-relaxed max-w-sm font-normal">
-                  A DSA practice platform for students, verified by GitHub. Stay
-                  consistent, compete, and grow together.
+                <p className="mt-2 text-xs text-[#647096] leading-relaxed max-w-sm font-normal">
+                  A DSA practice platform for students, verified by GitHub. Stay consistent, compete, and grow together.
                 </p>
 
-                {/* 4 Feature Items (compact on desktop) */}
-                <div className="mt-4 xl:mt-5 space-y-2 max-w-sm">
+                {/* 4 Feature Items */}
+                <div className="mt-3.5 space-y-1.5 max-w-sm">
                   {/* Feature 1 */}
                   <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
-                    <div className="w-8 h-8 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765] shrink-0 border border-[#16A765]/20">
+                    <div className="size-8 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765] shrink-0 border border-[#16A765]/20">
                       <CheckCircle2 className="size-4" />
                     </div>
                     <div className="min-w-0">
@@ -184,7 +163,7 @@ export function LoginPage() {
 
                   {/* Feature 2 */}
                   <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
-                    <div className="w-8 h-8 rounded-lg bg-[#EEF0F8] flex items-center justify-center text-[#151936] shrink-0 border border-[#151936]/15">
+                    <div className="size-8 rounded-lg bg-[#EEF0F8] flex items-center justify-center text-[#151936] shrink-0 border border-[#151936]/15">
                       <GithubMark className="size-4" />
                     </div>
                     <div className="min-w-0">
@@ -199,7 +178,7 @@ export function LoginPage() {
 
                   {/* Feature 3 */}
                   <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
-                    <div className="w-8 h-8 rounded-lg bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B] shrink-0 border border-[#F59E0B]/25">
+                    <div className="size-8 rounded-lg bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B] shrink-0 border border-[#F59E0B]/25">
                       <BarChart3 className="size-4" />
                     </div>
                     <div className="min-w-0">
@@ -214,7 +193,7 @@ export function LoginPage() {
 
                   {/* Feature 4 */}
                   <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
-                    <div className="w-8 h-8 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5] shrink-0 border border-[#4F46E5]/20">
+                    <div className="size-8 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5] shrink-0 border border-[#4F46E5]/20">
                       <Users className="size-4" />
                     </div>
                     <div className="min-w-0">
@@ -229,91 +208,49 @@ export function LoginPage() {
                 </div>
               </div>
 
-              {/* Right: 3D Mascot Cutout on Desktop */}
-              <div className="col-span-5 relative flex flex-col items-center justify-center">
-                {/* Soft circular lavender aura */}
+              {/* Right Column: 3D Mascot Character */}
+              <div className="hidden md:flex md:col-span-5 relative flex-col items-center justify-center">
+                {/* Soft circular aura */}
                 <div
-                  className="w-48 h-48 xl:w-56 xl:h-56 rounded-full bg-gradient-to-tr from-[#E9E7FF]/90 to-[#F1EFFF]/80 absolute z-0 blur-[1px]"
+                  className="w-44 h-44 xl:w-52 xl:h-52 rounded-full bg-gradient-to-tr from-[#E9E7FF]/90 to-[#F1EFFF]/80 absolute z-0 blur-[1px]"
                   aria-hidden="true"
                 />
 
-                {/* Playful doodle rays above head */}
+                {/* Doodle rays above mascot head */}
                 <div className="absolute -top-3 left-1/2 -translate-x-6 z-0 opacity-80" aria-hidden="true">
-                  <svg width="32" height="20" viewBox="0 0 40 24" fill="none">
+                  <svg width="34" height="20" viewBox="0 0 40 24" fill="none">
                     <path d="M6 18L14 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
                     <path d="M20 16V4" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
                     <path d="M34 18L26 8" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
 
-                {/* Mascot image */}
+                {/* Mascot Image */}
                 <div className="relative z-10 flex items-center justify-center">
                   <img
                     src="/mascot.png"
-                    alt="Solvers 3D Student Character with Laptop"
-                    className="w-auto h-52 xl:h-60 object-contain select-none transition-transform duration-300 hover:scale-[1.02]"
-                    loading="eager"
-                    width={320}
-                    height={360}
-                  />
-                </div>
-
-                {/* Floating badge */}
-                <div className="absolute -bottom-1 -left-1 xl:left-2 z-20 bg-white/95 px-2.5 py-1 rounded-full border border-[#E2E6F5] shadow-xs rotate-[-5deg] select-none flex items-center gap-1.5">
-                  <Sparkles className="size-3 text-[#4F46E5]" />
-                  <span className="text-[11px] font-bold text-[#4F46E5] tracking-tight">
-                    Better Coders Everyday!
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Hero Layout (<md: 768px) - Compact so page NEVER scrolls */}
-            <div className="md:hidden flex flex-col items-center text-center">
-              <div className="relative w-full flex items-center justify-between gap-2.5">
-                <div className="text-left flex-1 min-w-0">
-                  <h1 className="text-lg sm:text-2xl font-black text-[#151936] tracking-tight leading-[1.1]">
-                    Practice.
-                    <br />
-                    <span className="text-[#4F46E5]">Track.</span>
-                    <br />
-                    Improve.
-                  </h1>
-                  <p className="mt-0.5 text-[10px] sm:text-[11px] text-[#647096] leading-snug font-normal line-clamp-2">
-                    A DSA practice platform for students, verified by GitHub.
-                  </p>
-                </div>
-
-                {/* Mobile Mascot Cutout */}
-                <div className="relative shrink-0 flex items-center justify-center">
-                  <div
-                    className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-[#E9E7FF] to-[#F1EFFF] absolute z-0 blur-[0.5px]"
-                    aria-hidden="true"
-                  />
-                  <img
-                    src="/mascot.png"
                     alt="Solvers Student Character"
-                    className="w-auto h-20 sm:h-28 object-contain select-none relative z-10"
+                    className="w-auto h-48 xl:h-56 object-contain select-none transition-transform duration-300 hover:scale-[1.02]"
                     loading="eager"
-                    width={110}
-                    height={130}
+                    width={280}
+                    height={320}
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom Trust Badges (Tablet & Desktop matching reference) */}
-          <div className="relative z-10 pt-3 hidden md:flex items-center justify-between gap-2 border-t border-[#E2E6F5]/80">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#647096]">
+          {/* Bottom Trust Line */}
+          <div className="relative z-10 pt-2.5 hidden sm:flex items-center justify-between border-t border-[#E2E6F5]/80 text-[10px] font-semibold text-[#647096]">
+            <div className="flex items-center gap-1.5">
               <ShieldCheck className="size-3.5 text-[#4F46E5]" />
               <span>Secure Authentication</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#647096]">
+            <div className="flex items-center gap-1.5">
               <Users className="size-3.5 text-[#16A765]" />
               <span>Academic Integrity</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#647096]">
+            <div className="flex items-center gap-1.5">
               <Zap className="size-3.5 text-[#F59E0B]" />
               <span>Real Learning</span>
             </div>
@@ -321,33 +258,41 @@ export function LoginPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* AUTHENTICATION PANEL                                                      */}
-        {/* Clean, perfectly proportioned, accessible on all screen sizes             */}
+        {/* RIGHT AUTH PANEL: Clean, Professional Login Interface (No tags)           */}
         {/* ========================================================================= */}
         <section
           aria-labelledby="login-surface-heading"
-          className="w-full md:w-[46%] lg:w-[44%] bg-white border-t md:border-t-0 md:border-l border-[#E2E6F5] p-3 sm:p-5 md:p-6 lg:p-7 xl:p-8 flex flex-col justify-between items-center relative"
+          className="w-full md:w-[45%] lg:w-[44%] bg-white p-5 sm:p-7 md:p-8 flex flex-col justify-between items-center relative"
         >
-          {/* Top Tag on Tablet & Desktop */}
-          <div className="w-full hidden md:flex justify-end select-none">
-            <span
-              className="text-xs font-semibold text-[#9BA8CD] italic select-none pointer-events-none"
-              style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
-            >
-              Same Effort, Higher Future
-            </span>
+          {/* Top Right: Stylish Stacked Quote */}
+          <div className="w-full flex items-center justify-end select-none pr-1">
+            <div className="flex flex-col items-end text-right leading-[1.05] pointer-events-none select-none">
+              <span
+                className="text-xs sm:text-[13px] font-semibold text-[#8E99B8] tracking-wide"
+                style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic" }}
+              >
+                Same Effort,
+              </span>
+              <span
+                className="text-base sm:text-lg font-bold bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] bg-clip-text text-transparent tracking-tight mt-0.5"
+                style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
+              >
+                Higher Future ✨
+              </span>
+            </div>
           </div>
 
-          {/* Centered Login / Admin Form Block */}
-          <div className="w-full max-w-full sm:max-w-[360px] my-auto py-0.5 sm:py-2 flex flex-col items-center text-center">
-            {/* Header: Welcome to Solvers */}
+          {/* Centered Login Block */}
+          <div className="w-full max-w-[340px] sm:max-w-[360px] my-auto py-2 flex flex-col items-center text-center">
+            
             <h2
               id="login-surface-heading"
-              className="text-lg sm:text-2xl font-black text-[#151936] tracking-tight"
+              className="text-xl sm:text-2xl font-black text-[#151936] tracking-tight"
             >
               Welcome to <span className="text-[#4F46E5]">Solvers</span>
             </h2>
-            <p className="text-[10px] sm:text-xs text-[#647096] mt-0.5 sm:mt-1 font-normal max-w-xs">
+
+            <p className="text-xs text-[#647096] mt-1 font-normal max-w-xs">
               {showAdminForm
                 ? "Sign in with your authorized professor account."
                 : "Sign in with your GitHub account to continue."}
@@ -357,9 +302,9 @@ export function LoginPage() {
             {(auth.error || failed) && (
               <div
                 role="alert"
-                className="w-full mt-2 sm:mt-3.5 p-2 sm:p-3 rounded-xl bg-[#DC4545]/10 border border-[#DC4545]/20 text-[#DC4545] text-xs flex items-start gap-2 text-left animate-in fade-in duration-200"
+                className="w-full mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2 text-left animate-in fade-in duration-200"
               >
-                <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                <AlertCircle className="size-4 shrink-0 mt-0.5 text-rose-600" />
                 <p className="font-medium leading-snug">
                   {failed || `Could not reach the server: ${auth.error}`}
                 </p>
@@ -367,7 +312,7 @@ export function LoginPage() {
             )}
 
             {/* Action Buttons OR Admin Form */}
-            <div className="w-full mt-3 sm:mt-5 space-y-2 sm:space-y-3">
+            <div className="w-full mt-4 space-y-2.5">
               {!showAdminForm ? (
                 <>
                   {/* Primary GitHub Button */}
@@ -376,9 +321,9 @@ export function LoginPage() {
                     onClick={startOAuth}
                     disabled={busy}
                     aria-label="Continue with GitHub"
-                    className="w-full h-10 sm:h-12 bg-[#151936] hover:bg-[#1E2448] text-white rounded-xl sm:rounded-2xl flex items-center justify-between px-3.5 sm:px-5 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#151936]"
+                    className="w-full h-11 sm:h-12 bg-[#151936] hover:bg-[#1E2448] text-white rounded-xl sm:rounded-2xl flex items-center justify-between px-4 sm:px-5 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#151936]"
                   >
-                    <div className="flex items-center gap-2 sm:gap-2.5">
+                    <div className="flex items-center gap-2.5">
                       <GithubMark className="size-4 sm:size-4.5 text-white" />
                       <span className="font-semibold text-xs sm:text-sm">
                         {busy ? "Connecting..." : "Continue with GitHub"}
@@ -387,10 +332,10 @@ export function LoginPage() {
                     <ArrowRight className="size-3.5 sm:size-4 text-white/70 group-hover:translate-x-1 transition-transform" />
                   </button>
 
-                  {/* Divider: or */}
-                  <div className="flex items-center gap-2 sm:gap-3 my-1.5 sm:my-3" aria-hidden="true">
+                  {/* Divider */}
+                  <div className="flex items-center gap-2.5 my-2" aria-hidden="true">
                     <div className="flex-1 h-px bg-[#E2E6F5]" />
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-[#8E99B8] uppercase tracking-wider">
+                    <span className="text-[10px] font-semibold text-[#8E99B8] uppercase tracking-wider">
                       or
                     </span>
                     <div className="flex-1 h-px bg-[#E2E6F5]" />
@@ -405,22 +350,22 @@ export function LoginPage() {
                     }}
                     disabled={busy}
                     aria-label="Admin Login (Authorized Professors Only)"
-                    className="w-full h-10 sm:h-12 bg-white hover:bg-[#F8F8FF] text-[#151936] border border-[#E2E6F5] hover:border-[#D0D5E8] rounded-xl sm:rounded-2xl flex items-center justify-between px-3.5 sm:px-5 transition-all duration-200 disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4F46E5]"
+                    className="w-full h-10 sm:h-11 bg-white hover:bg-[#F8F8FF] text-[#151936] border border-[#E2E6F5] hover:border-[#CBD5E1] rounded-xl sm:rounded-2xl flex items-center justify-between px-3.5 sm:px-4 transition-all duration-200 disabled:opacity-60 cursor-pointer group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4F46E5]"
                   >
-                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                      <div className="size-5 sm:size-6 rounded-lg bg-[#F0F2FA] flex items-center justify-center text-[#151936] shrink-0">
-                        <Lock className="size-3 sm:size-3.5" />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="size-5 rounded-lg bg-[#F0F2FA] flex items-center justify-center text-[#151936] shrink-0">
+                        <Lock className="size-3" />
                       </div>
-                      <span className="font-semibold text-[11px] sm:text-xs text-[#151936] truncate">
+                      <span className="font-semibold text-xs text-[#151936] truncate">
                         Admin Login (Authorized Professors Only)
                       </span>
                     </div>
-                    <ArrowRight className="size-3 sm:size-3.5 text-[#8E99B8] group-hover:translate-x-1 transition-transform shrink-0" />
+                    <ArrowRight className="size-3.5 text-[#8E99B8] group-hover:translate-x-1 transition-transform shrink-0" />
                   </button>
                 </>
               ) : (
                 /* Admin Credential Form */
-                <form onSubmit={handleAdminSignIn} className="w-full space-y-2 sm:space-y-3 text-left">
+                <form onSubmit={handleAdminSignIn} className="w-full space-y-2.5 text-left">
                   <div>
                     <label
                       htmlFor="admin-username"
@@ -476,7 +421,7 @@ export function LoginPage() {
                   <button
                     type="submit"
                     disabled={busy}
-                    className="w-full h-11 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold rounded-xl text-xs transition-all shadow-xs disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full h-10 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold rounded-xl text-xs transition-all shadow-xs disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Lock className="size-3.5" />
                     {busy ? "Verifying..." : "Sign in as Admin"}
@@ -489,7 +434,7 @@ export function LoginPage() {
                       setShowAdminForm(false);
                     }}
                     disabled={busy}
-                    className="w-full py-1.5 text-xs font-medium text-[#647096] hover:text-[#151936] text-center transition-colors cursor-pointer"
+                    className="w-full py-1 text-xs font-medium text-[#647096] hover:text-[#151936] text-center transition-colors cursor-pointer"
                   >
                     &larr; Back to Student GitHub Login
                   </button>
@@ -497,45 +442,41 @@ export function LoginPage() {
               )}
             </div>
 
-            {/* Participation Rules & Academic Integrity Disclaimer */}
-            <p className="text-[10px] sm:text-[11px] text-[#8E99B8] text-center mt-2.5 sm:mt-3.5 leading-relaxed max-w-xs mx-auto">
-              By signing in, you agree to our participation rules and academic
-              integrity policy.
+            {/* Disclaimer */}
+            <p className="text-[10px] text-[#8E99B8] text-center mt-3 leading-relaxed max-w-xs mx-auto">
+              By signing in, you agree to our participation rules and academic integrity policy.
             </p>
           </div>
 
-          {/* Bottom Trust Indicators (Hidden on small mobile to save vertical space, visible on tablet & desktop) */}
-          <div className="w-full max-w-[340px] sm:max-w-[360px] hidden md:grid grid-cols-3 gap-2 pt-2.5 border-t border-[#F0F2FA] text-center">
-            {/* Indicator 1 */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="size-7 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5]">
-                <ShieldCheck className="size-3.5" />
+          {/* Bottom Trust Indicators */}
+          <div className="w-full max-w-[340px] sm:max-w-[360px] hidden md:grid grid-cols-3 gap-2 pt-2 border-t border-[#F0F2FA] text-center">
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="size-6 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5]">
+                <ShieldCheck className="size-3" />
               </div>
-              <span className="text-[10px] font-semibold text-[#151936] leading-tight">
+              <span className="text-[9px] font-semibold text-[#151936] leading-tight">
                 Secure
                 <br />
                 Authentication
               </span>
             </div>
 
-            {/* Indicator 2 */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="size-7 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765]">
-                <Users className="size-3.5" />
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="size-6 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765]">
+                <Users className="size-3" />
               </div>
-              <span className="text-[10px] font-semibold text-[#151936] leading-tight">
+              <span className="text-[9px] font-semibold text-[#151936] leading-tight">
                 Academic
                 <br />
                 Integrity
               </span>
             </div>
 
-            {/* Indicator 3 */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="size-7 rounded-lg bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B]">
-                <Zap className="size-3.5" />
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="size-6 rounded-lg bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B]">
+                <Zap className="size-3" />
               </div>
-              <span className="text-[10px] font-semibold text-[#151936] leading-tight">
+              <span className="text-[9px] font-semibold text-[#151936] leading-tight">
                 Focused on
                 <br />
                 Real Learning

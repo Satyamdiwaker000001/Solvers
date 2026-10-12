@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { StudentLayout, AdminLayout, ProtectedRoute } from "./layouts/AppLayouts.jsx";
-import { AccessStatusPage, AuthFinishPage } from "./features/auth/AuthPages.jsx";
+import { AccessStatusPage } from "./features/auth/AccessStatusPage.jsx";
+import { AuthFinishPage } from "./features/auth/AuthPages.jsx";
 import { SignInPage, AdminLoginPage } from "./features/auth/LoginPageOnly.jsx";
 import { StudentDashboardConcept as StudentDashboard } from "./features/dashboard/StudentDashboardConcept.jsx";
 import { AdminDashboard } from "./features/dashboard/AdminDashboard.jsx";
@@ -14,10 +15,13 @@ import { StudentsPage, StudentDetailPage } from "./features/students/StudentsPag
 import { ReviewQueuePage, ReviewDetailPage } from "./features/review/ReviewPages.jsx";
 import { IntegrationPage, AuditPage } from "./features/admin/AdminOpsPages.jsx";
 import { ForbiddenPage, NotFoundPage, ServerErrorPage, RateLimitPage } from "./pages/SystemPages.jsx";
+import { TopProgressBar } from "./components/ui/TopProgressBar.jsx";
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <TopProgressBar />
+      <Routes>
       <Route path="/" element={<Navigate to="/sign-in" replace />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/admin-login" element={<AdminLoginPage />} />
@@ -55,5 +59,6 @@ export default function App() {
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </>
   );
 }
