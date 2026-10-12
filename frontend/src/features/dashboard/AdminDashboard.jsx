@@ -149,35 +149,63 @@ export function AdminDashboard() {
   return (
     <div className="flex flex-col gap-6 font-sans antialiased text-[#151936]">
       {/* ============================================================== */}
-      {/* 1. TOP WELCOME BANNER & STATS ROW (MOBILE-OPTIMIZED)           */}
+      {/* 1. TOP WELCOME BANNER & STATS ROW (EXECUTIVE FACULTY SUITE)    */}
       {/* ============================================================== */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white bg-[url('/background.png')] bg-cover bg-center border border-[#E2E6F5] p-4 sm:p-6 lg:p-8 shadow-xs">
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-[#E2E6F5] p-5 sm:p-7 lg:p-8 shadow-[0_10px_35px_-12px_rgba(79,70,229,0.07)]">
         {/* Soft background light blooms and text contrast overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-transparent pointer-events-none" aria-hidden="true" />
-        <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-[#E9E7FF]/60 blur-3xl" />
-        <div className="pointer-events-none absolute top-1/2 right-1/4 size-96 rounded-full bg-[#E0E7FF]/40 blur-3xl" />
+        <div
+          className="absolute inset-0 pointer-events-none opacity-40"
+          style={{
+            backgroundImage: "url('/background.png')",
+            backgroundSize: "180% 100%",
+            backgroundPosition: "left center",
+            backgroundRepeat: "no-repeat",
+          }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-transparent pointer-events-none" aria-hidden="true" />
+        <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-[#E9E7FF]/70 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute top-1/2 right-1/4 size-96 rounded-full bg-[#E0E7FF]/50 blur-3xl" aria-hidden="true" />
 
-        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 z-10">
+        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 z-10">
           {/* Left Text Column */}
-          <div className="flex-1 max-w-xl">
-            <h1 className="text-xl sm:text-3xl lg:text-[34px] font-black tracking-tight text-[#151936] flex items-center gap-1.5 sm:gap-2">
-              <span>Welcome back, {adminName}!</span>
-              <span className="inline-block animate-wave origin-bottom-right">👋</span>
-            </h1>
-
-            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#647096] italic">
-              "Consistency today, stronger tomorrow."
-            </p>
-
-            <div className="mt-3 sm:mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-white/80 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-[#151936] border border-[#E2E6F5] shadow-2xs">
-                <span className="size-2 rounded-full bg-[#4F46E5]" />
-                Admin Overview
+          <div className="flex-1 max-w-2xl min-w-0">
+            {/* Top pill bar */}
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EEECFF] px-2.5 py-0.5 text-[11px] font-bold text-[#4F46E5] border border-[#4F46E5]/20 select-none">
+                <Sparkles className="size-3" />
+                Faculty Administration
               </span>
-              <span className="text-[11px] sm:text-xs text-[#647096] hidden sm:inline">
-                Review submissions, manage assignments, and track student progress.
+              <span className="text-[11px] text-[#8E99B8] font-medium hidden sm:inline">
+                Verified Oversight Suite
               </span>
             </div>
+
+            {/* Main Greeting */}
+            <h1 className="text-2xl sm:text-3xl lg:text-[36px] font-black tracking-tight text-[#151936] leading-[1.15] flex flex-wrap items-center gap-2">
+              <span>Welcome back,</span>
+              <span className="bg-gradient-to-r from-[#151936] via-[#312E81] to-[#4F46E5] bg-clip-text text-transparent">
+                {adminName}!
+              </span>
+              <span className="inline-block animate-wave origin-bottom-right select-none text-2xl sm:text-3xl">👋</span>
+            </h1>
+
+            {/* Elevated Motivational Quote with stylish serif typography */}
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-[#4F46E5]/40 text-lg select-none font-serif">“</span>
+              <p
+                className="text-xs sm:text-[14px] font-medium text-[#4B5563] tracking-wide italic"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Consistency today, stronger tomorrow.
+              </p>
+              <span className="text-[#4F46E5]/40 text-lg select-none font-serif">”</span>
+            </div>
+
+            {/* Bottom Subtext */}
+            <p className="mt-4 text-xs sm:text-[13px] text-[#647096] leading-relaxed max-w-xl">
+              Review submissions, oversee assignments, and monitor student progress with real-time academic integrity tracking.
+            </p>
           </div>
 
           {/* Mascot Artwork with Circular Backdrop (Half-in half-out cut effect) */}

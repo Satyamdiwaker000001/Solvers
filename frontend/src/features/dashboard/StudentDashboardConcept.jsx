@@ -226,44 +226,70 @@ export function StudentDashboardConcept() {
   return (
     <div className="flex flex-col gap-5 sm:gap-6 font-sans antialiased text-[#151936] w-full max-w-[1400px] mx-auto min-w-0">
       {/* ============================================================== */}
-      {/* 1. TOP WELCOME BANNER (TABLET & DESKTOP HARMONIOUS LAYOUT)      */}
+      {/* 1. TOP WELCOME BANNER (EXECUTIVE & SLEEK DESIGN SYSTEM)        */}
       {/* ============================================================== */}
-      <div className="relative overflow-hidden rounded-3xl bg-white bg-[url('/background.png')] bg-cover bg-center border border-[#E2E6F5] p-5 sm:p-6 lg:p-7 shadow-xs">
-        {/* Soft contrast overlay */}
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-[#E2E6F5] p-5 sm:p-7 lg:p-8 shadow-[0_10px_35px_-12px_rgba(79,70,229,0.07)]">
+        {/* Subtle background graphic & soft ambient glows */}
         <div
-          className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-transparent pointer-events-none"
+          className="absolute inset-0 pointer-events-none opacity-40"
+          style={{
+            backgroundImage: "url('/background.png')",
+            backgroundSize: "180% 100%",
+            backgroundPosition: "left center",
+            backgroundRepeat: "no-repeat",
+          }}
           aria-hidden="true"
         />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-transparent pointer-events-none" aria-hidden="true" />
+        <div className="pointer-events-none absolute -top-20 -left-20 size-72 rounded-full bg-[#E9E7FF]/70 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute top-1/2 right-1/4 size-80 rounded-full bg-[#EEECFF]/50 blur-3xl" aria-hidden="true" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          {/* Left Text */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-black tracking-tight text-[#151936] flex items-center gap-2">
-              Welcome back,
-              <span>{firstName}!</span>
-              <span className="inline-block animate-wave origin-bottom-right">👋</span>
-            </h1>
-
-            <p className="mt-2 text-xs sm:text-sm text-[#647096] italic">
-              "Consistency today, stronger tomorrow."
-            </p>
-
-            <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#151936] border border-[#E2E6F5] shadow-2xs">
-                <span className="size-2 rounded-full bg-[#4F46E5]" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          {/* Left Hero Text Column */}
+          <div className="flex-1 min-w-0 max-w-2xl">
+            {/* Top pill bar */}
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EEECFF] px-2.5 py-0.5 text-[11px] font-bold text-[#4F46E5] border border-[#4F46E5]/20 select-none">
+                <Sparkles className="size-3" />
                 Solvers Student Platform
               </span>
-              <span className="text-xs text-[#647096] hidden sm:inline">
-                Practice daily, verify on GitHub, and build competitive strength.
+              <span className="text-[11px] text-[#8E99B8] font-medium hidden sm:inline">
+                Verified with GitHub
               </span>
             </div>
+
+            {/* Main Greeting */}
+            <h1 className="text-2xl sm:text-3xl lg:text-[36px] font-black tracking-tight text-[#151936] leading-[1.15] flex flex-wrap items-center gap-2">
+              <span>Welcome back,</span>
+              <span className="bg-gradient-to-r from-[#151936] via-[#312E81] to-[#4F46E5] bg-clip-text text-transparent">
+                {firstName}!
+              </span>
+              <span className="inline-block animate-wave origin-bottom-right select-none text-2xl sm:text-3xl">👋</span>
+            </h1>
+
+            {/* Elevated Motivational Quote with stylish serif typography */}
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-[#4F46E5]/40 text-lg select-none font-serif">“</span>
+              <p
+                className="text-xs sm:text-[14px] font-medium text-[#4B5563] tracking-wide italic"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Consistency today, stronger tomorrow.
+              </p>
+              <span className="text-[#4F46E5]/40 text-lg select-none font-serif">”</span>
+            </div>
+
+            {/* Bottom Subtext */}
+            <p className="mt-4 text-xs sm:text-[13px] text-[#647096] leading-relaxed max-w-xl">
+              Practice daily, verify on GitHub, and build competitive strength with rigorous DSA problems.
+            </p>
           </div>
 
-          {/* Right Mascot with laptop matching reference & circular half-in half-out effect */}
+          {/* Right Mascot Showcase with circular soft backdrop */}
           <div className="relative flex items-end justify-end shrink-0 h-[155px] sm:h-[185px] my-1 md:my-0 overflow-hidden sm:overflow-visible">
-            {/* Circular backdrop: avatar is positioned half inside, half rising out */}
+            {/* Circular aura backdrop */}
             <div
-              className="absolute bottom-0 right-4 sm:right-6 size-28 sm:size-36 lg:size-40 rounded-full bg-gradient-to-tr from-[#E9E7FF] via-[#EEECFF] to-[#F5F3FF] border border-[#E0E7FF] shadow-inner z-0"
+              className="absolute bottom-0 right-4 sm:right-6 size-32 sm:size-40 rounded-full bg-gradient-to-tr from-[#E9E7FF] via-[#EEECFF] to-[#F5F3FF] border border-[#E0E7FF] shadow-inner z-0"
               aria-hidden="true"
             />
 
