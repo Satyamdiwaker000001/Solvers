@@ -190,8 +190,8 @@ export function RateLimitPage() {
       code="429 RATE LIMITED"
       subtitle="Traffic Protection"
       title="Too Many Requests"
-      description="Aapki IP address se brief period mein zyada requests aayi hain. DDoS protection aur fair abuse policies ki wajah se traffic temporarily throttle kiya gaya hai."
-      details="Request window will automatically refresh shortly. Please wait 30-60 seconds before retrying."
+      description="Too many requests were detected from your network within a short timeframe. In accordance with platform security and rate-limiting policies, access has been temporarily throttled."
+      details="The request window refreshes automatically. Please wait approximately 30–60 seconds before retrying."
       actions={
         <>
           <Button onClick={() => window.location.reload()} className="w-full sm:w-auto text-xs font-bold bg-primary text-white hover:bg-primary-strong">
@@ -215,7 +215,7 @@ export function GenericErrorPage({ error, onRetry }) {
       code="UNEXPECTED_ERROR"
       subtitle="Application Notice"
       title="Something Went Wrong"
-      description="Application ko load karte waqt unexpected runtime exception aayi hai. Aap page refresh karke dobara try kar sakte hain."
+      description="An unexpected runtime exception occurred while processing this page. Please refresh the page or try again in a few moments."
       details={error?.message || String(error || "Unknown error")}
       actions={
         <>

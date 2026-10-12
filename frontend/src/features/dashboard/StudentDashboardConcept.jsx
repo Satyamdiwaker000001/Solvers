@@ -23,6 +23,7 @@ import {
   getStudentSubmissions,
 } from "../../services/api.js";
 import { LoadingState, ErrorState } from "../../components/ui/States.jsx";
+import { StudentDashboardSkeleton } from "./DashboardSkeleton.jsx";
 import { formatDate, shortSha } from "../../lib/format.js";
 import { Avatar } from "../../components/ui/Avatar.jsx";
 
@@ -179,11 +180,7 @@ export function StudentDashboardConcept() {
   }, [state.assignments]);
 
   if (state.loading && !state.overview) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <LoadingState label="Loading your student dashboard…" />
-      </div>
-    );
+    return <StudentDashboardSkeleton />;
   }
 
   if (state.error && !state.overview) {
