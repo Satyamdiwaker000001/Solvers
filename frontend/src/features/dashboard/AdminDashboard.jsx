@@ -36,6 +36,7 @@ import {
   updateTrackingPolicy,
 } from "../../services/api.js";
 import { LoadingState, ErrorState, EmptyState } from "../../components/ui/States.jsx";
+import { AdminDashboardSkeleton } from "./DashboardSkeleton.jsx";
 import { Avatar } from "../../components/ui/Avatar.jsx";
 import { VerificationBadge, Badge } from "../../components/ui/Badge.jsx";
 import { formatDate } from "../../lib/format.js";
@@ -108,11 +109,7 @@ export function AdminDashboard() {
   }, []);
 
   if (loading && !overview) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <LoadingState label="Loading admin dashboard…" />
-      </div>
-    );
+    return <AdminDashboardSkeleton />;
   }
 
   if (error && !overview) {

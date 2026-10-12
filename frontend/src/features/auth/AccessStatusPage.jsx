@@ -103,7 +103,7 @@ export function AccessStatusPage() {
         }
 
         if (currentUser.accessState === "APPROVED") {
-          toast.push({ tone: "success", title: "Request Accepted!", body: "Aapki request accept ho chuki hai! Redirecting to dashboard…" });
+          toast.push({ tone: "success", title: "Enrollment Approved", body: "Your access request has been approved. Redirecting to your student dashboard…" });
           navigate("/app/dashboard", { replace: true });
           return;
         }
@@ -129,15 +129,15 @@ export function AccessStatusPage() {
 
       if (isManual) {
         toast.push({
-          title: "Status Checked",
+          title: "Verification Queue Status",
           body: currentUser?.accessState === "PENDING"
-            ? "Request abhi bhi Admin queue mein pending hai."
-            : `Current status: ${currentUser?.accessState || "PENDING"}`,
+            ? "Your request is currently awaiting faculty review in the admin queue."
+            : `Current verification status: ${currentUser?.accessState || "PENDING"}`,
         });
       }
     } catch (e) {
       if (isManual) {
-        setError(e.message || "Failed to sync status with server.");
+        setError(e.message || "Failed to synchronize status with server.");
       }
     } finally {
       if (isManual) setChecking(false);
@@ -162,12 +162,12 @@ export function AccessStatusPage() {
       setRequest(res.data || res);
       toast.push({
         tone: "success",
-        title: "Request Re-submitted",
-        body: "Aapki nayi request admin queue mein bhej di gayi hai.",
+        title: "Application Re-submitted",
+        body: "Your request has been delivered to the faculty review queue.",
       });
       await syncStatus(false);
     } catch (e) {
-      setError(e.message || "Could not submit new request. Please wait until restriction expires.");
+      setError(e.message || "Unable to submit a new request. Please wait until the restriction timer expires.");
     } finally {
       setSubmitting(false);
     }
@@ -346,28 +346,28 @@ export function AccessStatusPage() {
             )}
 
             {/* ================================================================= */}
-            {/* STATE 1: PENDING (Waiting for Admin Response)                      */}
+            {/* STATE 1: PENDING (Waiting for Faculty Verification)                */}
             {/* ================================================================= */}
             {isPending && (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/70 via-white to-amber-50/40 p-4 sm:p-5">
                   <div className="flex items-center gap-2 text-xs font-bold text-amber-800">
                     <Clock3 className="size-4 text-amber-600 animate-pulse" />
-                    <span>Request Sent to Admin</span>
+                    <span>Verification Request Submitted</span>
                   </div>
 
                   <h1 className="mt-2 text-lg sm:text-xl font-black text-[#151936] tracking-tight leading-snug">
-                    Request gayi, ab admin ke response ka wait kijiye
+                    Request Sent — Awaiting Faculty Approval
                   </h1>
 
                   <p className="mt-2 text-xs sm:text-[13px] text-[#475569] leading-relaxed">
-                    Aapki login request course professor ke verification queue mein bhej di gayi hai.
-                    <span className="font-semibold text-[#151936]"> Agar request accept hoti hai</span>, toh aapka account automatically login ho jayega aur practice dashboard open ho jayega.
+                    Your student enrollment request has been delivered to the course professor's review queue.
+                    <span className="font-semibold text-[#151936]"> Upon approval</span>, your account will be activated immediately and your student practice dashboard will unlock automatically.
                   </p>
 
                   <div className="mt-3.5 pt-3 border-t border-amber-200/60 flex items-center gap-2 text-[11px] text-amber-900 font-medium">
                     <span className="size-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
-                    <span>Real-time listener active — page reload karne ki zaroorat nahi hai.</span>
+                    <span>Real-time verification listener active — no manual page refresh required.</span>
                   </div>
                 </div>
 
@@ -384,7 +384,7 @@ export function AccessStatusPage() {
                       <Send className="size-3.5 text-amber-600" /> Queue Status
                     </span>
                     <span className="font-semibold text-amber-700 bg-amber-100/60 px-2 py-0.5 rounded">
-                      In Review Queue
+                      Pending Faculty Review
                     </span>
                   </div>
                   <div className="flex items-center justify-between border-t border-[#E2E6F5]/60 pt-2 text-muted">
@@ -392,7 +392,7 @@ export function AccessStatusPage() {
                       <RefreshCw className={`size-3.5 text-[#4F46E5] ${checking ? "animate-spin" : ""}`} /> Auto-Sync
                     </span>
                     <span className="text-[11px] text-[#647096]">
-                      {lastSynced ? `Last checked: ${lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : "Checking continuously every 5s"}
+                      {lastSynced ? `Last synchronized: ${lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : "Synchronizing live every 5s"}
                     </span>
                   </div>
                 </div>
@@ -407,16 +407,16 @@ export function AccessStatusPage() {
                 <div className="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50/80 via-white to-rose-50/40 p-4 sm:p-5">
                   <div className="flex items-center gap-2 text-xs font-bold text-rose-700">
                     <AlertCircle className="size-4 text-rose-600" />
-                    <span>Request Not Approved</span>
+                    <span>Application Status</span>
                   </div>
 
                   <h1 className="mt-2 text-lg sm:text-xl font-black text-[#151936] tracking-tight leading-snug">
-                    Aapki request reject ho chuki hai
+                    Access Request Declined
                   </h1>
 
                   <p className="mt-2 text-xs sm:text-[13px] text-[#475569] leading-relaxed">
-                    Course administrator dwara aapki access request accept nahi ki gayi hai.
-                    Security and policy rules ke mutabik aap lock duration ke baad phir se try kar sakte hain.
+                    Your access request could not be approved by the faculty administration at this time.
+                    In accordance with course security policies, reapplication is locked until the server cooldown timer expires.
                   </p>
                 </div>
 
@@ -424,7 +424,7 @@ export function AccessStatusPage() {
                 <div className="rounded-xl border border-rose-200/90 bg-rose-50/50 p-4 text-center">
                   <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-rose-800 mb-2">
                     <Timer className="size-4 text-rose-600" />
-                    <span>Eligible to Try Again (Lock Countdown)</span>
+                    <span>Reapplication Cooldown Active</span>
                   </div>
 
                   {countdown && !countdown.isExpired ? (
@@ -448,14 +448,14 @@ export function AccessStatusPage() {
                       </div>
 
                       <p className="mt-2 text-[11px] text-rose-800">
-                        Aap <strong>{countdown.formatted}</strong> ke baad dubara reapply kar sakte hain.
+                        You may submit a new access request in <strong>{countdown.formatted}</strong>.
                       </p>
                     </div>
                   ) : (
                     <div className="py-1">
                       <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-1.5">
                         <CheckCircle2 className="size-4 text-emerald-600" />
-                        Cooldown complete! Aap ab dubara request bhej sakte hain.
+                        Cooldown complete. You are now eligible to reapply.
                       </p>
                     </div>
                   )}
@@ -468,7 +468,7 @@ export function AccessStatusPage() {
                     onClick={handleReapply}
                     className="w-full bg-[#4F46E5] text-white hover:bg-[#4338CA] font-bold text-xs py-2.5 shadow-md shadow-[#4F46E5]/20"
                   >
-                    <Send className="size-3.5" /> Submit a New Access Request
+                    <Send className="size-3.5" /> Submit New Verification Request
                   </Button>
                 )}
               </div>
@@ -483,16 +483,16 @@ export function AccessStatusPage() {
                   <CheckCircle2 className="size-6" />
                 </div>
                 <h1 className="text-xl font-black text-[#151936]">
-                  Request Approved! 🎉
+                  Access Approved! 🎉
                 </h1>
                 <p className="mt-1 text-xs text-[#647096]">
-                  Aapka account approve ho chuka hai. Student dashboard khul raha hai…
+                  Your student credentials have been confirmed. Initializing student dashboard…
                 </p>
                 <Button
                   onClick={() => navigate("/app/dashboard", { replace: true })}
                   className="mt-4 w-full bg-[#16A765] text-white hover:bg-[#138e55] font-bold text-xs py-2.5"
                 >
-                  Go to Dashboard <ArrowRight className="size-3.5" />
+                  Open Student Dashboard <ArrowRight className="size-3.5" />
                 </Button>
               </div>
             )}
@@ -512,7 +512,7 @@ export function AccessStatusPage() {
                 onClick={() => syncStatus(true)}
                 className="flex-1 text-xs font-bold bg-[#4F46E5] text-white hover:bg-[#4338CA] shadow-sm"
               >
-                <RefreshCw className={`size-3.5 ${checking ? "animate-spin" : ""}`} /> Check Status Now
+                <RefreshCw className={`size-3.5 ${checking ? "animate-spin" : ""}`} /> Check Verification Status
               </Button>
 
               <Button
@@ -520,7 +520,7 @@ export function AccessStatusPage() {
                 onClick={handleSignOut}
                 className="text-xs border-[#E2E6F5] text-[#647096] hover:bg-[#F8F8FF]"
               >
-                <LogOut className="size-3.5" /> Sign Out / Switch User
+                <LogOut className="size-3.5" /> Sign Out / Switch Account
               </Button>
             </div>
 
