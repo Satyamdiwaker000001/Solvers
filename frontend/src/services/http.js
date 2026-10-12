@@ -80,47 +80,54 @@ function isCsrfFailure(res, body) {
   return res.status === 403 && /csrf/i.test(body?.error?.message ?? "");
 }
 
+import { networkBus } from "./networkBus.js";
+
 export async function apiFetch(path, { method = "GET", body, headers } = {}) {
   if (!isLive()) {
     throw new Error("Backend is not configured (VITE_API_BASE_URL is empty).");
   }
-  const mutating = !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
-  if (mutating && !csrfToken) {
-    try {
-      await fetchCsrfToken();
-    } catch {
-      // Continue without a token; the server will answer 403 explicitly.
+  networkBus.beginRequest();
+  try {
+    const mutating = !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
+    if (mutating && !csrfToken) {
+      try {
+        await fetchCsrfToken();
+      } catch {
+        // Continue without a token; the server will answer 403 explicitly.
+      }
     }
-  }
 
-  const send = async (token) => {
-    const res = await fetch(`${BASE}${path}`, {
-      method,
-      credentials: "include",
-      headers: {
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-        ...(token && mutating ? { "x-csrf-token": token } : {}),
-        ...(storedSessionId ? { "x-session-id": storedSessionId } : {}),
-        ...(headers ?? {}),
-      },
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
-    const responseBody = await res.json().catch(() => ({}));
-    return { res, responseBody };
-  };
+    const send = async (token) => {
+      const res = await fetch(`${BASE}${path}`, {
+        method,
+        credentials: "include",
+        headers: {
+          ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+          ...(token && mutating ? { "x-csrf-token": token } : {}),
+          ...(storedSessionId ? { "x-session-id": storedSessionId } : {}),
+          ...(headers ?? {}),
+        },
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
+      const responseBody = await res.json().catch(() => ({}));
+      return { res, responseBody };
+    };
 
-  let { res, responseBody } = await send(csrfToken);
-  if (isCsrfFailure(res, responseBody)) {
-    // Token may have rotated (e.g. fresh login): refresh once and retry.
-    try {
-      await fetchCsrfToken();
-    } catch {
-      throw toApiError(res, responseBody);
+    let { res, responseBody } = await send(csrfToken);
+    if (isCsrfFailure(res, responseBody)) {
+      // Token may have rotated (e.g. fresh login): refresh once and retry.
+      try {
+        await fetchCsrfToken();
+      } catch {
+        throw toApiError(res, responseBody);
+      }
+      ({ res, responseBody } = await send(csrfToken));
     }
-    ({ res, responseBody } = await send(csrfToken));
+    if (!res.ok) throw toApiError(res, responseBody);
+    return responseBody;
+  } finally {
+    networkBus.endRequest();
   }
-  if (!res.ok) throw toApiError(res, responseBody);
-  return responseBody;
 }
 
 export function clearCsrfToken() {
