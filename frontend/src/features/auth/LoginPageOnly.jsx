@@ -93,7 +93,7 @@ export function LoginPage() {
   };
 
   return (
-    <main className="fixed inset-0 h-[100dvh] w-screen bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-3 sm:p-5 lg:p-6 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5] overflow-hidden">
+    <main className="min-h-[100dvh] w-full bg-[#F3F4FF] text-[#151936] flex items-center justify-center p-3 sm:p-5 lg:p-6 relative selection:bg-[#4F46E5]/20 selection:text-[#4F46E5] overflow-y-auto">
       {/* Background ambient soft glows on outer canvas */}
       <div
         className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-[#E9E7FF]/70 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"
@@ -105,15 +105,15 @@ export function LoginPage() {
       />
 
       {/* Main Login Card Container:
-          Fits perfectly inside viewport with ZERO page scroll */}
-      <div className="w-full max-w-full sm:max-w-xl md:max-w-[860px] lg:max-w-[980px] xl:max-w-[1040px] max-h-[92dvh] bg-white border border-[#E2E6F5] rounded-3xl shadow-[0_12px_40px_-10px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col md:flex-row my-auto">
+          Responsive, scrollable when needed so inputs are always accessible on Mobile M & L */}
+      <div className="w-full max-w-full sm:max-w-xl md:max-w-[860px] lg:max-w-[980px] xl:max-w-[1040px] md:max-h-[92dvh] bg-white border border-[#E2E6F5] rounded-2xl sm:rounded-3xl shadow-[0_12px_40px_-10px_rgba(79,70,229,0.08)] overflow-hidden relative z-10 flex flex-col md:flex-row my-auto">
         
         {/* ========================================================================= */}
         {/* LEFT SHOWCASE PANEL: Solvers Logo, Value Props, and Mascot                */}
         {/* ========================================================================= */}
         <section
           aria-label="Solvers introduction and features"
-          className="w-full md:w-[55%] lg:w-[56%] relative p-4 sm:p-6 lg:p-7 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] shrink-0 border-b md:border-b-0 md:border-r border-[#E2E6F5]"
+          className="w-full md:w-[55%] lg:w-[56%] relative p-3.5 sm:p-6 lg:p-7 flex flex-col justify-between overflow-hidden bg-[#F8F8FF] shrink-0 border-b md:border-b-0 md:border-r border-[#E2E6F5]"
         >
           {/* Background image layer showing exactly the left half (200% width aligned to left) */}
           <div
@@ -144,24 +144,20 @@ export function LoginPage() {
               
               {/* Left Column: Headlines & Features */}
               <div className="md:col-span-7 flex flex-col justify-center">
-                <h1 className="text-2xl lg:text-3xl xl:text-[34px] font-black text-[#151936] tracking-tight leading-[1.12]">
-                  Practice.
-                  <br />
-                  <span className="text-[#4F46E5]">Track.</span>
-                  <br />
-                  Improve.
+                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-[34px] font-black text-[#151936] tracking-tight leading-[1.15]">
+                  Practice. <span className="text-[#4F46E5]">Track.</span> Improve.
                 </h1>
 
-                <p className="mt-2 text-xs text-[#647096] leading-relaxed max-w-sm font-normal">
+                <p className="mt-1.5 text-xs text-[#647096] leading-relaxed max-w-sm font-normal">
                   A DSA practice platform for students, verified by GitHub. Stay consistent, compete, and grow together.
                 </p>
 
-                {/* 4 Feature Items */}
-                <div className="mt-3.5 space-y-1.5 max-w-sm">
+                {/* Feature Items - collapsed to 2 on small screens, all 4 on sm+ */}
+                <div className="mt-3 space-y-1.5 max-w-sm">
                   {/* Feature 1 */}
                   <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
-                    <div className="size-8 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765] shrink-0 border border-[#16A765]/20">
-                      <CheckCircle2 className="size-4" />
+                    <div className="size-7 sm:size-8 rounded-lg bg-[#EAF8F1] flex items-center justify-center text-[#16A765] shrink-0 border border-[#16A765]/20">
+                      <CheckCircle2 className="size-3.5 sm:size-4" />
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-xs font-bold text-[#151936] leading-tight">
@@ -175,8 +171,8 @@ export function LoginPage() {
 
                   {/* Feature 2 */}
                   <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
-                    <div className="size-8 rounded-lg bg-[#EEF0F8] flex items-center justify-center text-[#151936] shrink-0 border border-[#151936]/15">
-                      <GithubMark className="size-4" />
+                    <div className="size-7 sm:size-8 rounded-lg bg-[#EEF0F8] flex items-center justify-center text-[#151936] shrink-0 border border-[#151936]/15">
+                      <GithubMark className="size-3.5 sm:size-4" />
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-xs font-bold text-[#151936] leading-tight">
@@ -188,8 +184,8 @@ export function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Feature 3 */}
-                  <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
+                  {/* Feature 3 (Hidden on mobile to save vertical space for login inputs) */}
+                  <div className="hidden sm:flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
                     <div className="size-8 rounded-lg bg-[#FEF6E9] flex items-center justify-center text-[#F59E0B] shrink-0 border border-[#F59E0B]/25">
                       <BarChart3 className="size-4" />
                     </div>
@@ -203,8 +199,8 @@ export function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Feature 4 */}
-                  <div className="flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
+                  {/* Feature 4 (Hidden on mobile to save vertical space for login inputs) */}
+                  <div className="hidden sm:flex items-center gap-2.5 p-1.5 rounded-xl transition-colors hover:bg-white/60">
                     <div className="size-8 rounded-lg bg-[#EEECFF] flex items-center justify-center text-[#4F46E5] shrink-0 border border-[#4F46E5]/20">
                       <Users className="size-4" />
                     </div>
@@ -310,10 +306,10 @@ export function LoginPage() {
         {/* ========================================================================= */}
         <section
           aria-labelledby="login-surface-heading"
-          className="w-full md:w-[45%] lg:w-[44%] bg-white p-5 sm:p-7 md:p-8 flex flex-col justify-between items-center relative"
+          className="w-full md:w-[45%] lg:w-[44%] bg-white p-4 sm:p-7 md:p-8 flex flex-col justify-between items-center relative"
         >
-          {/* Top Right: Stylish Inspirational Quote */}
-          <div className="w-full flex items-center justify-end select-none pr-1">
+          {/* Top Right: Stylish Inspirational Quote (hidden on extra small screens for maximum form focus) */}
+          <div className="w-full hidden sm:flex items-center justify-end select-none pr-1">
             <div className="flex flex-col items-end text-right leading-none pointer-events-none">
               <span
                 className="text-[11px] sm:text-xs font-semibold text-[#8E99B8] italic tracking-wide"
